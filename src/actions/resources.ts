@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
-import type { Resource } from '@/lib/types';
+import type { Resource, SchemeMetadata } from '@/lib/types';
 
 export async function getResources() {
   const supabase = createAdminClient();
@@ -32,11 +32,13 @@ export async function createResource(formData: {
   description: string;
   url: string;
   icon: string;
+  logo_url: string;
   category: string;
   provider: string;
   eligibility: string;
   deadline: string;
   tags: string[];
+  metadata: SchemeMetadata;
   is_active: boolean;
   created_by: string;
 }) {
@@ -46,11 +48,13 @@ export async function createResource(formData: {
     description: formData.description || null,
     url: formData.url || null,
     icon: formData.icon || null,
+    logo_url: formData.logo_url || null,
     category: formData.category,
     provider: formData.provider || null,
     eligibility: formData.eligibility || null,
     deadline: formData.deadline || null,
     tags: formData.tags,
+    metadata: formData.metadata || {},
     is_active: formData.is_active,
     created_by: formData.created_by,
   });
@@ -67,11 +71,13 @@ export async function updateResource(
     description: string;
     url: string;
     icon: string;
+    logo_url: string;
     category: string;
     provider: string;
     eligibility: string;
     deadline: string;
     tags: string[];
+    metadata: SchemeMetadata;
     is_active: boolean;
   }
 ) {
@@ -83,11 +89,13 @@ export async function updateResource(
       description: formData.description || null,
       url: formData.url || null,
       icon: formData.icon || null,
+      logo_url: formData.logo_url || null,
       category: formData.category,
       provider: formData.provider || null,
       eligibility: formData.eligibility || null,
       deadline: formData.deadline || null,
       tags: formData.tags,
+      metadata: formData.metadata || {},
       is_active: formData.is_active,
       updated_at: new Date().toISOString(),
     })
@@ -101,6 +109,45 @@ export async function updateResource(
 export async function deleteResource(id: string) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('resources').delete().eq('id', id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/dashboard/resources');
+  revalidatePath('/dashboard');
+}
+
+export async function bulkCreateResources(
+  rows: {
+    title: string;
+    description?: string;
+    url?: string;
+    logo_url?: string;
+    category: string;
+    provider?: string;
+    eligibility?: string;
+    deadline?: string;
+    tags?: string[];
+    metadata?: SchemeMetadata;
+  }[],
+  created_by: string
+) {
+  const supabase = createAdminClient();
+
+  const records = rows.map((row) => ({
+    title: row.title,
+    description: row.description || null,
+    url: row.url || null,
+    logo_url: row.logo_url || null,
+    category: row.category || 'scheme',
+    provider: row.provider || null,
+    eligibility: row.eligibility || null,
+    deadline: row.deadline || null,
+    tags: row.tags || [],
+    metadata: row.metadata || {},
+    is_active: true,
+    created_by,
+  }));
+
+  const { error } = await supabase.from('resources').insert(records);
 
   if (error) throw new Error(error.message);
   revalidatePath('/dashboard/resources');

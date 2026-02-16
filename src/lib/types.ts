@@ -57,17 +57,29 @@ export interface Event {
   is_active: boolean;
 }
 
+export interface SchemeMetadata {
+  location?: string;
+  recent_investments?: string;
+  sectors?: string;
+  avg_startup_age?: string;
+  avg_num_founders?: string;
+  avg_founder_age?: string;
+  companies_invested?: string;
+}
+
 export interface Resource {
   id: string;
   title: string;
   description: string | null;
   url: string | null;
   icon: string | null;
-  category: 'govt_scheme' | 'accelerator_incubator' | 'company_offer' | 'tool' | 'bank_offer';
+  logo_url: string | null;
+  category: 'govt_scheme' | 'accelerator_incubator' | 'company_offer' | 'tool' | 'bank_offer' | 'scheme';
   provider: string | null;
   eligibility: string | null;
   deadline: string | null;
   tags: string[];
+  metadata: SchemeMetadata;
   created_by: string;
   created_at: string;
   updated_at: string;

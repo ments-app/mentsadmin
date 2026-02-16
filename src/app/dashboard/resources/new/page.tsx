@@ -13,6 +13,7 @@ const categoryOptions = [
   { value: 'company_offer', label: 'Company Offer' },
   { value: 'tool', label: 'Tool' },
   { value: 'bank_offer', label: 'Bank Offer' },
+  { value: 'scheme', label: 'Scheme' },
 ];
 
 export default function NewResourcePage() {
@@ -24,12 +25,21 @@ export default function NewResourcePage() {
     description: '',
     url: '',
     icon: '',
+    logo_url: '',
     category: 'tool',
     provider: '',
     eligibility: '',
     deadline: '',
     tags: '',
     is_active: true,
+    // Scheme-specific fields
+    location: '',
+    recent_investments: '',
+    sectors: '',
+    avg_startup_age: '',
+    avg_num_founders: '',
+    avg_founder_age: '',
+    companies_invested: '',
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -45,12 +55,23 @@ export default function NewResourcePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const metadata = form.category === 'scheme' || form.category === 'govt_scheme' || form.category === 'accelerator_incubator' ? {
+        location: form.location || undefined,
+        recent_investments: form.recent_investments || undefined,
+        sectors: form.sectors || undefined,
+        avg_startup_age: form.avg_startup_age || undefined,
+        avg_num_founders: form.avg_num_founders || undefined,
+        avg_founder_age: form.avg_founder_age || undefined,
+        companies_invested: form.companies_invested || undefined,
+      } : {};
+
       await createResource({
         ...form,
         tags: form.tags
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
+        metadata,
         created_by: user.id,
       });
       router.push('/dashboard/resources');
@@ -116,6 +137,14 @@ export default function NewResourcePage() {
           placeholder="e.g. 🏛️ or 🚀"
         />
         <FormField
+          type="url"
+          label="Logo URL"
+          name="logo_url"
+          value={form.logo_url}
+          onChange={(v) => update('logo_url', v)}
+          placeholder="https://example.com/logo.png"
+        />
+        <FormField
           type="text"
           label="Provider"
           name="provider"
@@ -145,6 +174,70 @@ export default function NewResourcePage() {
           onChange={(v) => update('tags', v)}
           placeholder="e.g. startup, funding, design"
         />
+
+        {/* Scheme-specific fields */}
+        {form.category === 'scheme' || form.category === 'govt_scheme' || form.category === 'accelerator_incubator' && (
+          <div className="space-y-4 rounded-lg border border-card-border p-4">
+            <h3 className="text-sm font-semibold text-foreground">Scheme Details</h3>
+            <FormField
+              type="text"
+              label="Location"
+              name="location"
+              value={form.location}
+              onChange={(v) => update('location', v)}
+              placeholder="e.g. India, USA, Global"
+            />
+            <FormField
+              type="textarea"
+              label="Recent Investments"
+              name="recent_investments"
+              value={form.recent_investments}
+              onChange={(v) => update('recent_investments', v)}
+              placeholder="List of recent investments..."
+            />
+            <FormField
+              type="text"
+              label="Sectors"
+              name="sectors"
+              value={form.sectors}
+              onChange={(v) => update('sectors', v)}
+              placeholder="e.g. Fintech, SaaS, Healthcare"
+            />
+            <FormField
+              type="text"
+              label="Avg Startup Age at Investment"
+              name="avg_startup_age"
+              value={form.avg_startup_age}
+              onChange={(v) => update('avg_startup_age', v)}
+              placeholder="e.g. 2 years"
+            />
+            <FormField
+              type="text"
+              label="Avg No. of Founders"
+              name="avg_num_founders"
+              value={form.avg_num_founders}
+              onChange={(v) => update('avg_num_founders', v)}
+              placeholder="e.g. 2"
+            />
+            <FormField
+              type="text"
+              label="Avg Founder Age"
+              name="avg_founder_age"
+              value={form.avg_founder_age}
+              onChange={(v) => update('avg_founder_age', v)}
+              placeholder="e.g. 28"
+            />
+            <FormField
+              type="textarea"
+              label="Companies Invested"
+              name="companies_invested"
+              value={form.companies_invested}
+              onChange={(v) => update('companies_invested', v)}
+              placeholder="List of companies invested in..."
+            />
+          </div>
+        )}
+
         <FormField
           type="checkbox"
           label="Active"

@@ -80,3 +80,5 @@ CREATE TABLE IF NOT EXISTS resources (
 
 ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read access for resources" ON resources FOR SELECT USING (true);
+
+-- See supabase-migration-schemes.sql for Scheme category migration (metadata, logo_url, scheme category)

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -15,6 +15,7 @@ const categoryLabels: Record<string, string> = {
   company_offer: 'Company Offer',
   tool: 'Tool',
   bank_offer: 'Bank Offer',
+  scheme: 'Scheme',
 };
 
 const columns: Column<Resource>[] = [
@@ -85,13 +86,22 @@ export default function ResourcesPage() {
           <h1 className="text-2xl font-bold text-foreground">Resources</h1>
           <p className="mt-1 text-muted">Manage resources — schemes, accelerators, offers, tools & more</p>
         </div>
-        <Link
-          href="/dashboard/resources/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
-          <Plus size={16} />
-          Add Resource
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/resources/import"
+            className="flex items-center gap-2 rounded-lg border border-card-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
+          >
+            <Upload size={16} />
+            Import CSV
+          </Link>
+          <Link
+            href="/dashboard/resources/new"
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          >
+            <Plus size={16} />
+            Add Resource
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6">
