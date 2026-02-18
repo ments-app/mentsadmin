@@ -2,9 +2,10 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle, X, Sparkles, Loader2 } from 'lucide-react';
 import { bulkCreateResources } from '@/actions/resources';
 import { supabase } from '@/lib/supabase';
+import { CATEGORY_METADATA_FIELDS } from '@/lib/category-metadata';
 
 const VALID_CATEGORIES = ['govt_scheme', 'accelerator_incubator', 'company_offer', 'tool', 'bank_offer', 'scheme'];
 
@@ -13,6 +14,10 @@ const EXPECTED_COLUMNS = [
   'Name', 'Location', 'Website', 'Summary Information', 'Recent Investments',
   'Sectors', 'Average Startup Age at Investment', 'Average No of Founders',
   'Average age of Founders', 'Companies Invested',
+  // New category-specific columns
+  'discount_value', 'promo_code', 'valid_until', 'terms',
+  'pricing_model', 'platform', 'features',
+  'interest_rate', 'loan_range', 'repayment_period', 'collateral_required',
 ];
 
 type ParsedRow = {
@@ -25,6 +30,7 @@ type ParsedRow = {
   eligibility: string;
   deadline: string;
   tags: string[];
+  // Scheme metadata
   location: string;
   recent_investments: string;
   sectors: string;
@@ -32,6 +38,20 @@ type ParsedRow = {
   avg_num_founders: string;
   avg_founder_age: string;
   companies_invested: string;
+  // Company offer metadata
+  discount_value: string;
+  promo_code: string;
+  valid_until: string;
+  terms: string;
+  // Tool metadata
+  pricing_model: string;
+  platform: string;
+  features: string;
+  // Bank offer metadata
+  interest_rate: string;
+  loan_range: string;
+  repayment_period: string;
+  collateral_required: string;
   errors: string[];
 };
 
@@ -112,8 +132,37 @@ function mapRow(headers: string[], values: string[]): ParsedRow {
     avg_num_founders: get('Average No of Founders') || get('avg_num_founders'),
     avg_founder_age: get('Average age of Founders') || get('avg_founder_age'),
     companies_invested: get('Companies Invested') || get('companies_invested'),
+    // Company offer
+    discount_value: get('discount_value'),
+    promo_code: get('promo_code'),
+    valid_until: get('valid_until'),
+    terms: get('terms'),
+    // Tool
+    pricing_model: get('pricing_model'),
+    platform: get('platform'),
+    features: get('features'),
+    // Bank offer
+    interest_rate: get('interest_rate'),
+    loan_range: get('loan_range'),
+    repayment_period: get('repayment_period'),
+    collateral_required: get('collateral_required'),
     errors,
   };
+}
+
+function buildMetadataForRow(row: ParsedRow): Record<string, string> {
+  const cat = VALID_CATEGORIES.includes(row.category) ? row.category : 'scheme';
+  const fields = CATEGORY_METADATA_FIELDS[cat];
+  if (!fields) return {};
+
+  const metadata: Record<string, string> = {};
+  for (const field of fields) {
+    const val = (row as Record<string, unknown>)[field.key];
+    if (typeof val === 'string' && val) {
+      metadata[field.key] = val;
+    }
+  }
+  return metadata;
 }
 
 export default function ImportResourcesPage() {
@@ -124,6 +173,8 @@ export default function ImportResourcesPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null);
   const [fileName, setFileName] = useState('');
+  const [enhancing, setEnhancing] = useState(false);
+  const [enhanceProgress, setEnhanceProgress] = useState({ current: 0, total: 0 });
 
   function handleFile(file: File) {
     setResult(null);
@@ -161,6 +212,65 @@ export default function ImportResourcesPage() {
   const hasErrors = rows.some(r => r.errors.length > 0);
   const validCount = rows.filter(r => r.errors.length === 0).length;
 
+  async function handleEnhanceAll() {
+    const rowsToEnhance = rows.filter(r => r.url && (!r.description || !r.eligibility));
+    if (rowsToEnhance.length === 0) {
+      setResult({ success: false, message: 'No rows with URLs and missing fields to enhance.' });
+      return;
+    }
+
+    setEnhancing(true);
+    setEnhanceProgress({ current: 0, total: rowsToEnhance.length });
+
+    const updated = [...rows];
+    let enhanced = 0;
+
+    for (let i = 0; i < updated.length; i++) {
+      const row = updated[i];
+      if (!row.url || (row.description && row.eligibility)) continue;
+
+      try {
+        const res = await fetch('/api/ai/autofill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: row.url, category: row.category }),
+        });
+        const json = await res.json();
+
+        if (res.ok && json.data) {
+          const data = json.data as Record<string, unknown>;
+          if (!row.description && data.description) updated[i] = { ...updated[i], description: data.description as string };
+          if (!row.eligibility && data.eligibility) updated[i] = { ...updated[i], eligibility: data.eligibility as string };
+          if (!row.provider && data.provider) updated[i] = { ...updated[i], provider: data.provider as string };
+          if (data.category && VALID_CATEGORIES.includes(data.category as string)) {
+            updated[i] = { ...updated[i], category: data.category as string };
+          }
+          if (data.tags && Array.isArray(data.tags) && updated[i].tags.length === 0) {
+            updated[i] = { ...updated[i], tags: data.tags as string[] };
+          }
+          // Fill metadata fields
+          if (data.metadata && typeof data.metadata === 'object') {
+            const meta = data.metadata as Record<string, string>;
+            for (const [k, v] of Object.entries(meta)) {
+              if (v && !(updated[i] as Record<string, unknown>)[k]) {
+                (updated[i] as Record<string, unknown>)[k] = v;
+              }
+            }
+          }
+        }
+      } catch {
+        // Skip failed rows silently
+      }
+
+      enhanced++;
+      setEnhanceProgress({ current: enhanced, total: rowsToEnhance.length });
+    }
+
+    setRows(updated);
+    setEnhancing(false);
+    setResult({ success: true, message: `Enhanced ${enhanced} rows with AI.` });
+  }
+
   async function handleImport() {
     setImporting(true);
     setResult(null);
@@ -178,15 +288,7 @@ export default function ImportResourcesPage() {
         eligibility: r.eligibility || undefined,
         deadline: r.deadline || undefined,
         tags: r.tags.length > 0 ? r.tags : undefined,
-        metadata: {
-          location: r.location || undefined,
-          recent_investments: r.recent_investments || undefined,
-          sectors: r.sectors || undefined,
-          avg_startup_age: r.avg_startup_age || undefined,
-          avg_num_founders: r.avg_num_founders || undefined,
-          avg_founder_age: r.avg_founder_age || undefined,
-          companies_invested: r.companies_invested || undefined,
-        },
+        metadata: buildMetadataForRow(r),
       }));
 
       await bulkCreateResources(validRows, user.id);
@@ -204,7 +306,7 @@ export default function ImportResourcesPage() {
     <div className="mx-auto max-w-4xl">
       <h1 className="text-2xl font-bold text-foreground">Import Resources (CSV)</h1>
       <p className="mt-1 text-muted">
-        Upload a CSV file to bulk-create resources. Expected columns: {EXPECTED_COLUMNS.join(', ')}
+        Upload a CSV file to bulk-create resources. Expected columns: {EXPECTED_COLUMNS.slice(0, 10).join(', ')}, ...
       </p>
 
       {/* Result banner */}
@@ -268,15 +370,45 @@ export default function ImportResourcesPage() {
             </button>
           </div>
 
+          {/* Enhance with AI */}
+          <div className="mt-3">
+            <button
+              type="button"
+              disabled={enhancing || importing}
+              onClick={handleEnhanceAll}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-all hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {enhancing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enhancing {enhanceProgress.current}/{enhanceProgress.total}...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Enhance All with AI
+                </>
+              )}
+            </button>
+            {enhancing && (
+              <div className="mt-2 h-2 w-full rounded-full bg-card-border overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300"
+                  style={{ width: `${enhanceProgress.total > 0 ? (enhanceProgress.current / enhanceProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="mt-3 overflow-x-auto rounded-lg border border-card-border">
             <table className="w-full text-xs">
               <thead>
                 <tr className="bg-card-border/30">
                   <th className="px-3 py-2 text-left font-medium text-muted">#</th>
                   <th className="px-3 py-2 text-left font-medium text-muted">Name</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Location</th>
+                  <th className="px-3 py-2 text-left font-medium text-muted">Description</th>
                   <th className="px-3 py-2 text-left font-medium text-muted">Website</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Sectors</th>
+                  <th className="px-3 py-2 text-left font-medium text-muted">Provider</th>
                   <th className="px-3 py-2 text-left font-medium text-muted">Category</th>
                   <th className="px-3 py-2 text-left font-medium text-muted">Status</th>
                 </tr>
@@ -289,9 +421,9 @@ export default function ImportResourcesPage() {
                   >
                     <td className="px-3 py-2 text-muted">{i + 1}</td>
                     <td className="px-3 py-2 text-foreground max-w-[200px] truncate">{row.title || '—'}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[120px] truncate">{row.location || '—'}</td>
+                    <td className="px-3 py-2 text-foreground max-w-[200px] truncate">{row.description ? row.description.slice(0, 60) + '...' : '—'}</td>
                     <td className="px-3 py-2 text-foreground max-w-[160px] truncate">{row.url || '—'}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[150px] truncate">{row.sectors || '—'}</td>
+                    <td className="px-3 py-2 text-foreground max-w-[120px] truncate">{row.provider || '—'}</td>
                     <td className="px-3 py-2">
                       <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium capitalize text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                         {row.category}
@@ -317,7 +449,7 @@ export default function ImportResourcesPage() {
           <div className="mt-4 flex gap-3">
             <button
               type="button"
-              disabled={importing || validCount === 0}
+              disabled={importing || validCount === 0 || enhancing}
               onClick={handleImport}
               className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
             >

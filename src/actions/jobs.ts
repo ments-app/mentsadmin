@@ -38,6 +38,17 @@ export async function createJob(formData: {
   deadline: string;
   is_active: boolean;
   created_by: string;
+  // New fields
+  company_logo_url: string;
+  company_website: string;
+  experience_level: string;
+  skills_required: string[];
+  benefits: string;
+  responsibilities: string;
+  category: string;
+  work_mode: string;
+
+  contact_email: string;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('jobs').insert({
@@ -51,6 +62,17 @@ export async function createJob(formData: {
     deadline: formData.deadline || null,
     is_active: formData.is_active,
     created_by: formData.created_by,
+    // New fields
+    company_logo_url: formData.company_logo_url || null,
+    company_website: formData.company_website || null,
+    experience_level: formData.experience_level || 'any',
+    skills_required: formData.skills_required,
+    benefits: formData.benefits || null,
+    responsibilities: formData.responsibilities || null,
+    category: formData.category || 'other',
+    work_mode: formData.work_mode || 'onsite',
+
+    contact_email: formData.contact_email || null,
   });
 
   if (error) throw new Error(error.message);
@@ -70,6 +92,18 @@ export async function updateJob(
     requirements: string;
     deadline: string;
     is_active: boolean;
+    // New fields
+    company_logo_url: string;
+    company_website: string;
+    experience_level: string;
+    skills_required: string[];
+    benefits: string;
+    responsibilities: string;
+    category: string;
+    work_mode: string;
+    apply_url: string;
+    apply_email: string;
+    contact_email: string;
   }
 ) {
   const supabase = createAdminClient();
@@ -86,6 +120,18 @@ export async function updateJob(
       deadline: formData.deadline || null,
       is_active: formData.is_active,
       updated_at: new Date().toISOString(),
+      // New fields
+      company_logo_url: formData.company_logo_url || null,
+      company_website: formData.company_website || null,
+      experience_level: formData.experience_level || 'any',
+      skills_required: formData.skills_required,
+      benefits: formData.benefits || null,
+      responsibilities: formData.responsibilities || null,
+      category: formData.category || 'other',
+      work_mode: formData.work_mode || 'onsite',
+      apply_url: formData.apply_url || null,
+      apply_email: formData.apply_email || null,
+      contact_email: formData.contact_email || null,
     })
     .eq('id', id);
 

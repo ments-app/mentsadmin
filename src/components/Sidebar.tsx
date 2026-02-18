@@ -15,6 +15,8 @@ import {
   LogOut,
   Sun,
   Moon,
+  Users,
+  BarChart3,
 } from 'lucide-react';
 
 const navItems = [
@@ -22,8 +24,10 @@ const navItems = [
   { href: '/dashboard/competitions', label: 'Competitions', icon: Trophy },
   { href: '/dashboard/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/dashboard/gigs', label: 'Gigs', icon: Zap },
+  { href: '/dashboard/applications', label: 'Applications', icon: Users },
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
   { href: '/dashboard/resources', label: 'Resources', icon: Package },
+  { href: '/dashboard/feed-analytics', label: 'Feed Analytics', icon: BarChart3 },
 ];
 
 export default function Sidebar() {

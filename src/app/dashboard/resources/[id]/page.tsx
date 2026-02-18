@@ -5,7 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import FormField from '@/components/FormField';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import CategoryMetadataFields from '@/components/CategoryMetadataFields';
+import AiAutoFillButton from '@/components/AiAutoFillButton';
 import { getResource, updateResource, deleteResource } from '@/actions/resources';
+import AiFieldButton from '@/components/AiFieldButton';
 
 const categoryOptions = [
   { value: 'govt_scheme', label: 'Govt Scheme / Grant' },
@@ -36,15 +39,8 @@ export default function EditResourcePage() {
     deadline: '',
     tags: '',
     is_active: true,
-    // Scheme-specific fields
-    location: '',
-    recent_investments: '',
-    sectors: '',
-    avg_startup_age: '',
-    avg_num_founders: '',
-    avg_founder_age: '',
-    companies_invested: '',
   });
+  const [metadataFields, setMetadataFields] = useState<Record<string, string>>({});
 
   useEffect(() => {
     getResource(id).then((data) => {
@@ -61,14 +57,13 @@ export default function EditResourcePage() {
         deadline: data.deadline ? data.deadline.slice(0, 16) : '',
         tags: (data.tags ?? []).join(', '),
         is_active: data.is_active,
-        location: meta.location ?? '',
-        recent_investments: meta.recent_investments ?? '',
-        sectors: meta.sectors ?? '',
-        avg_startup_age: meta.avg_startup_age ?? '',
-        avg_num_founders: meta.avg_num_founders ?? '',
-        avg_founder_age: meta.avg_founder_age ?? '',
-        companies_invested: meta.companies_invested ?? '',
       });
+      // Populate all metadata fields from the stored object
+      const metaRecord: Record<string, string> = {};
+      for (const [k, v] of Object.entries(meta)) {
+        if (v) metaRecord[k] = v;
+      }
+      setMetadataFields(metaRecord);
       setLoading(false);
     });
   }, [id]);
@@ -77,21 +72,39 @@ export default function EditResourcePage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function updateMetadata(key: string, value: string) {
+    setMetadataFields((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleCategoryChange(value: string) {
+    update('category', value);
+    setMetadataFields({});
+  }
+
+  function handleAutoFilled(data: Record<string, unknown>) {
+    if (data.title && !form.title) update('title', data.title as string);
+    if (data.description) update('description', data.description as string);
+    if (data.category) handleCategoryChange(data.category as string);
+    if (data.provider && !form.provider) update('provider', data.provider as string);
+    if (data.eligibility) update('eligibility', data.eligibility as string);
+    if (data.tags) update('tags', Array.isArray(data.tags) ? (data.tags as string[]).join(', ') : data.tags as string);
+    if (data.metadata && typeof data.metadata === 'object') {
+      const meta = data.metadata as Record<string, string>;
+      setMetadataFields((prev) => ({ ...prev, ...meta }));
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSaving(true);
 
     try {
-      const metadata = form.category === 'scheme' || form.category === 'govt_scheme' || form.category === 'accelerator_incubator' ? {
-        location: form.location || undefined,
-        recent_investments: form.recent_investments || undefined,
-        sectors: form.sectors || undefined,
-        avg_startup_age: form.avg_startup_age || undefined,
-        avg_num_founders: form.avg_num_founders || undefined,
-        avg_founder_age: form.avg_founder_age || undefined,
-        companies_invested: form.companies_invested || undefined,
-      } : {};
+      // Build metadata from metadataFields, stripping empty values
+      const metadata: Record<string, string> = {};
+      for (const [k, v] of Object.entries(metadataFields)) {
+        if (v) metadata[k] = v;
+      }
 
       await updateResource(id, {
         ...form,
@@ -170,26 +183,49 @@ export default function EditResourcePage() {
           label="Category"
           name="category"
           value={form.category}
-          onChange={(v) => update('category', v)}
+          onChange={handleCategoryChange}
           options={categoryOptions}
           required
         />
-        <FormField
-          type="textarea"
-          label="Description"
-          name="description"
-          value={form.description}
-          onChange={(v) => update('description', v)}
-          placeholder="Describe the resource..."
-        />
-        <FormField
-          type="url"
-          label="URL"
-          name="url"
-          value={form.url}
-          onChange={(v) => update('url', v)}
-          placeholder="https://example.com"
-        />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">Description</label>
+            <AiFieldButton
+              field="description"
+              type="resource"
+              context={{ title: form.title, category: form.category, provider: form.provider, url: form.url, tags: form.tags }}
+              onGenerated={(text) => update('description', text)}
+              disabled={!form.title}
+            />
+          </div>
+          <FormField
+            type="textarea"
+            label=""
+            name="description"
+            value={form.description}
+            onChange={(v) => update('description', v)}
+            placeholder="Describe the resource..."
+            rows={4}
+          />
+        </div>
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">URL</label>
+            <AiAutoFillButton
+              url={form.url}
+              category={form.category}
+              onAutoFilled={handleAutoFilled}
+            />
+          </div>
+          <FormField
+            type="url"
+            label=""
+            name="url"
+            value={form.url}
+            onChange={(v) => update('url', v)}
+            placeholder="https://example.com"
+          />
+        </div>
         <FormField
           type="text"
           label="Icon (emoji)"
@@ -214,91 +250,60 @@ export default function EditResourcePage() {
           onChange={(v) => update('provider', v)}
           placeholder="e.g. Govt of India, Y Combinator, SBI"
         />
-        <FormField
-          type="textarea"
-          label="Eligibility"
-          name="eligibility"
-          value={form.eligibility}
-          onChange={(v) => update('eligibility', v)}
-          placeholder="Who is eligible for this resource?"
-        />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">Eligibility</label>
+            <AiFieldButton
+              field="eligibility"
+              type="resource"
+              context={{ title: form.title, category: form.category, provider: form.provider, url: form.url, description: form.description, tags: form.tags }}
+              onGenerated={(text) => update('eligibility', text)}
+              disabled={!form.title}
+            />
+          </div>
+          <FormField
+            type="textarea"
+            label=""
+            name="eligibility"
+            value={form.eligibility}
+            onChange={(v) => update('eligibility', v)}
+            placeholder="Who is eligible for this resource?"
+            rows={4}
+          />
+        </div>
         <DateTimePicker
           label="Deadline"
           name="deadline"
           value={form.deadline}
           onChange={(v) => update('deadline', v)}
         />
-        <FormField
-          type="text"
-          label="Tags (comma-separated)"
-          name="tags"
-          value={form.tags}
-          onChange={(v) => update('tags', v)}
-          placeholder="e.g. startup, funding, design"
-        />
-
-        {/* Scheme-specific fields */}
-        {form.category === 'scheme' || form.category === 'govt_scheme' || form.category === 'accelerator_incubator' && (
-          <div className="space-y-4 rounded-lg border border-card-border p-4">
-            <h3 className="text-sm font-semibold text-foreground">Scheme Details</h3>
-            <FormField
-              type="text"
-              label="Location"
-              name="location"
-              value={form.location}
-              onChange={(v) => update('location', v)}
-              placeholder="e.g. India, USA, Global"
-            />
-            <FormField
-              type="textarea"
-              label="Recent Investments"
-              name="recent_investments"
-              value={form.recent_investments}
-              onChange={(v) => update('recent_investments', v)}
-              placeholder="List of recent investments..."
-            />
-            <FormField
-              type="text"
-              label="Sectors"
-              name="sectors"
-              value={form.sectors}
-              onChange={(v) => update('sectors', v)}
-              placeholder="e.g. Fintech, SaaS, Healthcare"
-            />
-            <FormField
-              type="text"
-              label="Avg Startup Age at Investment"
-              name="avg_startup_age"
-              value={form.avg_startup_age}
-              onChange={(v) => update('avg_startup_age', v)}
-              placeholder="e.g. 2 years"
-            />
-            <FormField
-              type="text"
-              label="Avg No. of Founders"
-              name="avg_num_founders"
-              value={form.avg_num_founders}
-              onChange={(v) => update('avg_num_founders', v)}
-              placeholder="e.g. 2"
-            />
-            <FormField
-              type="text"
-              label="Avg Founder Age"
-              name="avg_founder_age"
-              value={form.avg_founder_age}
-              onChange={(v) => update('avg_founder_age', v)}
-              placeholder="e.g. 28"
-            />
-            <FormField
-              type="textarea"
-              label="Companies Invested"
-              name="companies_invested"
-              value={form.companies_invested}
-              onChange={(v) => update('companies_invested', v)}
-              placeholder="List of companies invested in..."
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-foreground">Tags (comma-separated)</label>
+            <AiFieldButton
+              field="tags"
+              type="resource"
+              context={{ title: form.title, category: form.category, provider: form.provider, description: form.description, eligibility: form.eligibility }}
+              onGenerated={(text) => update('tags', text)}
+              disabled={!form.title}
             />
           </div>
-        )}
+          <FormField
+            type="text"
+            label=""
+            name="tags"
+            value={form.tags}
+            onChange={(v) => update('tags', v)}
+            placeholder="e.g. startup, funding, design"
+          />
+        </div>
+
+        {/* Category-specific metadata fields */}
+        <CategoryMetadataFields
+          category={form.category}
+          values={metadataFields}
+          onChange={updateMetadata}
+        />
 
         <FormField
           type="checkbox"

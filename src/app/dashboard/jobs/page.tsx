@@ -7,9 +7,10 @@ import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getJobs, deleteJob } from '@/actions/jobs';
+import { getApplicationCount } from '@/actions/applications';
 import type { Job } from '@/lib/types';
 
-const columns: Column<Job>[] = [
+const columns: Column<Job & { _appCount?: number }>[] = [
   { key: 'title', label: 'Title' },
   { key: 'company', label: 'Company' },
   {
@@ -22,6 +23,20 @@ const columns: Column<Job>[] = [
     ),
   },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  {
+    key: '_appCount' as keyof Job,
+    label: 'Applications',
+    render: (item) => {
+      const count = (item as Job & { _appCount?: number })._appCount ?? 0;
+      return count > 0 ? (
+        <Link href={`/dashboard/jobs/${item.id}/applications`} className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+          {count}
+        </Link>
+      ) : (
+        <span className="text-xs text-muted">0</span>
+      );
+    },
+  },
   {
     key: 'is_active',
     label: 'Status',
@@ -45,14 +60,16 @@ const columns: Column<Job>[] = [
 ];
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<(Job & { _appCount?: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getJobs().then((data) => {
-      setJobs(data);
+    getJobs().then(async (data) => {
+      // Fetch application counts in parallel
+      const counts = await Promise.all(data.map((j) => getApplicationCount(j.id)));
+      setJobs(data.map((j, i) => ({ ...j, _appCount: counts[i] })));
       setLoading(false);
     });
   }, []);

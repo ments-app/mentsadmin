@@ -7,9 +7,10 @@ import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getGigs, deleteGig } from '@/actions/gigs';
+import { getApplicationCount } from '@/actions/applications';
 import type { Gig } from '@/lib/types';
 
-const columns: Column<Gig>[] = [
+const columns: Column<Gig & { _appCount?: number }>[] = [
   { key: 'title', label: 'Title' },
   { key: 'budget', label: 'Budget', render: (item) => item.budget || '—' },
   { key: 'duration', label: 'Duration', render: (item) => item.duration || '—' },
@@ -36,6 +37,20 @@ const columns: Column<Gig>[] = [
       ),
   },
   {
+    key: '_appCount' as keyof Gig,
+    label: 'Applications',
+    render: (item) => {
+      const count = (item as Gig & { _appCount?: number })._appCount ?? 0;
+      return count > 0 ? (
+        <Link href={`/dashboard/gigs/${item.id}/applications`} className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+          {count}
+        </Link>
+      ) : (
+        <span className="text-xs text-muted">0</span>
+      );
+    },
+  },
+  {
     key: 'is_active',
     label: 'Status',
     render: (item) => (
@@ -58,14 +73,15 @@ const columns: Column<Gig>[] = [
 ];
 
 export default function GigsPage() {
-  const [gigs, setGigs] = useState<Gig[]>([]);
+  const [gigs, setGigs] = useState<(Gig & { _appCount?: number })[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<Gig | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getGigs().then((data) => {
-      setGigs(data);
+    getGigs().then(async (data) => {
+      const counts = await Promise.all(data.map((g) => getApplicationCount(undefined, g.id)));
+      setGigs(data.map((g, i) => ({ ...g, _appCount: counts[i] })));
       setLoading(false);
     });
   }, []);

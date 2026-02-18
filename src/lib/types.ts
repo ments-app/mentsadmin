@@ -26,6 +26,16 @@ export interface Job {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  // Detailed fields
+  company_logo_url: string | null;
+  company_website: string | null;
+  experience_level: 'any' | 'internship' | 'entry' | 'mid' | 'senior' | 'lead' | 'executive';
+  skills_required: string[];
+  benefits: string | null;
+  responsibilities: string | null;
+  category: 'engineering' | 'design' | 'marketing' | 'sales' | 'operations' | 'finance' | 'hr' | 'legal' | 'product' | 'data' | 'support' | 'content' | 'other';
+  work_mode: 'onsite' | 'remote' | 'hybrid';
+  contact_email: string | null;
 }
 
 export interface Gig {
@@ -40,6 +50,56 @@ export interface Gig {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  // Detailed fields
+  company: string | null;
+  company_logo_url: string | null;
+  company_website: string | null;
+  category: 'development' | 'design' | 'writing' | 'marketing' | 'video' | 'audio' | 'data' | 'consulting' | 'other';
+  experience_level: 'any' | 'beginner' | 'intermediate' | 'expert';
+  payment_type: 'fixed' | 'hourly' | 'milestone' | 'negotiable';
+  deliverables: string | null;
+  responsibilities: string | null;
+  contact_email: string | null;
+}
+
+export interface Application {
+  id: string;
+  job_id: string | null;
+  gig_id: string | null;
+  user_id: string;
+  user_name: string | null;
+  user_email: string | null;
+  user_avatar_url: string | null;
+  user_tagline: string | null;
+  user_city: string | null;
+  profile_snapshot: Record<string, unknown>;
+  match_score: number;
+  match_breakdown: { skills: number; experience: number; level: number; overall: number };
+  profile_summary: string | null;
+  strengths: string[];
+  weaknesses: string[];
+  ai_questions: Array<{
+    id: number;
+    question: string;
+    type: string;
+    answer: string;
+    score: number;
+    feedback: string;
+  }>;
+  interview_score: number;
+  overall_score: number;
+  ai_recommendation: 'strongly_recommend' | 'recommend' | 'maybe' | 'not_recommend' | 'pending';
+  ai_summary: string | null;
+  hire_suggestion: string | null;
+  tab_switch_count: number;
+  time_spent_seconds: number;
+  status: 'in_progress' | 'submitted' | 'reviewed' | 'shortlisted' | 'rejected';
+  admin_notes: string | null;
+  started_at: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Event {
@@ -67,6 +127,28 @@ export interface SchemeMetadata {
   companies_invested?: string;
 }
 
+export interface CompanyOfferMetadata {
+  discount_value?: string;
+  promo_code?: string;
+  valid_until?: string;
+  terms?: string;
+}
+
+export interface ToolMetadata {
+  pricing_model?: string;
+  platform?: string;
+  features?: string;
+}
+
+export interface BankOfferMetadata {
+  interest_rate?: string;
+  loan_range?: string;
+  repayment_period?: string;
+  collateral_required?: string;
+}
+
+export type ResourceMetadata = SchemeMetadata | CompanyOfferMetadata | ToolMetadata | BankOfferMetadata;
+
 export interface Resource {
   id: string;
   title: string;
@@ -79,7 +161,7 @@ export interface Resource {
   eligibility: string | null;
   deadline: string | null;
   tags: string[];
-  metadata: SchemeMetadata;
+  metadata: ResourceMetadata;
   created_by: string;
   created_at: string;
   updated_at: string;

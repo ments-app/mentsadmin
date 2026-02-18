@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache';
-import type { Resource, SchemeMetadata } from '@/lib/types';
+import type { Resource, ResourceMetadata } from '@/lib/types';
 
 export async function getResources() {
   const supabase = createAdminClient();
@@ -38,7 +38,7 @@ export async function createResource(formData: {
   eligibility: string;
   deadline: string;
   tags: string[];
-  metadata: SchemeMetadata;
+  metadata: ResourceMetadata;
   is_active: boolean;
   created_by: string;
 }) {
@@ -77,7 +77,7 @@ export async function updateResource(
     eligibility: string;
     deadline: string;
     tags: string[];
-    metadata: SchemeMetadata;
+    metadata: ResourceMetadata;
     is_active: boolean;
   }
 ) {
@@ -126,7 +126,7 @@ export async function bulkCreateResources(
     eligibility?: string;
     deadline?: string;
     tags?: string[];
-    metadata?: SchemeMetadata;
+    metadata?: ResourceMetadata;
   }[],
   created_by: string
 ) {

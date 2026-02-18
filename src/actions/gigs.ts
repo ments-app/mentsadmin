@@ -36,6 +36,17 @@ export async function createGig(formData: {
   deadline: string;
   is_active: boolean;
   created_by: string;
+  // New fields
+  company: string;
+  company_logo_url: string;
+  company_website: string;
+  category: string;
+  experience_level: string;
+  payment_type: string;
+  deliverables: string;
+  responsibilities: string;
+
+  contact_email: string;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('gigs').insert({
@@ -47,6 +58,17 @@ export async function createGig(formData: {
     deadline: formData.deadline || null,
     is_active: formData.is_active,
     created_by: formData.created_by,
+    // New fields
+    company: formData.company || null,
+    company_logo_url: formData.company_logo_url || null,
+    company_website: formData.company_website || null,
+    category: formData.category || 'other',
+    experience_level: formData.experience_level || 'any',
+    payment_type: formData.payment_type || 'fixed',
+    deliverables: formData.deliverables || null,
+    responsibilities: formData.responsibilities || null,
+
+    contact_email: formData.contact_email || null,
   });
 
   if (error) throw new Error(error.message);
@@ -64,6 +86,16 @@ export async function updateGig(
     skills_required: string[];
     deadline: string;
     is_active: boolean;
+    // New fields
+    company: string;
+    company_logo_url: string;
+    company_website: string;
+    category: string;
+    experience_level: string;
+    payment_type: string;
+    deliverables: string;
+    responsibilities: string;
+    contact_email: string;
   }
 ) {
   const supabase = createAdminClient();
@@ -78,6 +110,16 @@ export async function updateGig(
       deadline: formData.deadline || null,
       is_active: formData.is_active,
       updated_at: new Date().toISOString(),
+      // New fields
+      company: formData.company || null,
+      company_logo_url: formData.company_logo_url || null,
+      company_website: formData.company_website || null,
+      category: formData.category || 'other',
+      experience_level: formData.experience_level || 'any',
+      payment_type: formData.payment_type || 'fixed',
+      deliverables: formData.deliverables || null,
+      responsibilities: formData.responsibilities || null,
+      contact_email: formData.contact_email || null,
     })
     .eq('id', id);
 
