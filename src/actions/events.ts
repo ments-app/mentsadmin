@@ -12,7 +12,7 @@ export async function getEvents() {
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return data as Event[];
+  return (data ?? []).map((row) => ({ ...row, tags: row.tags ?? [] })) as Event[];
 }
 
 export async function getEvent(id: string) {
@@ -24,7 +24,7 @@ export async function getEvent(id: string) {
     .single();
 
   if (error) throw new Error(error.message);
-  return data as Event;
+  return { ...data, tags: data.tags ?? [] } as Event;
 }
 
 export async function createEvent(formData: {
@@ -37,6 +37,11 @@ export async function createEvent(formData: {
   event_type: string;
   is_active: boolean;
   created_by: string;
+  // Extended fields
+  tags: string[];
+  is_featured: boolean;
+  organizer_name: string;
+  category: string;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('events').insert({
@@ -49,6 +54,10 @@ export async function createEvent(formData: {
     event_type: formData.event_type,
     is_active: formData.is_active,
     created_by: formData.created_by,
+    tags: formData.tags,
+    is_featured: formData.is_featured,
+    organizer_name: formData.organizer_name || null,
+    category: formData.category || 'event',
   });
 
   if (error) throw new Error(error.message);
@@ -67,6 +76,11 @@ export async function updateEvent(
     banner_image_url: string;
     event_type: string;
     is_active: boolean;
+    // Extended fields
+    tags: string[];
+    is_featured: boolean;
+    organizer_name: string;
+    category: string;
   }
 ) {
   const supabase = createAdminClient();
@@ -81,6 +95,10 @@ export async function updateEvent(
       banner_image_url: formData.banner_image_url || null,
       event_type: formData.event_type,
       is_active: formData.is_active,
+      tags: formData.tags,
+      is_featured: formData.is_featured,
+      organizer_name: formData.organizer_name || null,
+      category: formData.category || 'event',
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);

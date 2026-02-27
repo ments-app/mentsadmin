@@ -10,6 +10,36 @@ export interface Competition {
   has_leaderboard: boolean;
   prize_pool: string | null;
   banner_image_url: string | null;
+  // Extended fields
+  tags: string[];
+  is_featured: boolean;
+  is_active: boolean;
+  domain: string | null;
+  organizer_name: string | null;
+  participation_type: 'individual' | 'team';
+  team_size_min: number;
+  team_size_max: number;
+  eligibility_criteria: string | null;
+}
+
+export interface CompetitionRound {
+  id: string;
+  competition_id: string;
+  round_number: number;
+  title: string;
+  description: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+}
+
+export interface CompetitionFaq {
+  id: string;
+  competition_id: string;
+  question: string;
+  answer: string;
+  order_index: number;
+  created_at: string;
 }
 
 export interface Job {
@@ -115,6 +145,11 @@ export interface Event {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  // Extended fields
+  tags: string[];
+  is_featured: boolean;
+  organizer_name: string | null;
+  category: 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar';
 }
 
 export interface SchemeMetadata {
