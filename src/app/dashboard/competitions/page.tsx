@@ -2,50 +2,101 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, Star, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getCompetitions, deleteCompetition } from '@/actions/competitions';
 import type { Competition } from '@/lib/types';
 
-const columns: Column<Competition>[] = [
-  { key: 'title', label: 'Title' },
+type CompetitionWithCount = Competition & { participant_count: number };
+
+const domainLabels: Record<string, string> = {
+  hackathon: 'Hackathon',
+  case_study: 'Case Study',
+  quiz: 'Quiz',
+  design: 'Design',
+  coding: 'Coding',
+  business_plan: 'Biz Plan',
+  research: 'Research',
+  marketing: 'Marketing',
+  other: 'Other',
+};
+
+const columns: Column<CompetitionWithCount>[] = [
   {
-    key: 'deadline',
-    label: 'Deadline',
-    render: (item) =>
-      item.deadline ? format(new Date(item.deadline), 'MMM d, yyyy') : '—',
+    key: 'title',
+    label: 'Title',
+    render: (item) => (
+      <div className="flex items-center gap-2">
+        {item.is_featured && <Star size={13} className="text-amber-500 fill-amber-500 shrink-0" />}
+        <span className="font-medium">{item.title}</span>
+      </div>
+    ),
   },
   {
-    key: 'is_external',
+    key: 'domain',
+    label: 'Domain',
+    render: (item) => item.domain ? (
+      <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
+        {domainLabels[item.domain] ?? item.domain}
+      </span>
+    ) : '—',
+  },
+  {
+    key: 'participation_type',
     label: 'Type',
     render: (item) => (
-      <span
-        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-          item.is_external
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-            : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-        }`}
-      >
-        {item.is_external ? 'External' : 'Internal'}
+      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+        item.participation_type === 'team'
+          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+      }`}>
+        {item.participation_type === 'team'
+          ? `Team (${item.team_size_min}–${item.team_size_max})`
+          : 'Individual'}
       </span>
     ),
   },
-  { key: 'prize_pool', label: 'Prize Pool', render: (item) => item.prize_pool || '—' },
   {
-    key: 'created_at',
-    label: 'Created',
-    render: (item) => format(new Date(item.created_at), 'MMM d, yyyy'),
+    key: 'is_active',
+    label: 'Status',
+    render: (item) => (
+      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+        item.is_active
+          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+          : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+      }`}>
+        {item.is_active ? 'Active' : 'Inactive'}
+      </span>
+    ),
+  },
+  {
+    key: 'participant_count',
+    label: 'Registrations',
+    render: (item) => (
+      <div className="flex items-center gap-1 text-sm">
+        <Users size={13} className="text-muted" />
+        {item.participant_count}
+      </div>
+    ),
+  },
+  {
+    key: 'deadline',
+    label: 'Deadline',
+    render: (item) => item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : '—',
+  },
+  {
+    key: 'prize_pool',
+    label: 'Prize',
+    render: (item) => item.prize_pool || '—',
   },
 ];
 
 export default function CompetitionsPage() {
-  const router = useRouter();
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<CompetitionWithCount[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Competition | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<CompetitionWithCount | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -74,7 +125,7 @@ export default function CompetitionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Competitions</h1>
-          <p className="mt-1 text-muted">Manage hub competitions</p>
+          <p className="mt-1 text-muted text-sm">Manage hub competitions</p>
         </div>
         <Link
           href="/dashboard/competitions/new"

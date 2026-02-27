@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import FormField from '@/components/FormField';
+import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getEvent, updateEvent, deleteEvent } from '@/actions/events';
@@ -13,6 +15,14 @@ const eventTypeOptions = [
   { value: 'hybrid', label: 'Hybrid' },
 ];
 
+const categoryOptions = [
+  { value: 'event', label: 'Event' },
+  { value: 'meetup', label: 'Meetup' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'conference', label: 'Conference' },
+  { value: 'seminar', label: 'Seminar' },
+];
+
 export default function EditEventPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -21,6 +31,8 @@ export default function EditEventPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [error, setError] = useState('');
+  const [tagInput, setTagInput] = useState('');
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -30,6 +42,10 @@ export default function EditEventPage() {
     banner_image_url: '',
     event_type: 'online',
     is_active: true,
+    tags: [] as string[],
+    is_featured: false,
+    organizer_name: '',
+    category: 'event',
   });
 
   useEffect(() => {
@@ -43,6 +59,10 @@ export default function EditEventPage() {
         banner_image_url: data.banner_image_url ?? '',
         event_type: data.event_type,
         is_active: data.is_active,
+        tags: data.tags ?? [],
+        is_featured: data.is_featured ?? false,
+        organizer_name: data.organizer_name ?? '',
+        category: data.category ?? 'event',
       });
       setLoading(false);
     });
@@ -52,11 +72,21 @@ export default function EditEventPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  function addTag(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const tag = tagInput.trim().toLowerCase().replace(/\s+/g, '-');
+      if (tag && !form.tags.includes(tag)) update('tags', [...form.tags, tag]);
+      setTagInput('');
+    }
+  }
+
+  function removeTag(tag: string) { update('tags', form.tags.filter((t) => t !== tag)); }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSaving(true);
-
     try {
       await updateEvent(id, form);
       router.push('/dashboard/events');
@@ -84,7 +114,7 @@ export default function EditEventPage() {
       <div className="mx-auto max-w-2xl">
         <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
         <div className="mt-6 space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
           ))}
         </div>
@@ -97,112 +127,89 @@ export default function EditEventPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Edit Event</h1>
-          <p className="mt-1 text-muted">Update event details</p>
+          <p className="mt-1 text-muted text-sm">Update event details</p>
         </div>
-        <button
-          onClick={() => setShowDelete(true)}
-          className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover"
-        >
+        <button onClick={() => setShowDelete(true)}
+          className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover">
           Delete
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">
-            {error}
-          </div>
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
         )}
 
-        <FormField
-          type="text"
-          label="Title"
-          name="title"
-          value={form.title}
-          onChange={(v) => update('title', v)}
-          required
-          placeholder="Event title"
-        />
-        <FormField
-          type="textarea"
-          label="Description"
-          name="description"
-          value={form.description}
-          onChange={(v) => update('description', v)}
-          placeholder="Describe the event..."
-        />
-        <FormField
-          type="select"
-          label="Event Type"
-          name="event_type"
-          value={form.event_type}
-          onChange={(v) => update('event_type', v)}
-          options={eventTypeOptions}
-          required
-        />
-        <DateTimePicker
-          label="Event Date"
-          name="event_date"
-          value={form.event_date}
-          onChange={(v) => update('event_date', v)}
-        />
-        <FormField
-          type="text"
-          label="Location"
-          name="location"
-          value={form.location}
-          onChange={(v) => update('location', v)}
-          placeholder="e.g. Convention Center, NYC"
-        />
-        <FormField
-          type="url"
-          label="Event URL"
-          name="event_url"
-          value={form.event_url}
-          onChange={(v) => update('event_url', v)}
-          placeholder="https://..."
-        />
-        <FormField
-          type="url"
-          label="Banner Image URL"
-          name="banner_image_url"
-          value={form.banner_image_url}
-          onChange={(v) => update('banner_image_url', v)}
-          placeholder="https://..."
-        />
-        <FormField
-          type="checkbox"
-          label="Active"
-          name="is_active"
-          checked={form.is_active}
-          onChange={(v) => update('is_active', v)}
-        />
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Basic Info</h2>
+          <FormField type="text" label="Title" name="title" value={form.title}
+            onChange={(v) => update('title', v)} required placeholder="Event title" />
+          <FormField type="textarea" label="Description" name="description" value={form.description}
+            onChange={(v) => update('description', v)} placeholder="Describe the event..." rows={4} />
 
-        <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-          >
+          <div className="grid grid-cols-2 gap-4">
+            <FormField type="select" label="Category" name="category" value={form.category}
+              onChange={(v) => update('category', v)} options={categoryOptions} required />
+            <FormField type="select" label="Mode" name="event_type" value={form.event_type}
+              onChange={(v) => update('event_type', v)} options={eventTypeOptions} required />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <DateTimePicker label="Event Date" name="event_date" value={form.event_date}
+              onChange={(v) => update('event_date', v)} />
+            <FormField type="text" label="Location" name="location" value={form.location}
+              onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru / Online" />
+          </div>
+
+          <FormField type="text" label="Organizer Name" name="organizer_name" value={form.organizer_name}
+            onChange={(v) => update('organizer_name', v)} placeholder="e.g. TechSpark Community" />
+
+          <FormField type="url" label="Event Registration URL" name="event_url" value={form.event_url}
+            onChange={(v) => update('event_url', v)} placeholder="https://..." />
+
+          <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url}
+            onChange={(v) => update('banner_image_url', v)} />
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-foreground">Tags</label>
+            <div className="flex flex-wrap gap-2 rounded-lg border border-card-border bg-background p-2 min-h-[42px]">
+              {form.tags.map((tag) => (
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  {tag}
+                  <button type="button" onClick={() => removeTag(tag)}><X size={10} /></button>
+                </span>
+              ))}
+              <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag}
+                placeholder="Add tag, press Enter"
+                className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted" />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Settings</h2>
+          <div className="flex flex-wrap gap-6">
+            <FormField type="checkbox" label="Active (visible on hub)" name="is_active"
+              checked={form.is_active} onChange={(v) => update('is_active', v)} />
+            <FormField type="checkbox" label="Featured" name="is_featured"
+              checked={form.is_featured} onChange={(v) => update('is_featured', v)} />
+          </div>
+        </section>
+
+        <div className="flex gap-3 pt-4 border-t border-card-border">
+          <button type="submit" disabled={saving}
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
-          >
+          <button type="button" onClick={() => router.back()}
+            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
             Cancel
           </button>
         </div>
       </form>
 
-      <DeleteConfirmModal
-        open={showDelete}
-        title={form.title}
-        onConfirm={handleDelete}
-        onCancel={() => setShowDelete(false)}
-        loading={deleting}
-      />
+      <DeleteConfirmModal open={showDelete} title={form.title}
+        onConfirm={handleDelete} onCancel={() => setShowDelete(false)} loading={deleting} />
     </div>
   );
 }

@@ -2,15 +2,47 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getEvents, deleteEvent } from '@/actions/events';
 import type { Event } from '@/lib/types';
 
+const CATEGORY_STYLES: Record<string, string> = {
+  event: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  meetup: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+  workshop: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+  conference: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300',
+  seminar: 'bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300',
+};
+
 const columns: Column<Event>[] = [
-  { key: 'title', label: 'Title' },
+  {
+    key: 'title',
+    label: 'Title',
+    render: (item) => (
+      <span className="flex items-center gap-1.5">
+        {item.is_featured && (
+          <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
+        )}
+        {item.title}
+      </span>
+    ),
+  },
+  {
+    key: 'category',
+    label: 'Category',
+    render: (item) => (
+      <span
+        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize ${
+          CATEGORY_STYLES[item.category] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+        }`}
+      >
+        {item.category}
+      </span>
+    ),
+  },
   {
     key: 'event_date',
     label: 'Date',
@@ -26,6 +58,7 @@ const columns: Column<Event>[] = [
       </span>
     ),
   },
+  { key: 'organizer_name', label: 'Organizer', render: (item) => item.organizer_name || '—' },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },
   {
     key: 'is_active',

@@ -17,6 +17,9 @@ import {
   Moon,
   Users,
   BarChart3,
+  TrendingUp,
+  MessageSquare,
+  Rocket,
 } from 'lucide-react';
 
 const navItems = [
@@ -27,6 +30,9 @@ const navItems = [
   { href: '/dashboard/applications', label: 'Applications', icon: Users },
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
   { href: '/dashboard/resources', label: 'Resources', icon: Package },
+  { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
+  { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },
+  { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
   { href: '/dashboard/feed-analytics', label: 'Feed Analytics', icon: BarChart3 },
 ];
 

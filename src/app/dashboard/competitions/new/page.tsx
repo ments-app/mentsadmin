@@ -2,16 +2,35 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Plus, X } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
-import { createCompetition } from '@/actions/competitions';
+import { createCompetition, upsertCompetitionRounds, upsertCompetitionFaqs } from '@/actions/competitions';
 import { supabase } from '@/lib/supabase';
+
+const domainOptions = [
+  { value: '', label: 'Select domain...' },
+  { value: 'hackathon', label: 'Hackathon' },
+  { value: 'case_study', label: 'Case Study' },
+  { value: 'quiz', label: 'Quiz' },
+  { value: 'design', label: 'Design Challenge' },
+  { value: 'coding', label: 'Coding' },
+  { value: 'business_plan', label: 'Business Plan' },
+  { value: 'research', label: 'Research' },
+  { value: 'marketing', label: 'Marketing' },
+  { value: 'other', label: 'Other' },
+];
+
+type Round = { title: string; description: string; start_date: string; end_date: string };
+type Faq = { question: string; answer: string };
 
 export default function NewCompetitionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [tagInput, setTagInput] = useState('');
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -21,10 +40,61 @@ export default function NewCompetitionPage() {
     has_leaderboard: false,
     prize_pool: '',
     banner_image_url: '',
+    tags: [] as string[],
+    is_featured: false,
+    is_active: true,
+    domain: '',
+    organizer_name: '',
+    participation_type: 'individual',
+    team_size_min: 1,
+    team_size_max: 4,
+    eligibility_criteria: '',
   });
+
+  const [rounds, setRounds] = useState<Round[]>([]);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function addTag(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const tag = tagInput.trim().toLowerCase().replace(/\s+/g, '-');
+      if (tag && !form.tags.includes(tag)) {
+        update('tags', [...form.tags, tag]);
+      }
+      setTagInput('');
+    }
+  }
+
+  function removeTag(tag: string) {
+    update('tags', form.tags.filter((t) => t !== tag));
+  }
+
+  function addRound() {
+    setRounds((prev) => [...prev, { title: '', description: '', start_date: '', end_date: '' }]);
+  }
+
+  function updateRound(i: number, key: keyof Round, value: string) {
+    setRounds((prev) => prev.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
+  }
+
+  function removeRound(i: number) {
+    setRounds((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function addFaq() {
+    setFaqs((prev) => [...prev, { question: '', answer: '' }]);
+  }
+
+  function updateFaq(i: number, key: keyof Faq, value: string) {
+    setFaqs((prev) => prev.map((f, idx) => (idx === i ? { ...f, [key]: value } : f)));
+  }
+
+  function removeFaq(i: number) {
+    setFaqs((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -36,7 +106,16 @@ export default function NewCompetitionPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      await createCompetition({ ...form, created_by: user.id });
+      const id = await createCompetition({ ...form, created_by: user.id });
+
+      const validRounds = rounds.filter((r) => r.title.trim());
+      const validFaqs = faqs.filter((f) => f.question.trim() && f.answer.trim());
+
+      await Promise.all([
+        validRounds.length ? upsertCompetitionRounds(id, validRounds) : Promise.resolve(),
+        validFaqs.length ? upsertCompetitionFaqs(id, validFaqs) : Promise.resolve(),
+      ]);
+
       router.push('/dashboard/competitions');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -45,93 +124,200 @@ export default function NewCompetitionPage() {
     }
   }
 
+  const inputBase =
+    'w-full rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm';
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-3xl">
       <h1 className="text-2xl font-bold text-foreground">New Competition</h1>
-      <p className="mt-1 text-muted">Create a new hub competition</p>
+      <p className="mt-1 text-muted text-sm">Create a hub competition</p>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">
-            {error}
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+        )}
+
+        {/* ── Basic Info ── */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Basic Info</h2>
+
+          <FormField type="text" label="Title" name="title" value={form.title}
+            onChange={(v) => update('title', v)} required placeholder="Competition title" />
+
+          <FormField type="textarea" label="Description" name="description" value={form.description}
+            onChange={(v) => update('description', v)} placeholder="Describe the competition..." rows={5} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField type="select" label="Domain / Category" name="domain" value={form.domain}
+              onChange={(v) => update('domain', v)} options={domainOptions} />
+            <FormField type="text" label="Organizer Name" name="organizer_name" value={form.organizer_name}
+              onChange={(v) => update('organizer_name', v)} placeholder="e.g. Google, IIT Delhi" />
           </div>
-        )}
 
-        <FormField
-          type="text"
-          label="Title"
-          name="title"
-          value={form.title}
-          onChange={(v) => update('title', v)}
-          required
-          placeholder="Competition title"
-        />
-        <FormField
-          type="textarea"
-          label="Description"
-          name="description"
-          value={form.description}
-          onChange={(v) => update('description', v)}
-          placeholder="Describe the competition..."
-        />
-        <DateTimePicker
-          label="Deadline"
-          name="deadline"
-          value={form.deadline}
-          onChange={(v) => update('deadline', v)}
-        />
-        <FormField
-          type="text"
-          label="Prize Pool"
-          name="prize_pool"
-          value={form.prize_pool}
-          onChange={(v) => update('prize_pool', v)}
-          placeholder="e.g. $1,000"
-        />
-        <ImageUpload
-          label="Banner Image"
-          name="banner_image_url"
-          value={form.banner_image_url}
-          onChange={(v) => update('banner_image_url', v)}
-        />
-        <FormField
-          type="checkbox"
-          label="External Competition"
-          name="is_external"
-          checked={form.is_external}
-          onChange={(v) => update('is_external', v)}
-        />
-        {form.is_external && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-foreground">Tags</label>
+            <div className="flex flex-wrap gap-2 rounded-lg border border-card-border bg-background p-2 min-h-[42px]">
+              {form.tags.map((tag) => (
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                  {tag}
+                  <button type="button" onClick={() => removeTag(tag)}>
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={addTag}
+                placeholder="Add tag, press Enter"
+                className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <DateTimePicker label="Deadline" name="deadline" value={form.deadline}
+              onChange={(v) => update('deadline', v)} />
+            <FormField type="text" label="Prize Pool" name="prize_pool" value={form.prize_pool}
+              onChange={(v) => update('prize_pool', v)} placeholder="e.g. ₹1,00,000" />
+          </div>
+
+          <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url}
+            onChange={(v) => update('banner_image_url', v)} />
+        </section>
+
+        {/* ── Participation ── */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Participation</h2>
+
           <FormField
-            type="url"
-            label="External URL"
-            name="external_url"
-            value={form.external_url}
-            onChange={(v) => update('external_url', v)}
-            placeholder="https://..."
+            type="select" label="Participation Type" name="participation_type"
+            value={form.participation_type}
+            onChange={(v) => update('participation_type', v)}
+            options={[
+              { value: 'individual', label: 'Individual' },
+              { value: 'team', label: 'Team' },
+            ]}
           />
-        )}
-        <FormField
-          type="checkbox"
-          label="Has Leaderboard"
-          name="has_leaderboard"
-          checked={form.has_leaderboard}
-          onChange={(v) => update('has_leaderboard', v)}
-        />
 
-        <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-          >
+          {form.participation_type === 'team' && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Min Team Size</label>
+                <input type="number" min={1} max={20} value={form.team_size_min}
+                  onChange={(e) => update('team_size_min', Number(e.target.value))}
+                  className={inputBase} />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Max Team Size</label>
+                <input type="number" min={1} max={20} value={form.team_size_max}
+                  onChange={(e) => update('team_size_max', Number(e.target.value))}
+                  className={inputBase} />
+              </div>
+            </div>
+          )}
+
+          <FormField type="textarea" label="Eligibility Criteria" name="eligibility_criteria"
+            value={form.eligibility_criteria}
+            onChange={(v) => update('eligibility_criteria', v)}
+            placeholder="Who can participate? (e.g. Open to all, College students only, Age 18+...)" rows={3} />
+        </section>
+
+        {/* ── Settings ── */}
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Settings</h2>
+          <div className="flex flex-wrap gap-6">
+            <FormField type="checkbox" label="Active (visible on hub)" name="is_active"
+              checked={form.is_active} onChange={(v) => update('is_active', v)} />
+            <FormField type="checkbox" label="Featured (shown in spotlight)" name="is_featured"
+              checked={form.is_featured} onChange={(v) => update('is_featured', v)} />
+            <FormField type="checkbox" label="Has Leaderboard" name="has_leaderboard"
+              checked={form.has_leaderboard} onChange={(v) => update('has_leaderboard', v)} />
+            <FormField type="checkbox" label="External Competition" name="is_external"
+              checked={form.is_external} onChange={(v) => update('is_external', v)} />
+          </div>
+
+          {form.is_external && (
+            <FormField type="url" label="External URL" name="external_url" value={form.external_url}
+              onChange={(v) => update('external_url', v)} placeholder="https://..." />
+          )}
+        </section>
+
+        {/* ── Rounds ── */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Rounds / Timeline</h2>
+            <button type="button" onClick={addRound}
+              className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card-border/30 transition-colors">
+              <Plus size={13} /> Add Round
+            </button>
+          </div>
+
+          {rounds.length === 0 && (
+            <p className="text-sm text-muted">No rounds added. Click "Add Round" to set a competition timeline.</p>
+          )}
+
+          {rounds.map((round, i) => (
+            <div key={i} className="rounded-lg border border-card-border p-4 space-y-3 relative">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted uppercase">Round {i + 1}</span>
+                <button type="button" onClick={() => removeRound(i)}
+                  className="text-muted hover:text-danger transition-colors">
+                  <X size={15} />
+                </button>
+              </div>
+              <FormField type="text" label="Round Title" name={`round_title_${i}`} value={round.title}
+                onChange={(v) => updateRound(i, 'title', v)} placeholder="e.g. Idea Submission" required />
+              <FormField type="textarea" label="Description" name={`round_desc_${i}`} value={round.description}
+                onChange={(v) => updateRound(i, 'description', v)} placeholder="What happens in this round?" rows={2} />
+              <div className="grid grid-cols-2 gap-3">
+                <DateTimePicker label="Start Date" name={`round_start_${i}`} value={round.start_date}
+                  onChange={(v) => updateRound(i, 'start_date', v)} />
+                <DateTimePicker label="End Date" name={`round_end_${i}`} value={round.end_date}
+                  onChange={(v) => updateRound(i, 'end_date', v)} />
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* ── FAQs ── */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">FAQs</h2>
+            <button type="button" onClick={addFaq}
+              className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card-border/30 transition-colors">
+              <Plus size={13} /> Add FAQ
+            </button>
+          </div>
+
+          {faqs.length === 0 && (
+            <p className="text-sm text-muted">No FAQs added. Click "Add FAQ" to help participants.</p>
+          )}
+
+          {faqs.map((faq, i) => (
+            <div key={i} className="rounded-lg border border-card-border p-4 space-y-3 relative">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted uppercase">FAQ {i + 1}</span>
+                <button type="button" onClick={() => removeFaq(i)}
+                  className="text-muted hover:text-danger transition-colors">
+                  <X size={15} />
+                </button>
+              </div>
+              <FormField type="text" label="Question" name={`faq_q_${i}`} value={faq.question}
+                onChange={(v) => updateFaq(i, 'question', v)} placeholder="e.g. Who can participate?" required />
+              <FormField type="textarea" label="Answer" name={`faq_a_${i}`} value={faq.answer}
+                onChange={(v) => updateFaq(i, 'answer', v)} placeholder="Answer..." rows={2} required />
+            </div>
+          ))}
+        </section>
+
+        <div className="flex gap-3 pt-4 border-t border-card-border">
+          <button type="submit" disabled={loading}
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
             {loading ? 'Creating...' : 'Create Competition'}
           </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
-          >
+          <button type="button" onClick={() => router.back()}
+            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
             Cancel
           </button>
         </div>
