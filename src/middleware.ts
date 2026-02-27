@@ -9,13 +9,9 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookieOptions: {
-        name: 'sb-admin-auth',
-      },
+      cookieOptions: { name: 'sb-admin-auth' },
       cookies: {
-        getAll() {
-          return req.cookies.getAll();
-        },
+        getAll() { return req.cookies.getAll(); },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request: req });
@@ -28,40 +24,100 @@ export async function middleware(req: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-
   const { pathname } = req.nextUrl;
 
-  // Redirect root to dashboard or login
-  if (pathname === '/') {
+  function redirect(path: string) {
     const url = req.nextUrl.clone();
-    url.pathname = user ? '/dashboard' : '/login';
+    url.pathname = path;
+    url.search = '';
     return NextResponse.redirect(url);
   }
 
-  // Reject authenticated users without @ments.app email (skip for Google OAuth callback)
-  if (user && !user.email?.endsWith('@ments.app') && !pathname.startsWith('/auth')) {
-    await supabase.auth.signOut();
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    loginUrl.searchParams.set('error', 'unauthorized_domain');
-    return NextResponse.redirect(loginUrl);
+  // ─── Static / public paths ───────────────────────────────
+  if (pathname.startsWith('/auth')) return supabaseResponse;
+
+  // ─── Root redirect ────────────────────────────────────────
+  if (pathname === '/') {
+    return redirect(user ? '/resolving' : '/login');
   }
 
-  // Redirect unauthenticated users to /login
-  if (!user && pathname.startsWith('/dashboard')) {
-    const loginUrl = req.nextUrl.clone();
-    loginUrl.pathname = '/login';
-    return NextResponse.redirect(loginUrl);
+  // ─── Unauthenticated guard ────────────────────────────────
+  const protectedPrefixes = ['/dashboard', '/facilitator', '/startup', '/onboarding', '/resolving'];
+  const isProtected = protectedPrefixes.some(p => pathname.startsWith(p));
+
+  if (!user && isProtected) return redirect('/login');
+  if (!user) return supabaseResponse;
+
+  // ─── Authenticated: fetch role from admin_profiles ────────
+  // Use anon key with user's session — RLS allows users to read own row
+  let profile: { role: string; verification_status: string } | null = null;
+
+  const { data } = await supabase
+    .from('admin_profiles')
+    .select('role, verification_status')
+    .eq('id', user.id)
+    .single();
+
+  profile = data ?? null;
+
+  // ─── No profile yet → onboarding ─────────────────────────
+  if (!profile) {
+    if (pathname.startsWith('/onboarding') || pathname === '/login') return supabaseResponse;
+    return redirect('/onboarding');
   }
 
-  // Redirect authenticated users away from /login
-  if (user && pathname === '/login') {
-    const dashboardUrl = req.nextUrl.clone();
-    dashboardUrl.pathname = '/dashboard';
-    return NextResponse.redirect(dashboardUrl);
+  const { role, verification_status: status } = profile;
+
+  // ─── Redirect away from login if authenticated ────────────
+  if (pathname === '/login') {
+    return redirect(getRoleHome(role, status));
+  }
+
+  // ─── Resolving redirect (from root) ──────────────────────
+  if (pathname === '/resolving') {
+    return redirect(getRoleHome(role, status));
+  }
+
+  // ─── SuperAdmin: can only access /dashboard ───────────────
+  if (role === 'superadmin') {
+    if (pathname.startsWith('/dashboard')) return supabaseResponse;
+    return redirect('/dashboard');
+  }
+
+  // ─── Facilitator routing ──────────────────────────────────
+  if (role === 'facilitator') {
+    if (status === 'approved') {
+      if (pathname.startsWith('/facilitator')) return supabaseResponse;
+      // Allow facilitator to still use onboarding if needed
+      if (pathname.startsWith('/onboarding')) return supabaseResponse;
+      return redirect('/facilitator/dashboard');
+    }
+    // Pending / rejected / suspended
+    if (pathname.startsWith('/pending-verification')) return supabaseResponse;
+    if (pathname.startsWith('/onboarding/facilitator')) return supabaseResponse;
+    return redirect('/pending-verification');
+  }
+
+  // ─── Startup routing ─────────────────────────────────────
+  if (role === 'startup') {
+    if (status === 'approved') {
+      if (pathname.startsWith('/startup')) return supabaseResponse;
+      if (pathname.startsWith('/onboarding')) return supabaseResponse;
+      return redirect('/startup/dashboard');
+    }
+    if (pathname.startsWith('/pending-approval')) return supabaseResponse;
+    if (pathname.startsWith('/onboarding/startup')) return supabaseResponse;
+    return redirect('/pending-approval');
   }
 
   return supabaseResponse;
+}
+
+function getRoleHome(role: string, status: string): string {
+  if (role === 'superadmin') return '/dashboard';
+  if (role === 'facilitator') return status === 'approved' ? '/facilitator/dashboard' : '/pending-verification';
+  if (role === 'startup') return status === 'approved' ? '/startup/dashboard' : '/pending-approval';
+  return '/onboarding';
 }
 
 export const config = {
