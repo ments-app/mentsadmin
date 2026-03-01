@@ -54,7 +54,7 @@ export async function getStartupJobs() {
   const { data, error } = await admin
     .from('jobs')
     .select('*')
-    .eq('startup_id', startupId)
+    .or(`startup_id.eq.${startupId},created_by.eq.${session.authId}`)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);

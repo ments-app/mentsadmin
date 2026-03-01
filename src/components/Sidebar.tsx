@@ -53,6 +53,8 @@ const FACILITATOR_NAV = [
 
 const STARTUP_NAV = [
   { href: '/startup/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/startup/profile', label: 'My Profile', icon: Building2 },
+  { href: '/startup/facilitators', label: 'Facilitators', icon: ShieldCheck },
   { href: '/startup/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/startup/gigs', label: 'Gigs', icon: Zap },
   { href: '/startup/events', label: 'Events', icon: CalendarDays },
@@ -66,9 +68,11 @@ interface SidebarProps {
   role?: 'superadmin' | 'facilitator' | 'startup';
   displayName?: string;
   orgName?: string;
+  logoUrl?: string | null;
+  startupProfileId?: string | null;
 }
 
-export default function Sidebar({ role = 'superadmin', displayName, orgName }: SidebarProps) {
+export default function Sidebar({ role = 'superadmin', displayName, orgName, logoUrl, startupProfileId }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
@@ -104,10 +108,21 @@ export default function Sidebar({ role = 'superadmin', displayName, orgName }: S
 
       {(displayName || orgName) && (
         <div className="mx-3 mb-2 rounded-lg bg-sidebar-hover px-3 py-2">
-          <p className="text-xs font-medium text-sidebar-text truncate">{displayName ?? orgName}</p>
-          {orgName && displayName && (
-            <p className="text-xs text-sidebar-text/50 truncate">{orgName}</p>
-          )}
+          <div className="flex items-center gap-2">
+            {role === 'startup' && logoUrl ? (
+              <img src={logoUrl} alt="" className="h-7 w-7 rounded-md object-cover border border-sidebar-border shrink-0" />
+            ) : role === 'startup' ? (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/20 text-xs font-bold text-primary">
+                {(displayName ?? '?').charAt(0).toUpperCase()}
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-sidebar-text truncate">{displayName ?? orgName}</p>
+              {orgName && displayName && (
+                <p className="text-xs text-sidebar-text/50 truncate">{orgName}</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

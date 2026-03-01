@@ -1,75 +1,167 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getFacilitatorCompetitions } from '@/actions/facilitators';
-import { format } from 'date-fns';
-import { Trophy, RefreshCw, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { Plus, Star, Users } from 'lucide-react';
+import { format } from 'date-fns';
+import DataTable, { type Column } from '@/components/DataTable';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { getFacilitatorCompetitions } from '@/actions/facilitators';
+import { deleteCompetition } from '@/actions/competitions';
+import type { Competition } from '@/lib/types';
+
+type CompetitionWithCount = Competition & { participant_count: number };
+
+const domainLabels: Record<string, string> = {
+  hackathon: 'Hackathon',
+  case_study: 'Case Study',
+  quiz: 'Quiz',
+  design: 'Design',
+  coding: 'Coding',
+  business_plan: 'Biz Plan',
+  research: 'Research',
+  marketing: 'Marketing',
+  other: 'Other',
+};
+
+const columns: Column<CompetitionWithCount>[] = [
+  {
+    key: 'title',
+    label: 'Title',
+    render: (item) => (
+      <div className="flex items-center gap-2">
+        {item.is_featured && <Star size={13} className="text-amber-500 fill-amber-500 shrink-0" />}
+        <span className="font-medium">{item.title}</span>
+      </div>
+    ),
+  },
+  {
+    key: 'domain',
+    label: 'Domain',
+    render: (item) =>
+      item.domain ? (
+        <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
+          {domainLabels[item.domain] ?? item.domain}
+        </span>
+      ) : (
+        '—'
+      ),
+  },
+  {
+    key: 'participation_type',
+    label: 'Type',
+    render: (item) => (
+      <span
+        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+          item.participation_type === 'team'
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+        }`}
+      >
+        {item.participation_type === 'team'
+          ? `Team (${item.team_size_min}–${item.team_size_max})`
+          : 'Individual'}
+      </span>
+    ),
+  },
+  {
+    key: 'is_active',
+    label: 'Status',
+    render: (item) => (
+      <span
+        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+          item.is_active
+            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+        }`}
+      >
+        {item.is_active ? 'Active' : 'Inactive'}
+      </span>
+    ),
+  },
+  {
+    key: 'participant_count',
+    label: 'Registrations',
+    render: (item) => (
+      <div className="flex items-center gap-1 text-sm">
+        <Users size={13} className="text-muted" />
+        {item.participant_count}
+      </div>
+    ),
+  },
+  {
+    key: 'deadline',
+    label: 'Deadline',
+    render: (item) => (item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : '—'),
+  },
+  {
+    key: 'prize_pool',
+    label: 'Prize',
+    render: (item) => item.prize_pool || '—',
+  },
+];
 
 export default function FacilitatorCompetitionsPage() {
-  const [items, setItems] = useState<any[]>([]);
+  const [competitions, setCompetitions] = useState<CompetitionWithCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<CompetitionWithCount | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getFacilitatorCompetitions().then(d => { setItems(d); setLoading(false); });
+    getFacilitatorCompetitions().then((data) => {
+      setCompetitions(data as CompetitionWithCount[]);
+      setLoading(false);
+    });
   }, []);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteCompetition(deleteTarget.id);
+      setCompetitions((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Competitions</h1>
-          <p className="mt-1 text-sm text-muted">Competitions created by you or your startups</p>
+          <p className="mt-1 text-muted text-sm">Manage hub competitions</p>
         </div>
         <Link
           href="/dashboard/competitions/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
-          <Plus size={16} /> Create Competition
+          <Plus size={16} />
+          Add Competition
         </Link>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><RefreshCw className="animate-spin text-primary" size={24} /></div>
-      ) : items.length === 0 ? (
-        <div className="py-16 text-center">
-          <Trophy size={40} className="mx-auto mb-3 text-muted opacity-40" />
-          <p className="font-medium text-foreground">No competitions yet</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-card-border bg-background">
-                <th className="px-4 py-3 text-left font-medium text-muted">Title</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Deadline</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Prize</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Created</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-card-border">
-              {items.map(c => (
-                <tr key={c.id} className="hover:bg-background/50">
-                  <td className="px-4 py-3 font-medium text-foreground">{c.title}</td>
-                  <td className="px-4 py-3 text-muted">
-                    {c.deadline ? format(new Date(c.deadline), 'MMM d, yyyy') : '—'}
-                  </td>
-                  <td className="px-4 py-3 text-muted">{c.prize_pool ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted">{format(new Date(c.created_at), 'MMM d, yyyy')}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      c.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
-                      {c.is_active ? 'Active' : 'Ended'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="mt-6">
+        <DataTable
+          columns={columns}
+          data={competitions}
+          loading={loading}
+          editHref={(item) => `/dashboard/competitions/${item.id}`}
+          onDelete={setDeleteTarget}
+          emptyMessage="No competitions yet. Create your first one!"
+        />
+      </div>
+
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        title={deleteTarget?.title ?? ''}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

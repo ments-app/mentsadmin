@@ -13,10 +13,7 @@ export async function getFacilitators(filter?: 'all' | 'pending' | 'approved' | 
 
   let query = admin
     .from('admin_profiles')
-    .select(`
-      *,
-      facilitator_profiles (*)
-    `)
+    .select('*')
     .eq('role', 'facilitator')
     .order('created_at', { ascending: false });
 
@@ -26,29 +23,66 @@ export async function getFacilitators(filter?: 'all' | 'pending' | 'approved' | 
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch facilitator_profiles separately to avoid PostgREST join issues
+  const ids = data.map((f: { id: string }) => f.id);
+  const { data: fpData } = await admin
+    .from('facilitator_profiles')
+    .select('*')
+    .in('id', ids);
+
+  const fpMap = new Map((fpData ?? []).map((fp: any) => [fp.id, fp]));
+  return data.map((f: any) => ({ ...f, facilitator_profiles: fpMap.get(f.id) ?? null }));
 }
 
 export async function getFacilitatorById(id: string) {
   await requireSuperAdmin();
   const admin = createAdminClient();
 
+  // Fetch base admin profile
   const { data, error } = await admin
     .from('admin_profiles')
-    .select(`
-      *,
-      facilitator_profiles (*),
-      startup_facilitator_assignments (
-        id, status, created_at, reviewed_at, notes,
-        startup_profiles: startup_id (id, brand_name, logo_url, stage, city, country)
-      )
-    `)
+    .select('*')
     .eq('id', id)
     .eq('role', 'facilitator')
     .single();
 
   if (error) throw new Error(error.message);
-  return data;
+
+  // Fetch facilitator_profiles separately
+  const { data: fp } = await admin
+    .from('facilitator_profiles')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  // Fetch startup assignments separately
+  const { data: assignments } = await admin
+    .from('startup_facilitator_assignments')
+    .select('id, status, created_at, reviewed_at, notes, startup_id')
+    .eq('facilitator_id', id)
+    .order('created_at', { ascending: false });
+
+  let enrichedAssignments: any[] = [];
+  if (assignments && assignments.length > 0) {
+    const startupIds = assignments.map((a: any) => a.startup_id);
+    const { data: startups } = await admin
+      .from('startup_profiles')
+      .select('id, brand_name, logo_url, stage, city, country')
+      .in('id', startupIds);
+    const spMap = new Map((startups ?? []).map((s: any) => [s.id, s]));
+    enrichedAssignments = assignments.map((a: any) => ({
+      ...a,
+      startup_profiles: spMap.get(a.startup_id) ?? null,
+    }));
+  }
+
+  return {
+    ...data,
+    facilitator_profiles: fp ?? null,
+    startup_facilitator_assignments: enrichedAssignments,
+  };
 }
 
 export async function approveFacilitator(facilitatorId: string, notes?: string) {
@@ -144,13 +178,7 @@ export async function getFacilitatorStartups(statusFilter?: 'all' | 'pending' | 
 
   let query = admin
     .from('startup_facilitator_assignments')
-    .select(`
-      id, status, created_at, reviewed_at, notes,
-      startup_profiles: startup_id (
-        id, brand_name, logo_url, stage, city, country,
-        tagline, is_published, is_featured, owner_id
-      )
-    `)
+    .select('id, status, created_at, reviewed_at, notes, startup_id')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
@@ -160,7 +188,17 @@ export async function getFacilitatorStartups(statusFilter?: 'all' | 'pending' | 
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
-  return data ?? [];
+  if (!data || data.length === 0) return [];
+
+  // Fetch startup profiles separately
+  const startupIds = data.map((a: any) => a.startup_id);
+  const { data: startups } = await admin
+    .from('startup_profiles')
+    .select('id, brand_name, logo_url, stage, city, country, is_published, is_featured, owner_id')
+    .in('id', startupIds);
+  const spMap = new Map((startups ?? []).map((s: any) => [s.id, s]));
+
+  return data.map((a: any) => ({ ...a, startup_profiles: spMap.get(a.startup_id) ?? null }));
 }
 
 /** Get unverified startups not yet assigned to any facilitator. */
@@ -168,29 +206,48 @@ export async function getUnassignedStartups() {
   await requireFacilitator();
   const admin = createAdminClient();
 
-  // Startups in admin_profiles with pending status and no assignment yet
-  const { data: assignedStartupIds } = await admin
+  // 1. Get all startup_profile IDs already in any assignment
+  const { data: assignments } = await admin
     .from('startup_facilitator_assignments')
     .select('startup_id');
+  const assignedSpIds = new Set((assignments ?? []).map((a: any) => a.startup_id as string));
 
-  const excludeIds = (assignedStartupIds ?? []).map((r: { startup_id: string }) => r.startup_id);
+  // 2. Get ALL startup profiles (then filter in JS — avoids PostgREST NOT IN issues with UUIDs)
+  const { data: startups, error } = await admin
+    .from('startup_profiles')
+    .select('id, brand_name, logo_url, stage, city, country, owner_id, created_at')
+    .order('created_at', { ascending: false });
 
-  let query = admin
+  if (error) throw new Error(error.message);
+  if (!startups || startups.length === 0) return [];
+
+  // Filter out already-assigned ones in JS
+  const unassigned = startups.filter((s: any) => !assignedSpIds.has(s.id));
+  if (unassigned.length === 0) return [];
+
+  // 3. Fetch admin_profiles for their owners — only those with pending verification
+  const ownerIds = unassigned.map((s: any) => s.owner_id);
+  const { data: adminProfiles } = await admin
     .from('admin_profiles')
-    .select(`
-      id, display_name, email, created_at,
-      startup_profiles: id (id, brand_name, logo_url, stage, city, country, tagline)
-    `)
+    .select('id, display_name, email, verification_status, created_at')
+    .in('id', ownerIds)
     .eq('role', 'startup')
     .eq('verification_status', 'pending');
 
-  if (excludeIds.length > 0) {
-    query = query.not('id', 'in', `(${excludeIds.join(',')})`);
-  }
+  const apMap = new Map((adminProfiles ?? []).map((ap: any) => [ap.id, ap]));
 
-  const { data, error } = await query.order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return unassigned
+    .filter((s: any) => apMap.has(s.owner_id))
+    .map((s: any) => {
+      const ap = apMap.get(s.owner_id);
+      return {
+        id: ap.id,
+        display_name: ap.display_name,
+        email: ap.email,
+        created_at: ap.created_at,
+        startup_profiles: s,
+      };
+    });
 }
 
 export async function claimStartupForVerification(startupUserId: string) {
@@ -420,12 +477,16 @@ export async function getFacilitatorCompetitions() {
 
   const { data, error } = await admin
     .from('competitions')
-    .select('*')
+    .select('*, participant_count:competition_entries(count)')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    participant_count: (row.participant_count as { count: number }[])[0]?.count ?? 0,
+    tags: row.tags ?? [],
+  }));
 }
 
 export async function getFacilitatorApplications() {
@@ -463,6 +524,53 @@ export async function getFacilitatorDashboardStats() {
     competitions: competitions.count ?? 0,
     applications: applications.count ?? 0,
     startups: startups.count ?? 0,
+  };
+}
+
+/** Get full startup profile detail — only if assigned to this facilitator. */
+export async function getFacilitatorStartupDetail(startupProfileId: string) {
+  const session = await requireFacilitator();
+  const admin = createAdminClient();
+
+  // Verify this facilitator has access to this startup
+  const { data: assignment, error: ae } = await admin
+    .from('startup_facilitator_assignments')
+    .select('id, status, notes, created_at, reviewed_at')
+    .eq('startup_id', startupProfileId)
+    .eq('facilitator_id', session.authId)
+    .maybeSingle();
+
+  if (ae) throw new Error(ae.message);
+  if (!assignment) throw new Error('Forbidden: startup not assigned to you');
+
+  // Fetch full startup profile
+  const { data: sp, error: spe } = await admin
+    .from('startup_profiles')
+    .select('*')
+    .eq('id', startupProfileId)
+    .single();
+
+  if (spe || !sp) throw new Error('Startup profile not found');
+
+  // Fetch related tables separately (avoid PostgREST join issues)
+  const [founderRes, fundingRes, incubatorRes, awardRes] = await Promise.all([
+    admin.from('startup_founders').select('*').eq('startup_id', sp.id).order('display_order', { ascending: true }),
+    admin.from('startup_funding_rounds').select('*').eq('startup_id', sp.id).order('round_date', { ascending: false }),
+    admin.from('startup_incubators').select('*').eq('startup_id', sp.id).order('year', { ascending: false }),
+    admin.from('startup_awards').select('*').eq('startup_id', sp.id).order('year', { ascending: false }),
+  ]);
+
+  return {
+    assignment,
+    profile: {
+      ...sp,
+      keywords: sp.keywords || [],
+      categories: sp.categories || [],
+      founders: founderRes.data || [],
+      funding_rounds: fundingRes.data || [],
+      incubators: incubatorRes.data || [],
+      awards: awardRes.data || [],
+    },
   };
 }
 

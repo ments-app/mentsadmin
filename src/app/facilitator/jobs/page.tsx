@@ -1,75 +1,130 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getFacilitatorJobs } from '@/actions/facilitators';
-import { format } from 'date-fns';
-import { Briefcase, RefreshCw, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
+import { format } from 'date-fns';
+import DataTable, { type Column } from '@/components/DataTable';
+import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import { getFacilitatorJobs } from '@/actions/facilitators';
+import { deleteJob } from '@/actions/jobs';
+import { getApplicationCount } from '@/actions/applications';
+import type { Job } from '@/lib/types';
+
+const columns: Column<Job & { _appCount?: number }>[] = [
+  { key: 'title', label: 'Title' },
+  { key: 'company', label: 'Company' },
+  {
+    key: 'job_type',
+    label: 'Type',
+    render: (item) => (
+      <span className="inline-block rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium capitalize text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+        {item.job_type}
+      </span>
+    ),
+  },
+  { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  {
+    key: '_appCount' as keyof Job,
+    label: 'Applications',
+    render: (item) => {
+      const count = (item as Job & { _appCount?: number })._appCount ?? 0;
+      return count > 0 ? (
+        <Link
+          href={`/dashboard/jobs/${item.id}/applications`}
+          className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+        >
+          {count}
+        </Link>
+      ) : (
+        <span className="text-xs text-muted">0</span>
+      );
+    },
+  },
+  {
+    key: 'is_active',
+    label: 'Status',
+    render: (item) => (
+      <span
+        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+          item.is_active
+            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+        }`}
+      >
+        {item.is_active ? 'Active' : 'Inactive'}
+      </span>
+    ),
+  },
+  {
+    key: 'created_at',
+    label: 'Created',
+    render: (item) => format(new Date(item.created_at), 'MMM d, yyyy'),
+  },
+];
 
 export default function FacilitatorJobsPage() {
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<(Job & { _appCount?: number })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    getFacilitatorJobs().then(d => { setJobs(d); setLoading(false); });
+    getFacilitatorJobs().then(async (data) => {
+      const counts = await Promise.all(data.map((j: Job) => getApplicationCount(j.id)));
+      setJobs(data.map((j: Job, i: number) => ({ ...j, _appCount: counts[i] })));
+      setLoading(false);
+    });
   }, []);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteJob(deleteTarget.id);
+      setJobs((prev) => prev.filter((j) => j.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Jobs</h1>
-          <p className="mt-1 text-sm text-muted">Jobs posted by you or your startups</p>
+          <p className="mt-1 text-muted">Manage job postings</p>
         </div>
         <Link
           href="/dashboard/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
-          <Plus size={16} /> Post Job
+          <Plus size={16} />
+          Add Job
         </Link>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><RefreshCw className="animate-spin text-primary" size={24} /></div>
-      ) : jobs.length === 0 ? (
-        <div className="py-16 text-center">
-          <Briefcase size={40} className="mx-auto mb-3 text-muted opacity-40" />
-          <p className="font-medium text-foreground">No jobs posted yet</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-card-border bg-background">
-                <th className="px-4 py-3 text-left font-medium text-muted">Title</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Company</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Posted</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-card-border">
-              {jobs.map(job => (
-                <tr key={job.id} className="hover:bg-background/50">
-                  <td className="px-4 py-3 font-medium text-foreground">{job.title}</td>
-                  <td className="px-4 py-3 text-muted">{job.company ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted capitalize">{job.job_type ?? '—'}</td>
-                  <td className="px-4 py-3 text-muted">{format(new Date(job.created_at), 'MMM d, yyyy')}</td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      job.is_active
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}>
-                      {job.is_active ? 'Active' : 'Closed'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="mt-6">
+        <DataTable
+          columns={columns}
+          data={jobs}
+          loading={loading}
+          editHref={(item) => `/dashboard/jobs/${item.id}`}
+          onDelete={setDeleteTarget}
+          emptyMessage="No jobs yet. Create your first one!"
+        />
+      </div>
+
+      <DeleteConfirmModal
+        open={!!deleteTarget}
+        title={deleteTarget?.title ?? ''}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 }

@@ -8,9 +8,10 @@ import {
 import { format } from 'date-fns';
 import {
   CheckCircle2, XCircle, ShieldAlert, Clock, Rocket,
-  RefreshCw, UserPlus, ChevronDown, ChevronUp
+  RefreshCw, UserPlus, ChevronDown, ChevronUp, Eye
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
+import Link from 'next/link';
 
 type Tab = 'my-startups' | 'unassigned';
 
@@ -26,16 +27,15 @@ export default function FacilitatorStartupsPage() {
 
   async function load() {
     setLoading(true);
-    try {
-      const [mine, free] = await Promise.all([
-        getFacilitatorStartups(),
-        getUnassignedStartups(),
-      ]);
-      setMyStartups(mine);
-      setUnassigned(free);
-    } catch (e) {
-      console.error(e);
-    }
+    // Load independently — one failure must not blank out the other tab
+    const [mineResult, freeResult] = await Promise.allSettled([
+      getFacilitatorStartups(),
+      getUnassignedStartups(),
+    ]);
+    if (mineResult.status === 'fulfilled') setMyStartups(mineResult.value);
+    else console.error('getFacilitatorStartups failed:', mineResult.reason);
+    if (freeResult.status === 'fulfilled') setUnassigned(freeResult.value);
+    else console.error('getUnassignedStartups failed:', freeResult.reason);
     setLoading(false);
   }
 
@@ -167,7 +167,13 @@ export default function FacilitatorStartupsPage() {
                       </div>
                     )}
 
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={`/facilitator/startups/${sp?.id}`}
+                        className="flex items-center gap-1 rounded-lg border border-card-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                      >
+                        <Eye size={12} /> View Profile
+                      </Link>
                       {a.status === 'pending' && (
                         <>
                           <button

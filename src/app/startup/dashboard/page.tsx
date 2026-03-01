@@ -2,23 +2,31 @@
 
 import { useEffect, useState } from 'react';
 import { getStartupDashboardStats } from '@/actions/startup-portal';
-import { getMyProfile } from '@/actions/rbac';
-import { Briefcase, Zap, CalendarDays, Trophy, Users, ShieldCheck } from 'lucide-react';
+import { getMyStartupSummary } from '@/actions/startup-profile';
+import { Briefcase, Zap, CalendarDays, Trophy, Users, Building2, ArrowRight, MapPin, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
+
+const STAGE_LABELS: Record<string, string> = {
+  ideation: 'Ideation',
+  mvp: 'MVP',
+  scaling: 'Scaling',
+  expansion: 'Expansion',
+  maturity: 'Maturity',
+};
 
 export default function StartupDashboardPage() {
   const [stats, setStats] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [startup, setStartup] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [s, p] = await Promise.all([
+      const [s, sp] = await Promise.all([
         getStartupDashboardStats(),
-        getMyProfile(),
+        getMyStartupSummary(),
       ]);
       setStats(s);
-      setProfile(p);
+      setStartup(sp);
       setLoading(false);
     }
     load();
@@ -34,16 +42,74 @@ export default function StartupDashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">
-          {loading ? 'Welcome!' : `Welcome back, ${profile?.display_name ?? 'Startup'}!`}
-        </h1>
-        <div className="mt-2 flex items-center gap-2">
-          <ShieldCheck size={14} className="text-green-500" />
-          <span className="text-sm text-green-600 dark:text-green-400 font-medium">Verified Startup</span>
+      {/* Startup profile hero */}
+      {!loading && (
+        <div className="mb-8 rounded-xl border border-card-border bg-card-bg p-5">
+          {startup ? (
+            <div className="flex items-center gap-4">
+              {startup.logo_url ? (
+                <img src={startup.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover border border-card-border" />
+              ) : (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl font-bold text-primary">
+                  {startup.brand_name?.charAt(0)?.toUpperCase() || '?'}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-xl font-bold text-foreground">{startup.brand_name}</h1>
+                  {startup.stage && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {STAGE_LABELS[startup.stage] || startup.stage}
+                    </span>
+                  )}
+                  {startup.is_actively_raising && (
+                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                      Raising
+                    </span>
+                  )}
+                </div>
+                {startup.tagline && (
+                  <p className="mt-0.5 text-sm text-muted truncate">{startup.tagline}</p>
+                )}
+                {(startup.city || startup.country) && (
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+                    <MapPin size={11} />
+                    {[startup.city, startup.country].filter(Boolean).join(', ')}
+                  </p>
+                )}
+              </div>
+              <Link
+                href="/startup/profile"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-light hover:text-primary"
+              >
+                View Profile <ArrowRight size={14} />
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                <Building2 size={24} className="text-primary" />
+              </div>
+              <div>
+                <h1 className="font-semibold text-foreground">Welcome to your dashboard</h1>
+                <p className="mt-0.5 text-sm text-muted">Your startup profile isn't set up yet.</p>
+              </div>
+              <Link
+                href="/startup/profile"
+                className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+              >
+                Set up profile <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
+      {loading && (
+        <div className="mb-8 h-24 animate-pulse rounded-xl bg-card-border" />
+      )}
+
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {statCards.map(card => {
           const Icon = card.icon;
@@ -90,15 +156,16 @@ export default function StartupDashboardPage() {
         </div>
       </div>
 
-      {/* Scope reminder */}
-      <div className="mt-8 rounded-xl border border-card-border bg-card-bg p-5">
-        <h3 className="font-semibold text-foreground text-sm mb-2">Your Private Workspace</h3>
-        <ul className="space-y-1 text-xs text-muted">
-          <li>• You can only see jobs, gigs, events and competitions you created</li>
-          <li>• Applications shown are only for your posts</li>
-          <li>• Other startups&apos; data is not visible to you</li>
-        </ul>
-      </div>
+      {/* Traction summary if available */}
+      {!loading && startup?.traction_metrics && (
+        <div className="mt-8 rounded-xl border border-card-border bg-card-bg p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={15} className="text-primary" />
+            <h3 className="font-semibold text-foreground text-sm">Traction</h3>
+          </div>
+          <p className="text-sm text-muted leading-relaxed">{startup.traction_metrics}</p>
+        </div>
+      )}
     </div>
   );
 }

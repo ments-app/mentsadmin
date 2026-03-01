@@ -60,8 +60,20 @@ export async function middleware(req: NextRequest) {
 
   profile = data ?? null;
 
-  // ─── No profile yet → onboarding ─────────────────────────
+  // ─── No admin_profiles row — check if super admin via users table ────
   if (!profile) {
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (userRecord?.role === 'super_admin') {
+      if (pathname === '/login') return redirect('/dashboard');
+      if (pathname.startsWith('/dashboard')) return supabaseResponse;
+      return redirect('/dashboard');
+    }
+
     if (pathname.startsWith('/onboarding') || pathname === '/login') return supabaseResponse;
     return redirect('/onboarding');
   }
@@ -99,15 +111,21 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── Startup routing ─────────────────────────────────────
+  // No verification step — startups are auto-approved on login
   if (role === 'startup') {
-    if (status === 'approved') {
-      if (pathname.startsWith('/startup')) return supabaseResponse;
-      if (pathname.startsWith('/onboarding')) return supabaseResponse;
-      return redirect('/startup/dashboard');
-    }
-    if (pathname.startsWith('/pending-approval')) return supabaseResponse;
-    if (pathname.startsWith('/onboarding/startup')) return supabaseResponse;
-    return redirect('/pending-approval');
+    if (pathname.startsWith('/startup')) return supabaseResponse;
+    if (pathname.startsWith('/onboarding')) return supabaseResponse;
+    // Allow startups to use admin create/edit forms for their own content
+    if (pathname.startsWith('/dashboard/jobs/')) return supabaseResponse;
+    if (pathname.startsWith('/dashboard/gigs/')) return supabaseResponse;
+    if (pathname.startsWith('/dashboard/events/')) return supabaseResponse;
+    if (pathname.startsWith('/dashboard/competitions/')) return supabaseResponse;
+    // Redirect admin list pages to startup equivalents
+    if (pathname === '/dashboard/jobs') return redirect('/startup/jobs');
+    if (pathname === '/dashboard/gigs') return redirect('/startup/gigs');
+    if (pathname === '/dashboard/events') return redirect('/startup/events');
+    if (pathname === '/dashboard/competitions') return redirect('/startup/competitions');
+    return redirect('/startup/dashboard');
   }
 
   return supabaseResponse;
@@ -116,7 +134,7 @@ export async function middleware(req: NextRequest) {
 function getRoleHome(role: string, status: string): string {
   if (role === 'superadmin') return '/dashboard';
   if (role === 'facilitator') return status === 'approved' ? '/facilitator/dashboard' : '/pending-verification';
-  if (role === 'startup') return status === 'approved' ? '/startup/dashboard' : '/pending-approval';
+  if (role === 'startup') return '/startup/dashboard';
   return '/onboarding';
 }
 
