@@ -1,11 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/dashboard';
 
   if (code) {
     const cookieStore = await cookies();
@@ -13,13 +13,9 @@ export async function GET(req: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        cookieOptions: {
-          name: 'sb-admin-auth',
-        },
+        cookieOptions: { name: 'sb-admin-auth' },
         cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
+          getAll() { return cookieStore.getAll(); },
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
@@ -32,28 +28,58 @@ export async function GET(req: NextRequest) {
     );
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('error', 'auth_failed');
+      return NextResponse.redirect(url);
+    }
 
-    if (!error) {
-      const { data: { user } } = await supabase.auth.getUser();
+    // Get the authenticated user
+    const { data: { user } } = await supabase.auth.getUser();
 
-      // Enforce @ments.app domain
-      if (user && !user.email?.endsWith('@ments.app')) {
-        await supabase.auth.signOut();
-        const loginUrl = req.nextUrl.clone();
-        loginUrl.pathname = '/login';
-        loginUrl.searchParams.set('error', 'unauthorized_domain');
-        return NextResponse.redirect(loginUrl);
+    if (user) {
+      const admin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      // 1. Already has admin_profiles → let middleware route them
+      const { data: existingProfile } = await admin
+        .from('admin_profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        const url = req.nextUrl.clone();
+        url.pathname = '/resolving';
+        url.search = '';
+        return NextResponse.redirect(url);
       }
 
-      const redirectUrl = req.nextUrl.clone();
-      redirectUrl.pathname = next;
-      redirectUrl.searchParams.delete('code');
-      redirectUrl.searchParams.delete('next');
-      return NextResponse.redirect(redirectUrl);
+      // 2. Check if they're a super_admin on the Ments platform
+      const { data: mentsUser } = await admin
+        .from('users')
+        .select('id, role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (mentsUser?.role === 'super_admin') {
+        const url = req.nextUrl.clone();
+        url.pathname = '/resolving';
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
+
+      // 3. New user (with or without Ments account) → role selection
+      const url = req.nextUrl.clone();
+      url.pathname = '/onboarding';
+      url.search = '';
+      return NextResponse.redirect(url);
     }
   }
 
-  // Auth failed — redirect to login with error
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = '/login';
   loginUrl.searchParams.set('error', 'auth_failed');

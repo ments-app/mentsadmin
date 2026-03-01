@@ -20,10 +20,16 @@ import {
   TrendingUp,
   MessageSquare,
   Rocket,
+  Building2,
+  ShieldCheck,
 } from 'lucide-react';
 
-const navItems = [
+// ─── Nav definitions per role ──────────────────────────────────
+
+const SUPERADMIN_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/facilitators', label: 'Facilitators', icon: ShieldCheck },
+  { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
   { href: '/dashboard/competitions', label: 'Competitions', icon: Trophy },
   { href: '/dashboard/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/dashboard/gigs', label: 'Gigs', icon: Zap },
@@ -32,14 +38,53 @@ const navItems = [
   { href: '/dashboard/resources', label: 'Resources', icon: Package },
   { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
   { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },
-  { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
   { href: '/dashboard/feed-analytics', label: 'Feed Analytics', icon: BarChart3 },
 ];
 
-export default function Sidebar() {
+const FACILITATOR_NAV = [
+  { href: '/facilitator/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/facilitator/startups', label: 'My Startups', icon: Rocket },
+  { href: '/facilitator/jobs', label: 'Jobs', icon: Briefcase },
+  { href: '/facilitator/gigs', label: 'Gigs', icon: Zap },
+  { href: '/facilitator/events', label: 'Events', icon: CalendarDays },
+  { href: '/facilitator/competitions', label: 'Competitions', icon: Trophy },
+  { href: '/facilitator/applications', label: 'Applications', icon: Users },
+];
+
+const STARTUP_NAV = [
+  { href: '/startup/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/startup/profile', label: 'My Profile', icon: Building2 },
+  { href: '/startup/facilitators', label: 'Facilitators', icon: ShieldCheck },
+  { href: '/startup/jobs', label: 'Jobs', icon: Briefcase },
+  { href: '/startup/gigs', label: 'Gigs', icon: Zap },
+  { href: '/startup/events', label: 'Events', icon: CalendarDays },
+  { href: '/startup/competitions', label: 'Competitions', icon: Trophy },
+  { href: '/startup/applications', label: 'Applications', icon: Users },
+];
+
+// ─── Props ──────────────────────────────────────────────────────
+
+interface SidebarProps {
+  role?: 'superadmin' | 'facilitator' | 'startup';
+  displayName?: string;
+  orgName?: string;
+  logoUrl?: string | null;
+  startupProfileId?: string | null;
+}
+
+export default function Sidebar({ role = 'superadmin', displayName, orgName, logoUrl, startupProfileId }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+
+  const navItems =
+    role === 'facilitator' ? FACILITATOR_NAV :
+    role === 'startup' ? STARTUP_NAV :
+    SUPERADMIN_NAV;
+
+  const roleLabel =
+    role === 'superadmin' ? 'Super Admin' :
+    role === 'facilitator' ? 'Facilitator' : 'Startup';
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
@@ -54,11 +99,34 @@ export default function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar-bg text-sidebar-text">
-      <div className="flex h-16 items-center px-6">
-        <h1 className="text-lg font-bold text-sidebar-heading">Ments Admin</h1>
+      <div className="flex h-16 items-center gap-2 px-6">
+        <h1 className="text-lg font-bold text-sidebar-heading">Ments</h1>
+        <span className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
+          {roleLabel}
+        </span>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      {(displayName || orgName) && (
+        <div className="mx-3 mb-2 rounded-lg bg-sidebar-hover px-3 py-2">
+          <div className="flex items-center gap-2">
+            {role === 'startup' && logoUrl ? (
+              <img src={logoUrl} alt="" className="h-7 w-7 rounded-md object-cover border border-sidebar-border shrink-0" />
+            ) : role === 'startup' ? (
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/20 text-xs font-bold text-primary">
+                {(displayName ?? '?').charAt(0).toUpperCase()}
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-sidebar-text truncate">{displayName ?? orgName}</p>
+              {orgName && displayName && (
+                <p className="text-xs text-sidebar-text/50 truncate">{orgName}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <nav className="flex-1 space-y-1 px-3 py-2 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);

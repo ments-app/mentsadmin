@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Pencil } from 'lucide-react';
+import Link from 'next/link';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import {
   getStartupProfile,
   toggleStartupFeatured,
-  toggleStartupPublished,
   deleteStartupProfile,
   type StartupProfile,
 } from '@/actions/startups';
@@ -38,20 +38,6 @@ export default function StartupDetailPage() {
       setLoading(false);
     });
   }, [id]);
-
-  async function handleTogglePublished() {
-    if (!startup) return;
-    setSaving(true);
-    setError('');
-    try {
-      await toggleStartupPublished(startup.id, !startup.is_published);
-      setStartup((prev) => prev ? { ...prev, is_published: !prev.is_published } : prev);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function handleToggleFeatured() {
     if (!startup) return;
@@ -108,13 +94,12 @@ export default function StartupDetailPage() {
           <p className="mt-1 text-muted text-sm">Startup profile</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleTogglePublished}
-            disabled={saving}
-            className="rounded-lg border border-card-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30 disabled:opacity-50"
+          <Link
+            href={`/dashboard/startups/${startup.id}/edit`}
+            className="flex items-center gap-1.5 rounded-lg border border-card-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
           >
-            {saving ? <Loader2 size={14} className="animate-spin inline" /> : startup.is_published ? 'Unpublish' : 'Publish'}
-          </button>
+            <Pencil size={14} /> Edit Profile
+          </Link>
           <button
             onClick={handleToggleFeatured}
             disabled={saving}
@@ -140,9 +125,6 @@ export default function StartupDetailPage() {
       <div className="mt-6 space-y-4">
         {/* Status badges */}
         <div className="flex flex-wrap gap-2">
-          <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${startup.is_published ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
-            {startup.is_published ? 'Published' : 'Unpublished'}
-          </span>
           {startup.is_featured && (
             <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
               Featured

@@ -3,17 +3,16 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Loader2, Eye, EyeOff, Star, StarOff, Pencil } from 'lucide-react';
+import { Loader2, Star, StarOff, Pencil, Plus } from 'lucide-react';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import {
   getStartupProfiles,
   toggleStartupFeatured,
-  toggleStartupPublished,
   deleteStartupProfile,
   type StartupProfile,
 } from '@/actions/startups';
 
-type Filter = 'all' | 'published' | 'unpublished' | 'featured';
+type Filter = 'all' | 'featured';
 
 const STAGE_LABELS: Record<string, string> = {
   idea: 'Idea',
@@ -60,11 +59,6 @@ export default function StartupsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function handleTogglePublished(id: string, current: boolean) {
-    setActionLoading(`pub-${id}`);
-    try { await toggleStartupPublished(id, !current); await load(); } finally { setActionLoading(null); }
-  }
-
   async function handleToggleFeatured(id: string, current: boolean) {
     setActionLoading(`feat-${id}`);
     try { await toggleStartupFeatured(id, !current); await load(); } finally { setActionLoading(null); }
@@ -94,11 +88,17 @@ export default function StartupsPage() {
           <h1 className="text-2xl font-bold text-foreground">Startups</h1>
           <p className="mt-1 text-muted">Moderate startup listings</p>
         </div>
+        <Link
+          href="/dashboard/startups/create"
+          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+        >
+          <Plus size={15} /> Create Profile
+        </Link>
       </div>
 
       {/* Filter tabs */}
       <div className="mt-4 flex gap-2">
-        {(['all', 'published', 'unpublished', 'featured'] as Filter[]).map((f) => (
+        {(['all', 'featured'] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => { setFilter(f); setPage(1); }}
@@ -121,7 +121,6 @@ export default function StartupsPage() {
               <th className="px-4 py-3 font-medium text-muted">Owner</th>
               <th className="px-4 py-3 font-medium text-muted">Stage</th>
               <th className="px-4 py-3 font-medium text-muted">Location</th>
-              <th className="px-4 py-3 font-medium text-muted">Published</th>
               <th className="px-4 py-3 font-medium text-muted">Featured</th>
               <th className="px-4 py-3 font-medium text-muted">Created</th>
               <th className="px-4 py-3 font-medium text-muted">Actions</th>
@@ -131,7 +130,7 @@ export default function StartupsPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="h-4 w-3/4 animate-pulse rounded bg-card-border" />
                     </td>
@@ -140,7 +139,7 @@ export default function StartupsPage() {
               ))
             ) : startups.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted">
                   No startup profiles found.
                 </td>
               </tr>
@@ -185,23 +184,6 @@ export default function StartupsPage() {
                   </td>
                   <td className="px-4 py-3 text-muted">
                     {[startup.city, startup.country].filter(Boolean).join(', ') || '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {actionLoading === `pub-${startup.id}` ? (
-                      <Loader2 size={14} className="animate-spin text-muted" />
-                    ) : (
-                      <button
-                        onClick={() => handleTogglePublished(startup.id, startup.is_published)}
-                        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
-                          startup.is_published
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'
-                        }`}
-                      >
-                        {startup.is_published ? <Eye size={10} /> : <EyeOff size={10} />}
-                        {startup.is_published ? 'Yes' : 'No'}
-                      </button>
-                    )}
                   </td>
                   <td className="px-4 py-3">
                     {actionLoading === `feat-${startup.id}` ? (
