@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getMyProfile } from '@/actions/rbac';
 import { supabase } from '@/lib/supabase';
 import { Clock, CheckCircle2, XCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 
-export default function PendingApprovalPage() {
+function PendingApprovalContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlStatus = searchParams.get('status');
@@ -128,5 +128,13 @@ export default function PendingApprovalPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PendingApprovalPage() {
+  return (
+    <Suspense>
+      <PendingApprovalContent />
+    </Suspense>
   );
 }

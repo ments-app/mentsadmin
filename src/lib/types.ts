@@ -66,6 +66,8 @@ export interface Job {
   category: 'engineering' | 'design' | 'marketing' | 'sales' | 'operations' | 'finance' | 'hr' | 'legal' | 'product' | 'data' | 'support' | 'content' | 'other';
   work_mode: 'onsite' | 'remote' | 'hybrid';
   contact_email: string | null;
+  apply_url: string | null;
+  apply_email: string | null;
 }
 
 export interface Gig {

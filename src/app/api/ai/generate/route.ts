@@ -15,7 +15,7 @@ type FieldType =
 
 // ── Prompts ────────────────────────────────────────────────────────
 
-const JOB_PROMPTS: Record<FieldType, (ctx: Record<string, string>) => string> = {
+const JOB_PROMPTS: Partial<Record<FieldType, (ctx: Record<string, string>) => string>> = {
   description: (ctx) => {
     const websiteInfo = ctx._website_content
       ? `\n\nHere is real information scraped from the company website (${ctx.company_website}):\n---\n${ctx._website_content}\n---\nUse this information to write an accurate company intro paragraph. Pull real facts about what the company does, their mission, products, and culture from this content. Do NOT make up company details — only use what is provided above.`
@@ -50,7 +50,7 @@ ${ctx.skills_required ? `Skills involved: ${ctx.skills_required}` : ''}
 Write each deliverable on a new line starting with "- ". Be concrete and measurable.`,
 };
 
-const GIG_PROMPTS: Record<FieldType, (ctx: Record<string, string>) => string> = {
+const GIG_PROMPTS: Partial<Record<FieldType, (ctx: Record<string, string>) => string>> = {
   description: (ctx) => {
     const websiteInfo = ctx._website_content
       ? `\n\nHere is real information scraped from the client's website (${ctx.company_website}):\n---\n${ctx._website_content}\n---\nUse this information to write an accurate intro about the client. Pull real facts about what the company does from this content. Do NOT make up company details.`

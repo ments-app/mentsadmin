@@ -22,7 +22,7 @@ const domainOptions = [
   { value: 'other', label: 'Other' },
 ];
 
-type Round = { title: string; description: string; start_date: string; end_date: string };
+type Round = { id?: string; round_number: number; title: string; description: string; start_date: string; end_date: string };
 type Faq = { question: string; answer: string };
 
 export default function NewCompetitionPage() {
@@ -74,7 +74,7 @@ export default function NewCompetitionPage() {
   }
 
   function addRound() {
-    setRounds((prev) => [...prev, { title: '', description: '', start_date: '', end_date: '' }]);
+    setRounds((prev) => [...prev, { round_number: prev.length + 1, title: '', description: '', start_date: '', end_date: '' }]);
   }
 
   function updateRound(i: number, key: keyof Round, value: string) {

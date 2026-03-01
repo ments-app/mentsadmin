@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getMyProfile } from '@/actions/rbac';
 import { getMyFacilitatorProfile } from '@/actions/rbac';
 import { supabase } from '@/lib/supabase';
 import { Clock, CheckCircle2, XCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 
-export default function PendingVerificationPage() {
+function PendingVerificationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlStatus = searchParams.get('status');
@@ -152,5 +152,13 @@ export default function PendingVerificationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PendingVerificationPage() {
+  return (
+    <Suspense>
+      <PendingVerificationContent />
+    </Suspense>
   );
 }

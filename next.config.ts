@@ -2,8 +2,10 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  serverActions: {
-    bodySizeLimit: '6mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '6mb',
+    },
   },
   turbopack: {
     root: __dirname,

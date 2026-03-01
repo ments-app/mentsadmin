@@ -18,19 +18,40 @@ export default function CategoryMetadataFields({ category, values, onChange }: P
   return (
     <div className="space-y-4 rounded-lg border border-card-border p-4">
       <h3 className="text-sm font-semibold text-foreground">{label}</h3>
-      {fields.map((field) => (
-        <FormField
-          key={field.key}
-          type={field.type}
-          label={field.label}
-          name={field.key}
-          value={values[field.key] || ''}
-          onChange={(v: string) => onChange(field.key, v)}
-          placeholder={field.placeholder}
-          options={field.options}
-          rows={field.type === 'textarea' ? 3 : undefined}
-        />
-      ))}
+      {fields.map((field) =>
+        field.type === 'select' ? (
+          <FormField
+            key={field.key}
+            type="select"
+            label={field.label}
+            name={field.key}
+            value={values[field.key] || ''}
+            onChange={(v: string) => onChange(field.key, v)}
+            options={field.options ?? []}
+          />
+        ) : field.type === 'textarea' ? (
+          <FormField
+            key={field.key}
+            type="textarea"
+            label={field.label}
+            name={field.key}
+            value={values[field.key] || ''}
+            onChange={(v: string) => onChange(field.key, v)}
+            placeholder={field.placeholder}
+            rows={3}
+          />
+        ) : (
+          <FormField
+            key={field.key}
+            type="text"
+            label={field.label}
+            name={field.key}
+            value={values[field.key] || ''}
+            onChange={(v: string) => onChange(field.key, v)}
+            placeholder={field.placeholder}
+          />
+        )
+      )}
     </div>
   );
 }

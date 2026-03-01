@@ -27,7 +27,7 @@ const domainOptions = [
   { value: 'other', label: 'Other' },
 ];
 
-type Round = { title: string; description: string; start_date: string; end_date: string };
+type Round = { id?: string; round_number: number; title: string; description: string; start_date: string; end_date: string };
 type Faq = { question: string; answer: string };
 
 export default function EditCompetitionPage() {
@@ -88,7 +88,9 @@ export default function EditCompetitionPage() {
         team_size_max: comp.team_size_max ?? 4,
         eligibility_criteria: comp.eligibility_criteria ?? '',
       });
-      setRounds(roundData.map((r) => ({
+      setRounds(roundData.map((r, idx) => ({
+        id: r.id,
+        round_number: r.round_number ?? idx + 1,
         title: r.title,
         description: r.description ?? '',
         start_date: r.start_date ? r.start_date.slice(0, 16) : '',
@@ -114,7 +116,7 @@ export default function EditCompetitionPage() {
 
   function removeTag(tag: string) { update('tags', form.tags.filter((t) => t !== tag)); }
 
-  function addRound() { setRounds((p) => [...p, { title: '', description: '', start_date: '', end_date: '' }]); }
+  function addRound() { setRounds((p) => [...p, { round_number: p.length + 1, title: '', description: '', start_date: '', end_date: '' }]); }
   function updateRound(i: number, key: keyof Round, value: string) {
     setRounds((p) => p.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
   }

@@ -80,6 +80,8 @@ export default function EditJobPage() {
     work_mode: 'onsite',
 
     contact_email: '',
+    apply_url: '',
+    apply_email: '',
   });
 
   useEffect(() => {
@@ -105,6 +107,8 @@ export default function EditJobPage() {
         work_mode: data.work_mode ?? 'onsite',
 
         contact_email: data.contact_email ?? '',
+        apply_url: data.apply_url ?? '',
+        apply_email: data.apply_email ?? '',
       });
       setLoading(false);
     });
