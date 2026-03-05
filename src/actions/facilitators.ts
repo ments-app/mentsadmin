@@ -427,66 +427,428 @@ export async function suspendStartup(startupId: string, reason: string) {
   revalidatePath('/facilitator/startups');
 }
 
+// ─── Facilitator: Create Content ──────────────────────────────
+
+export async function createFacilitatorJob(jobData: {
+  title: string;
+  company: string;
+  description?: string;
+  location?: string;
+  salary_range?: string;
+  job_type?: string;
+  requirements?: string;
+  deadline?: string;
+  skills_required?: string[];
+  experience_level?: string;
+  category?: string;
+  work_mode?: string;
+  contact_email?: string;
+  company_logo_url?: string;
+  company_website?: string;
+  benefits?: string;
+  responsibilities?: string;
+  is_active?: boolean;
+  visibility?: 'public' | 'email_restricted';
+}) {
+  const session = await requireFacilitator();
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.from('jobs').insert({
+    ...jobData,
+    created_by: session.authId,
+    facilitator_id: session.authId,
+    is_active: jobData.is_active ?? true,
+    visibility: jobData.visibility ?? 'public',
+  }).select().single();
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actionType: 'create_job',
+    actorId: session.authId,
+    actorRole: 'facilitator',
+    targetType: 'job',
+    targetId: data.id,
+    details: { title: jobData.title },
+  });
+
+  revalidatePath('/facilitator/jobs');
+  return data;
+}
+
+export async function createFacilitatorGig(gigData: {
+  title: string;
+  description?: string;
+  budget?: string;
+  duration?: string;
+  skills_required?: string[];
+  deadline?: string;
+  company?: string;
+  company_logo_url?: string;
+  company_website?: string;
+  category?: string;
+  experience_level?: string;
+  payment_type?: string;
+  deliverables?: string;
+  responsibilities?: string;
+  contact_email?: string;
+  is_active?: boolean;
+  visibility?: 'public' | 'email_restricted';
+}) {
+  const session = await requireFacilitator();
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.from('gigs').insert({
+    ...gigData,
+    created_by: session.authId,
+    facilitator_id: session.authId,
+    is_active: gigData.is_active ?? true,
+    visibility: gigData.visibility ?? 'public',
+  }).select().single();
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actionType: 'create_gig',
+    actorId: session.authId,
+    actorRole: 'facilitator',
+    targetType: 'gig',
+    targetId: data.id,
+    details: { title: gigData.title },
+  });
+
+  revalidatePath('/facilitator/gigs');
+  return data;
+}
+
+export async function createFacilitatorEvent(eventData: {
+  title: string;
+  description?: string;
+  event_date?: string;
+  location?: string;
+  event_url?: string;
+  banner_image_url?: string;
+  event_type?: string;
+  is_active?: boolean;
+  tags?: string[];
+  is_featured?: boolean;
+  organizer_name?: string;
+  category?: string;
+  visibility?: 'public' | 'email_restricted';
+}) {
+  const session = await requireFacilitator();
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.from('events').insert({
+    ...eventData,
+    created_by: session.authId,
+    facilitator_id: session.authId,
+    is_active: eventData.is_active ?? true,
+    tags: eventData.tags ?? [],
+    is_featured: eventData.is_featured ?? false,
+    visibility: eventData.visibility ?? 'public',
+  }).select().single();
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actionType: 'create_event',
+    actorId: session.authId,
+    actorRole: 'facilitator',
+    targetType: 'event',
+    targetId: data.id,
+    details: { title: eventData.title },
+  });
+
+  revalidatePath('/facilitator/events');
+  return data;
+}
+
+export async function createFacilitatorCompetition(compData: {
+  title: string;
+  description?: string;
+  deadline?: string;
+  is_external?: boolean;
+  external_url?: string;
+  has_leaderboard?: boolean;
+  prize_pool?: string;
+  banner_image_url?: string;
+  tags?: string[];
+  is_featured?: boolean;
+  is_active?: boolean;
+  domain?: string;
+  organizer_name?: string;
+  participation_type?: string;
+  team_size_min?: number;
+  team_size_max?: number;
+  eligibility_criteria?: string;
+  visibility?: 'public' | 'email_restricted';
+}) {
+  const session = await requireFacilitator();
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.from('competitions').insert({
+    ...compData,
+    created_by: session.authId,
+    facilitator_id: session.authId,
+    is_active: compData.is_active ?? true,
+    tags: compData.tags ?? [],
+    is_featured: compData.is_featured ?? false,
+    is_external: compData.is_external ?? false,
+    has_leaderboard: compData.has_leaderboard ?? false,
+    participation_type: compData.participation_type ?? 'individual',
+    team_size_min: compData.team_size_min ?? 1,
+    team_size_max: compData.team_size_max ?? 4,
+    visibility: compData.visibility ?? 'public',
+  }).select('id').single();
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actionType: 'create_competition',
+    actorId: session.authId,
+    actorRole: 'facilitator',
+    targetType: 'competition',
+    targetId: data.id,
+    details: { title: compData.title },
+  });
+
+  revalidatePath('/facilitator/competitions');
+  return data.id as string;
+}
+
 // ─── Facilitator: Scoped Content ──────────────────────────────
 
 export async function getFacilitatorJobs() {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  const { data, error } = await admin
+  // 1. Facilitator's own jobs
+  const { data: ownJobs, error: ownError } = await admin
     .from('jobs')
     .select('*')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  if (ownError) throw new Error(ownError.message);
+
+  // 2. Approved startup IDs for this facilitator
+  const { data: assignments } = await admin
+    .from('startup_facilitator_assignments')
+    .select('startup_id')
+    .eq('facilitator_id', session.authId)
+    .eq('status', 'approved');
+
+  const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
+
+  let startupJobs: any[] = [];
+  if (approvedStartupIds.length > 0) {
+    // 3. Startup jobs posted to facilitators (facilitator_only visibility) from approved startups
+    const { data: sJobs } = await admin
+      .from('jobs')
+      .select('*')
+      .in('startup_id', approvedStartupIds)
+      .eq('visibility', 'facilitator_only')
+      .order('created_at', { ascending: false });
+
+    if (sJobs && sJobs.length > 0) {
+      const { data: startups } = await admin
+        .from('startup_profiles')
+        .select('id, brand_name')
+        .in('id', approvedStartupIds);
+
+      const startupMap = new Map((startups ?? []).map((s: any) => [s.id, s.brand_name as string]));
+
+      startupJobs = sJobs
+        .filter((j: any) => !j.target_facilitator_ids || j.target_facilitator_ids.includes(session.authId))
+        .map((j: any) => ({
+          ...j,
+          _startup_name: startupMap.get(j.startup_id) ?? 'Unknown Startup',
+        }));
+    }
+  }
+
+  // Combine and sort by created_at descending
+  const allJobs = [
+    ...(ownJobs ?? []).map((j: any) => ({ ...j, _startup_name: null })),
+    ...startupJobs,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return allJobs;
 }
 
 export async function getFacilitatorGigs() {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  const { data, error } = await admin
+  // 1. Facilitator's own gigs
+  const { data: ownGigs, error: ownError } = await admin
     .from('gigs')
     .select('*')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  if (ownError) throw new Error(ownError.message);
+
+  // 2. Approved startup IDs for this facilitator
+  const { data: assignments } = await admin
+    .from('startup_facilitator_assignments')
+    .select('startup_id')
+    .eq('facilitator_id', session.authId)
+    .eq('status', 'approved');
+
+  const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
+
+  let startupGigs: any[] = [];
+  if (approvedStartupIds.length > 0) {
+    const { data: sGigs } = await admin
+      .from('gigs')
+      .select('*')
+      .in('startup_id', approvedStartupIds)
+      .eq('visibility', 'facilitator_only')
+      .order('created_at', { ascending: false });
+
+    if (sGigs && sGigs.length > 0) {
+      const { data: startups } = await admin
+        .from('startup_profiles')
+        .select('id, brand_name')
+        .in('id', approvedStartupIds);
+
+      const startupMap = new Map((startups ?? []).map((s: any) => [s.id, s.brand_name as string]));
+
+      startupGigs = sGigs
+        .filter((g: any) => !g.target_facilitator_ids || g.target_facilitator_ids.includes(session.authId))
+        .map((g: any) => ({
+          ...g,
+          _startup_name: startupMap.get(g.startup_id) ?? 'Unknown Startup',
+        }));
+    }
+  }
+
+  return [
+    ...(ownGigs ?? []).map((g: any) => ({ ...g, _startup_name: null })),
+    ...startupGigs,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 }
 
 export async function getFacilitatorEvents() {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  const { data, error } = await admin
+  // 1. Facilitator's own events
+  const { data: ownEvents, error: ownError } = await admin
     .from('events')
     .select('*')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  if (ownError) throw new Error(ownError.message);
+
+  // 2. Approved startup IDs for this facilitator
+  const { data: assignments } = await admin
+    .from('startup_facilitator_assignments')
+    .select('startup_id')
+    .eq('facilitator_id', session.authId)
+    .eq('status', 'approved');
+
+  const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
+
+  let startupEvents: any[] = [];
+  if (approvedStartupIds.length > 0) {
+    const { data: sEvents } = await admin
+      .from('events')
+      .select('*')
+      .in('startup_id', approvedStartupIds)
+      .eq('visibility', 'facilitator_only')
+      .order('created_at', { ascending: false });
+
+    if (sEvents && sEvents.length > 0) {
+      const { data: startups } = await admin
+        .from('startup_profiles')
+        .select('id, brand_name')
+        .in('id', approvedStartupIds);
+
+      const startupMap = new Map((startups ?? []).map((s: any) => [s.id, s.brand_name as string]));
+
+      startupEvents = sEvents
+        .filter((e: any) => !e.target_facilitator_ids || e.target_facilitator_ids.includes(session.authId))
+        .map((e: any) => ({
+          ...e,
+          _startup_name: startupMap.get(e.startup_id) ?? 'Unknown Startup',
+        }));
+    }
+  }
+
+  const allEvents = [
+    ...(ownEvents ?? []).map((e: any) => ({ ...e, _startup_name: null })),
+    ...startupEvents,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return allEvents;
 }
 
 export async function getFacilitatorCompetitions() {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  const { data, error } = await admin
+  // 1. Facilitator's own competitions
+  const { data: ownComps, error: ownError } = await admin
     .from('competitions')
     .select('*, participant_count:competition_entries(count)')
     .eq('facilitator_id', session.authId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
-  return (data ?? []).map((row: any) => ({
+  if (ownError) throw new Error(ownError.message);
+
+  const normalizeComp = (row: any) => ({
     ...row,
-    participant_count: (row.participant_count as { count: number }[])[0]?.count ?? 0,
+    participant_count: Array.isArray(row.participant_count)
+      ? (row.participant_count as { count: number }[])[0]?.count ?? 0
+      : (row.participant_count ?? 0),
     tags: row.tags ?? [],
-  }));
+  });
+
+  // 2. Approved startup IDs for this facilitator
+  const { data: assignments } = await admin
+    .from('startup_facilitator_assignments')
+    .select('startup_id')
+    .eq('facilitator_id', session.authId)
+    .eq('status', 'approved');
+
+  const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
+
+  let startupComps: any[] = [];
+  if (approvedStartupIds.length > 0) {
+    const { data: sComps } = await admin
+      .from('competitions')
+      .select('*, participant_count:competition_entries(count)')
+      .in('startup_id', approvedStartupIds)
+      .eq('visibility', 'facilitator_only')
+      .order('created_at', { ascending: false });
+
+    if (sComps && sComps.length > 0) {
+      const { data: startups } = await admin
+        .from('startup_profiles')
+        .select('id, brand_name')
+        .in('id', approvedStartupIds);
+
+      const startupMap = new Map((startups ?? []).map((s: any) => [s.id, s.brand_name as string]));
+
+      startupComps = sComps
+        .filter((c: any) => !c.target_facilitator_ids || c.target_facilitator_ids.includes(session.authId))
+        .map((c: any) => ({
+          ...normalizeComp(c),
+          _startup_name: startupMap.get(c.startup_id) ?? 'Unknown Startup',
+        }));
+    }
+  }
+
+  const allComps = [
+    ...(ownComps ?? []).map((c: any) => ({ ...normalizeComp(c), _startup_name: null })),
+    ...startupComps,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return allComps;
 }
 
 export async function getFacilitatorApplications() {

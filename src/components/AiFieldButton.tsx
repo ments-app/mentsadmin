@@ -30,16 +30,19 @@ export default function AiFieldButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ field, type, context }),
       });
-      const json = await res.json();
+      const raw = await res.text();
+      let json: { text?: string; error?: string } = {};
+      try { json = JSON.parse(raw); } catch { /* non-JSON response */ }
+
       if (!res.ok) {
-        setError(json.error || 'Generation failed');
+        setError(json.error || `Server error (${res.status})`);
         return;
       }
       if (json.text) {
         onGenerated(json.text);
       }
     } catch {
-      setError('Network error');
+      setError('Request failed — check dev server');
     } finally {
       setLoading(false);
     }

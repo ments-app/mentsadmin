@@ -9,9 +9,12 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getFacilitatorJobs } from '@/actions/facilitators';
 import { deleteJob } from '@/actions/jobs';
 import { getApplicationCount } from '@/actions/applications';
+import { Building2 } from 'lucide-react';
 import type { Job } from '@/lib/types';
 
-const columns: Column<Job & { _appCount?: number }>[] = [
+type FacilitatorJob = Job & { _appCount?: number; _startup_name?: string | null };
+
+const columns: Column<FacilitatorJob>[] = [
   { key: 'title', label: 'Title' },
   { key: 'company', label: 'Company' },
   {
@@ -24,6 +27,21 @@ const columns: Column<Job & { _appCount?: number }>[] = [
     ),
   },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  {
+    key: '_startup_name' as keyof Job,
+    label: 'Source',
+    render: (item) => {
+      const name = (item as FacilitatorJob)._startup_name;
+      return name ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+          <Building2 size={10} />
+          {name}
+        </span>
+      ) : (
+        <span className="text-xs text-muted">Own</span>
+      );
+    },
+  },
   {
     key: '_appCount' as keyof Job,
     label: 'Applications',
@@ -64,9 +82,9 @@ const columns: Column<Job & { _appCount?: number }>[] = [
 ];
 
 export default function FacilitatorJobsPage() {
-  const [jobs, setJobs] = useState<(Job & { _appCount?: number })[]>([]);
+  const [jobs, setJobs] = useState<FacilitatorJob[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Job | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FacilitatorJob | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -79,6 +97,8 @@ export default function FacilitatorJobsPage() {
 
   async function handleDelete() {
     if (!deleteTarget) return;
+    // Only allow deleting own jobs (not startup-posted jobs)
+    if (deleteTarget._startup_name) return;
     setDeleting(true);
     try {
       await deleteJob(deleteTarget.id);
@@ -99,7 +119,7 @@ export default function FacilitatorJobsPage() {
           <p className="mt-1 text-muted">Manage job postings</p>
         </div>
         <Link
-          href="/dashboard/jobs/new"
+          href="/facilitator/jobs/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           <Plus size={16} />
@@ -112,8 +132,8 @@ export default function FacilitatorJobsPage() {
           columns={columns}
           data={jobs}
           loading={loading}
-          editHref={(item) => `/dashboard/jobs/${item.id}`}
-          onDelete={setDeleteTarget}
+          editHref={(item) => `/facilitator/jobs/${item.id}`}
+          onDelete={(item) => { if (!item._startup_name) setDeleteTarget(item); }}
           emptyMessage="No jobs yet. Create your first one!"
         />
       </div>

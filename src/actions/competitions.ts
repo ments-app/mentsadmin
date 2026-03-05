@@ -107,6 +107,8 @@ export async function updateCompetition(
     team_size_min: number;
     team_size_max: number;
     eligibility_criteria: string;
+    visibility?: string;
+    target_facilitator_ids?: string[] | null;
   }
 ) {
   const supabase = createAdminClient();
@@ -130,6 +132,8 @@ export async function updateCompetition(
       team_size_min: formData.team_size_min || 1,
       team_size_max: formData.team_size_max || 1,
       eligibility_criteria: formData.eligibility_criteria || null,
+      ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
+      target_facilitator_ids: formData.target_facilitator_ids ?? null,
     })
     .eq('id', id);
 

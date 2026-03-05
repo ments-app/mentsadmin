@@ -22,12 +22,15 @@ import {
   Rocket,
   Building2,
   ShieldCheck,
+  GraduationCap,
+  PieChart,
 } from 'lucide-react';
 
 // ─── Nav definitions per role ──────────────────────────────────
 
 const SUPERADMIN_NAV = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/dashboard/analytics', label: 'Analytics', icon: PieChart },
   { href: '/dashboard/facilitators', label: 'Facilitators', icon: ShieldCheck },
   { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
   { href: '/dashboard/competitions', label: 'Competitions', icon: Trophy },
@@ -49,6 +52,7 @@ const FACILITATOR_NAV = [
   { href: '/facilitator/events', label: 'Events', icon: CalendarDays },
   { href: '/facilitator/competitions', label: 'Competitions', icon: Trophy },
   { href: '/facilitator/applications', label: 'Applications', icon: Users },
+  { href: '/facilitator/students', label: 'Student Access', icon: GraduationCap },
 ];
 
 const STARTUP_NAV = [

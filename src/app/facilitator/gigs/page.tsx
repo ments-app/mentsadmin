@@ -9,11 +9,29 @@ import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getFacilitatorGigs } from '@/actions/facilitators';
 import { deleteGig } from '@/actions/gigs';
 import { getApplicationCount } from '@/actions/applications';
+import { Building2 } from 'lucide-react';
 import type { Gig } from '@/lib/types';
 
-const columns: Column<Gig & { _appCount?: number }>[] = [
+type FacilitatorGig = Gig & { _appCount?: number; _startup_name?: string | null };
+
+const columns: Column<FacilitatorGig>[] = [
   { key: 'title', label: 'Title' },
   { key: 'budget', label: 'Budget', render: (item) => item.budget || '—' },
+  {
+    key: '_startup_name' as keyof Gig,
+    label: 'Source',
+    render: (item) => {
+      const name = (item as FacilitatorGig)._startup_name;
+      return name ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+          <Building2 size={10} />
+          {name}
+        </span>
+      ) : (
+        <span className="text-xs text-muted">Own</span>
+      );
+    },
+  },
   { key: 'duration', label: 'Duration', render: (item) => item.duration || '—' },
   {
     key: 'skills_required',
@@ -77,21 +95,23 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
 ];
 
 export default function FacilitatorGigsPage() {
-  const [gigs, setGigs] = useState<(Gig & { _appCount?: number })[]>([]);
+  const [gigs, setGigs] = useState<FacilitatorGig[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Gig | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<FacilitatorGig | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getFacilitatorGigs().then(async (data) => {
-      const counts = await Promise.all(data.map((g: Gig) => getApplicationCount(undefined, g.id)));
-      setGigs(data.map((g: Gig, i: number) => ({ ...g, _appCount: counts[i] })));
+      const counts = await Promise.all(data.map((g: FacilitatorGig) => getApplicationCount(undefined, g.id)));
+      setGigs(data.map((g: FacilitatorGig, i: number) => ({ ...g, _appCount: counts[i] })));
       setLoading(false);
     });
   }, []);
 
   async function handleDelete() {
     if (!deleteTarget) return;
+    // Only allow deleting own gigs (not startup-posted gigs)
+    if (deleteTarget._startup_name) return;
     setDeleting(true);
     try {
       await deleteGig(deleteTarget.id);
@@ -112,7 +132,7 @@ export default function FacilitatorGigsPage() {
           <p className="mt-1 text-muted">Manage freelance gigs</p>
         </div>
         <Link
-          href="/dashboard/gigs/new"
+          href="/facilitator/gigs/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           <Plus size={16} />
@@ -125,8 +145,8 @@ export default function FacilitatorGigsPage() {
           columns={columns}
           data={gigs}
           loading={loading}
-          editHref={(item) => `/dashboard/gigs/${item.id}`}
-          onDelete={setDeleteTarget}
+          editHref={(item) => `/facilitator/gigs/${item.id}`}
+          onDelete={(item) => { if (!item._startup_name) setDeleteTarget(item); }}
           emptyMessage="No gigs yet. Create your first one!"
         />
       </div>

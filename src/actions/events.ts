@@ -81,6 +81,8 @@ export async function updateEvent(
     is_featured: boolean;
     organizer_name: string;
     category: string;
+    visibility?: string;
+    target_facilitator_ids?: string[] | null;
   }
 ) {
   const supabase = createAdminClient();
@@ -99,6 +101,8 @@ export async function updateEvent(
       is_featured: formData.is_featured,
       organizer_name: formData.organizer_name || null,
       category: formData.category || 'event',
+      ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
+      target_facilitator_ids: formData.target_facilitator_ids ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);

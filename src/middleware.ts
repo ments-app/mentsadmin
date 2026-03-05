@@ -34,7 +34,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── Static / public paths ───────────────────────────────
-  if (pathname.startsWith('/auth')) return supabaseResponse;
+  if (pathname.startsWith('/auth') || pathname.startsWith('/api')) return supabaseResponse;
 
   // ─── Root redirect ────────────────────────────────────────
   if (pathname === '/') {
@@ -100,8 +100,12 @@ export async function middleware(req: NextRequest) {
   if (role === 'facilitator') {
     if (status === 'approved') {
       if (pathname.startsWith('/facilitator')) return supabaseResponse;
-      // Allow facilitator to still use onboarding if needed
       if (pathname.startsWith('/onboarding')) return supabaseResponse;
+      // Allow facilitators to use shared create/edit forms
+      if (pathname.startsWith('/dashboard/jobs/')) return supabaseResponse;
+      if (pathname.startsWith('/dashboard/gigs/')) return supabaseResponse;
+      if (pathname.startsWith('/dashboard/events/')) return supabaseResponse;
+      if (pathname.startsWith('/dashboard/competitions/')) return supabaseResponse;
       return redirect('/facilitator/dashboard');
     }
     // Pending / rejected / suspended

@@ -49,6 +49,7 @@ export async function createJob(formData: {
   work_mode: string;
 
   contact_email: string;
+  visibility?: string;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('jobs').insert({
@@ -71,8 +72,8 @@ export async function createJob(formData: {
     responsibilities: formData.responsibilities || null,
     category: formData.category || 'other',
     work_mode: formData.work_mode || 'onsite',
-
     contact_email: formData.contact_email || null,
+    visibility: formData.visibility ?? 'public',
   });
 
   if (error) throw new Error(error.message);
@@ -104,6 +105,8 @@ export async function updateJob(
     apply_url: string;
     apply_email: string;
     contact_email: string;
+    visibility?: string;
+    target_facilitator_ids?: string[] | null;
   }
 ) {
   const supabase = createAdminClient();
@@ -132,6 +135,8 @@ export async function updateJob(
       apply_url: formData.apply_url || null,
       apply_email: formData.apply_email || null,
       contact_email: formData.contact_email || null,
+      ...(formData.visibility ? { visibility: formData.visibility } : {}),
+      target_facilitator_ids: formData.target_facilitator_ids ?? null,
     })
     .eq('id', id);
 

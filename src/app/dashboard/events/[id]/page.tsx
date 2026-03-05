@@ -8,6 +8,7 @@ import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getEvent, updateEvent, deleteEvent } from '@/actions/events';
+import LocationInput from '@/components/LocationInput';
 
 const eventTypeOptions = [
   { value: 'online', label: 'Online' },
@@ -157,8 +158,7 @@ export default function EditEventPage() {
           <div className="grid grid-cols-2 gap-4">
             <DateTimePicker label="Event Date" name="event_date" value={form.event_date}
               onChange={(v) => update('event_date', v)} />
-            <FormField type="text" label="Location" name="location" value={form.location}
-              onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru / Online" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
           </div>
 
           <FormField type="text" label="Organizer Name" name="organizer_name" value={form.organizer_name}

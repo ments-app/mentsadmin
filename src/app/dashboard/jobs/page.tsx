@@ -8,6 +8,7 @@ import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getJobs, deleteJob } from '@/actions/jobs';
 import { getApplicationCount } from '@/actions/applications';
+import { Globe, Lock } from 'lucide-react';
 import type { Job } from '@/lib/types';
 
 const columns: Column<Job & { _appCount?: number }>[] = [
@@ -23,6 +24,22 @@ const columns: Column<Job & { _appCount?: number }>[] = [
     ),
   },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  {
+    key: 'visibility',
+    label: 'Visibility',
+    render: (item) =>
+      item.visibility === 'facilitator_only' ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+          <Lock size={10} />
+          Facilitators
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+          <Globe size={10} />
+          Public
+        </span>
+      ),
+  },
   {
     key: '_appCount' as keyof Job,
     label: 'Applications',

@@ -21,6 +21,21 @@ export async function getMyProfile(): Promise<AdminProfile | null> {
   return data ?? null;
 }
 
+export async function getMyAdminRole(): Promise<AdminRole | null> {
+  const supabase = await createAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from('admin_profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  return (data?.role as AdminRole) ?? null;
+}
+
 // ─── Facilitator Registration ─────────────────────────────────
 
 export async function registerAsFacilitator(formData: {

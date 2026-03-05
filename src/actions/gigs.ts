@@ -96,6 +96,7 @@ export async function updateGig(
     deliverables: string;
     responsibilities: string;
     contact_email: string;
+    visibility?: string;
   }
 ) {
   const supabase = createAdminClient();
@@ -120,6 +121,7 @@ export async function updateGig(
       deliverables: formData.deliverables || null,
       responsibilities: formData.responsibilities || null,
       contact_email: formData.contact_email || null,
+      ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
     })
     .eq('id', id);
 

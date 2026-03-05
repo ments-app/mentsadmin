@@ -8,6 +8,7 @@ import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getStartupJobs, deleteStartupJob } from '@/actions/startup-portal';
 import { getApplicationCount } from '@/actions/applications';
+import { Globe, Lock } from 'lucide-react';
 import type { Job } from '@/lib/types';
 
 const columns: Column<Job & { _appCount?: number }>[] = [
@@ -23,6 +24,22 @@ const columns: Column<Job & { _appCount?: number }>[] = [
     ),
   },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  {
+    key: 'visibility',
+    label: 'Visibility',
+    render: (item) =>
+      item.visibility === 'facilitator_only' ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">
+          <Lock size={10} />
+          Facilitators Only
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
+          <Globe size={10} />
+          Public
+        </span>
+      ),
+  },
   {
     key: '_appCount' as keyof Job,
     label: 'Applications',
@@ -98,7 +115,7 @@ export default function StartupJobsPage() {
           <p className="mt-1 text-muted">Manage job postings</p>
         </div>
         <Link
-          href="/dashboard/jobs/new"
+          href="/startup/jobs/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           <Plus size={16} />
@@ -111,7 +128,7 @@ export default function StartupJobsPage() {
           columns={columns}
           data={jobs}
           loading={loading}
-          editHref={(item) => `/dashboard/jobs/${item.id}`}
+          editHref={(item) => `/startup/jobs/${item.id}`}
           onDelete={setDeleteTarget}
           emptyMessage="No jobs yet. Create your first one!"
         />

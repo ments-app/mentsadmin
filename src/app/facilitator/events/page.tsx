@@ -118,7 +118,7 @@ export default function FacilitatorEventsPage() {
           <p className="mt-1 text-muted">Manage events</p>
         </div>
         <Link
-          href="/dashboard/events/new"
+          href="/facilitator/events/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           <Plus size={16} />
@@ -131,7 +131,7 @@ export default function FacilitatorEventsPage() {
           columns={columns}
           data={events}
           loading={loading}
-          editHref={(item) => `/dashboard/events/${item.id}`}
+          editHref={(item) => `/facilitator/events/${item.id}`}
           onDelete={setDeleteTarget}
           emptyMessage="No events yet. Create your first one!"
         />

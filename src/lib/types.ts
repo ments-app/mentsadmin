@@ -68,6 +68,10 @@ export interface Job {
   contact_email: string | null;
   apply_url: string | null;
   apply_email: string | null;
+  // Ownership & visibility
+  startup_id: string | null;
+  facilitator_id: string | null;
+  visibility: 'public' | 'facilitator_only';
 }
 
 export interface Gig {

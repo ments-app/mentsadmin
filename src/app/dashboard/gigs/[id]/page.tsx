@@ -8,6 +8,7 @@ import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import { getGig, updateGig, deleteGig } from '@/actions/gigs';
 import AiFieldButton from '@/components/AiFieldButton';
+import SkillsInput from '@/components/SkillsInput';
 
 const categoryOptions = [
   { value: 'development', label: 'Development' },
@@ -43,7 +44,6 @@ export default function EditGigPage() {
   const [deleting, setDeleting] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [error, setError] = useState('');
-  const [skillInput, setSkillInput] = useState('');
   const [fetchingLogo, setFetchingLogo] = useState(false);
   const [form, setForm] = useState({
     title: '',
@@ -114,18 +114,6 @@ export default function EditGigPage() {
     } finally {
       setFetchingLogo(false);
     }
-  }
-
-  function addSkill() {
-    const skill = skillInput.trim();
-    if (skill && !form.skills_required.includes(skill)) {
-      update('skills_required', [...form.skills_required, skill]);
-      setSkillInput('');
-    }
-  }
-
-  function removeSkill(skill: string) {
-    update('skills_required', form.skills_required.filter((s) => s !== skill));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -393,47 +381,7 @@ export default function EditGigPage() {
         {/* --- Skills --- */}
         <div className="rounded-lg border border-card-border p-4 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addSkill();
-                }
-              }}
-              placeholder="Type a skill and press Enter"
-              className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-            <button
-              type="button"
-              onClick={addSkill}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-            >
-              Add
-            </button>
-          </div>
-          {form.skills_required.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {form.skills_required.map((skill) => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="ml-0.5 text-purple-500 hover:text-purple-700"
-                  >
-                    &times;
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
         {/* --- Contact --- */}

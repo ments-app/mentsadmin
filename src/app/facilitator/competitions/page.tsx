@@ -136,7 +136,7 @@ export default function FacilitatorCompetitionsPage() {
           <p className="mt-1 text-muted text-sm">Manage hub competitions</p>
         </div>
         <Link
-          href="/dashboard/competitions/new"
+          href="/facilitator/competitions/new"
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
         >
           <Plus size={16} />
@@ -149,7 +149,7 @@ export default function FacilitatorCompetitionsPage() {
           columns={columns}
           data={competitions}
           loading={loading}
-          editHref={(item) => `/dashboard/competitions/${item.id}`}
+          editHref={(item) => `/facilitator/competitions/${item.id}`}
           onDelete={setDeleteTarget}
           emptyMessage="No competitions yet. Create your first one!"
         />

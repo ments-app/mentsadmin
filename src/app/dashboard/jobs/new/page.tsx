@@ -1,12 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FormField from '@/components/FormField';
 import DateTimePicker from '@/components/DateTimePicker';
 import { createJob } from '@/actions/jobs';
+import { createStartupJob } from '@/actions/startup-portal';
+import { createFacilitatorJob } from '@/actions/facilitators';
+import { getMyAdminRole } from '@/actions/rbac';
 import { supabase } from '@/lib/supabase';
 import AiFieldButton from '@/components/AiFieldButton';
+import { Globe, Lock } from 'lucide-react';
+import SkillsInput from '@/components/SkillsInput';
+import SalaryInput from '@/components/SalaryInput';
+import LocationInput from '@/components/LocationInput';
 
 const jobTypeOptions = [
   { value: 'full-time', label: 'Full-time' },
@@ -52,8 +59,8 @@ export default function NewJobPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [skillInput, setSkillInput] = useState('');
   const [fetchingLogo, setFetchingLogo] = useState(false);
+  const [userRole, setUserRole] = useState<'startup' | 'facilitator' | 'superadmin' | null>(null);
   const [form, setForm] = useState({
     title: '',
     company: '',
@@ -64,7 +71,6 @@ export default function NewJobPage() {
     requirements: '',
     deadline: '',
     is_active: true,
-    // New fields
     company_logo_url: '',
     company_website: '',
     experience_level: 'any',
@@ -73,9 +79,13 @@ export default function NewJobPage() {
     responsibilities: '',
     category: 'other',
     work_mode: 'onsite',
-
     contact_email: '',
+    visibility: 'public' as 'public' | 'facilitator_only',
   });
+
+  useEffect(() => {
+    getMyAdminRole().then((role) => setUserRole(role));
+  }, []);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -87,14 +97,11 @@ export default function NewJobPage() {
     setFetchingLogo(true);
     try {
       const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
-      // Try Clearbit first (high-res logo)
       const clearbitUrl = `https://logo.clearbit.com/${domain}`;
-      const res = await fetch(clearbitUrl, { method: 'HEAD', mode: 'no-cors' });
-      // no-cors won't give us status, so we just set it and let the preview show
+      await fetch(clearbitUrl, { method: 'HEAD', mode: 'no-cors' });
       update('company_logo_url', clearbitUrl);
     } catch {
       try {
-        // Fallback: Google favicon service
         const domain = new URL(url.startsWith('http') ? url : `https://${url}`).hostname;
         update('company_logo_url', `https://www.google.com/s2/favicons?domain=${domain}&sz=128`);
       } catch {
@@ -105,29 +112,58 @@ export default function NewJobPage() {
     }
   }
 
-  function addSkill() {
-    const skill = skillInput.trim();
-    if (skill && !form.skills_required.includes(skill)) {
-      update('skills_required', [...form.skills_required, skill]);
-      setSkillInput('');
-    }
-  }
-
-  function removeSkill(skill: string) {
-    update('skills_required', form.skills_required.filter((s) => s !== skill));
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      await createJob({ ...form, created_by: user.id });
-      router.push('/dashboard/jobs');
+      if (userRole === 'startup') {
+        await createStartupJob({
+          title: form.title,
+          company: form.company,
+          description: form.description,
+          location: form.location,
+          salary_range: form.salary_range,
+          job_type: form.job_type,
+          requirements: form.requirements,
+          deadline: form.deadline,
+          skills_required: form.skills_required,
+          experience_level: form.experience_level,
+          category: form.category,
+          work_mode: form.work_mode,
+          contact_email: form.contact_email,
+          visibility: form.visibility,
+        });
+        router.push('/startup/jobs');
+      } else if (userRole === 'facilitator') {
+        await createFacilitatorJob({
+          title: form.title,
+          company: form.company,
+          description: form.description,
+          location: form.location,
+          salary_range: form.salary_range,
+          job_type: form.job_type,
+          requirements: form.requirements,
+          deadline: form.deadline,
+          skills_required: form.skills_required,
+          experience_level: form.experience_level,
+          category: form.category,
+          work_mode: form.work_mode,
+          contact_email: form.contact_email,
+          company_logo_url: form.company_logo_url,
+          company_website: form.company_website,
+          benefits: form.benefits,
+          responsibilities: form.responsibilities,
+          is_active: form.is_active,
+        });
+        router.push('/facilitator/jobs');
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        await createJob({ ...form, created_by: user.id });
+        router.push('/dashboard/jobs');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -144,6 +180,46 @@ export default function NewJobPage() {
         {error && (
           <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">
             {error}
+          </div>
+        )}
+
+        {/* --- Posting Visibility (startups only) --- */}
+        {userRole === 'startup' && (
+          <div className="rounded-lg border border-card-border p-4 space-y-3">
+            <h2 className="text-lg font-semibold text-foreground">Where to Post</h2>
+            <p className="text-sm text-muted">Choose who can see and apply to this job.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => update('visibility', 'public')}
+                className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+                  form.visibility === 'public'
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                    : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
+                }`}
+              >
+                <Globe size={20} className={form.visibility === 'public' ? 'text-primary' : 'text-muted'} />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Open Platform</p>
+                  <p className="text-xs text-muted mt-0.5">Visible to everyone on the platform</p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => update('visibility', 'facilitator_only')}
+                className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+                  form.visibility === 'facilitator_only'
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                    : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
+                }`}
+              >
+                <Lock size={20} className={form.visibility === 'facilitator_only' ? 'text-primary' : 'text-muted'} />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">My Facilitators Only</p>
+                  <p className="text-xs text-muted mt-0.5">Shared only with facilitators who approved you</p>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 
@@ -206,22 +282,11 @@ export default function NewJobPage() {
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField
-              type="text"
-              label="Location"
-              name="location"
-              value={form.location}
-              onChange={(v) => update('location', v)}
-              placeholder="e.g. San Francisco, CA"
-            />
-            <FormField
-              type="text"
-              label="Salary Range"
-              name="salary_range"
-              value={form.salary_range}
-              onChange={(v) => update('salary_range', v)}
-              placeholder="e.g. $80k - $120k"
-            />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-foreground">Salary Range</label>
+              <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
+            </div>
           </div>
           <DateTimePicker
             label="Deadline"
@@ -375,50 +440,10 @@ export default function NewJobPage() {
         {/* --- Skills --- */}
         <div className="rounded-lg border border-card-border p-4 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addSkill();
-                }
-              }}
-              placeholder="Type a skill and press Enter"
-              className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
-            <button
-              type="button"
-              onClick={addSkill}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-            >
-              Add
-            </button>
-          </div>
-          {form.skills_required.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {form.skills_required.map((skill) => (
-                <span
-                  key={skill}
-                  className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300"
-                >
-                  {skill}
-                  <button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    className="ml-0.5 text-purple-500 hover:text-purple-700"
-                  >
-                    &times;
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+          <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
-        {/* --- Application --- */}
+        {/* --- Contact --- */}
         <div className="rounded-lg border border-card-border p-4 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Contact</h2>
           <FormField
