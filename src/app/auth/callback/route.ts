@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     if (user) {
       const admin = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
       );
 
       // 1. Already has admin_profiles → let middleware route them
@@ -66,6 +66,15 @@ export async function GET(req: NextRequest) {
         .maybeSingle();
 
       if (mentsUser?.role === 'super_admin') {
+        // Auto-provision admin_profiles row so the dashboard layout guard passes
+        await admin.from('admin_profiles').upsert({
+          id: user.id,
+          role: 'superadmin',
+          verification_status: 'approved',
+          email: user.email ?? '',
+          display_name: user.user_metadata?.full_name ?? user.email ?? '',
+        }, { onConflict: 'id' });
+
         const url = req.nextUrl.clone();
         url.pathname = '/resolving';
         url.search = '';
