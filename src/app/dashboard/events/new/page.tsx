@@ -24,6 +24,12 @@ const categoryOptions = [
   { value: 'seminar', label: 'Seminar' },
 ];
 
+const entryTypeOptions = [
+  { value: '', label: 'None (Normal Event)' },
+  { value: 'startup', label: 'Startup Entries' },
+  { value: 'project', label: 'Personal Project Entries' },
+];
+
 export default function NewEventPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -43,6 +49,10 @@ export default function NewEventPage() {
     is_featured: false,
     organizer_name: '',
     category: 'event',
+    // Arena fields
+    entry_type: '' as string,
+    arena_enabled: false,
+    virtual_fund_amount: 1000000,
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -134,6 +144,49 @@ export default function NewEventPage() {
                 className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted" />
             </div>
           </div>
+        </section>
+
+        {/* ── Investment Arena ── */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Investment Arena</h2>
+          <p className="text-xs text-muted">Enable this to run a Startup Investment Arena where participants invest virtual money in stalls.</p>
+
+          <FormField type="checkbox" label="Enable Investment Arena" name="arena_enabled"
+            checked={form.arena_enabled} onChange={(v: boolean) => update('arena_enabled', v)} />
+
+          {form.arena_enabled && (
+            <div className="space-y-4 pl-1 border-l-2 border-primary/30 ml-2">
+              <FormField type="select" label="Entry Type" name="entry_type" value={form.entry_type}
+                onChange={(v: string) => update('entry_type', v)} options={entryTypeOptions} required />
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Virtual Fund per Participant</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted">₹</span>
+                  <input
+                    type="number"
+                    value={form.virtual_fund_amount}
+                    onChange={(e) => update('virtual_fund_amount', parseInt(e.target.value) || 1000000)}
+                    min={100000}
+                    step={100000}
+                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  Default: ₹10,00,000 — Each audience member gets this amount to invest across stalls.
+                </p>
+              </div>
+
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 p-3 text-xs text-blue-700 dark:text-blue-300">
+                <strong>How it works:</strong>
+                <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                  <li><strong>Round 1 (Registration):</strong> {form.entry_type === 'startup' ? 'Startups' : form.entry_type === 'project' ? 'Project creators' : 'Participants'} register their stalls</li>
+                  <li><strong>Round 2 (Investment):</strong> Audience members (non-stall owners) join, receive virtual funds, and invest in stalls</li>
+                  <li>A live leaderboard shows which stalls received the most funding</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ── Settings ── */}

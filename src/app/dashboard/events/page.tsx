@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Star } from 'lucide-react';
+import { Plus, Star, Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -25,6 +25,9 @@ const columns: Column<Event>[] = [
       <span className="flex items-center gap-1.5">
         {item.is_featured && (
           <Star size={13} className="shrink-0 fill-amber-400 text-amber-400" />
+        )}
+        {item.arena_enabled && (
+          <Trophy size={13} className="shrink-0 text-emerald-500" />
         )}
         {item.title}
       </span>
@@ -57,6 +60,25 @@ const columns: Column<Event>[] = [
         {item.event_type}
       </span>
     ),
+  },
+  {
+    key: 'arena_round',
+    label: 'Arena',
+    render: (item) => {
+      if (!item.arena_enabled) return <span className="text-muted">—</span>;
+      const roundLabels: Record<string, string> = { registration: 'Round 1', investment: 'Round 2', completed: 'Done' };
+      const roundColors: Record<string, string> = {
+        registration: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+        investment: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
+        completed: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+      };
+      const round = item.arena_round ?? 'registration';
+      return (
+        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${roundColors[round] ?? ''}`}>
+          {roundLabels[round] ?? round}
+        </span>
+      );
+    },
   },
   { key: 'organizer_name', label: 'Organizer', render: (item) => item.organizer_name || '—' },
   { key: 'location', label: 'Location', render: (item) => item.location || '—' },

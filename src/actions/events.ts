@@ -42,6 +42,10 @@ export async function createEvent(formData: {
   is_featured: boolean;
   organizer_name: string;
   category: string;
+  // Arena fields
+  entry_type?: string | null;
+  arena_enabled?: boolean;
+  virtual_fund_amount?: number;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('events').insert({
@@ -58,6 +62,10 @@ export async function createEvent(formData: {
     is_featured: formData.is_featured,
     organizer_name: formData.organizer_name || null,
     category: formData.category || 'event',
+    entry_type: formData.entry_type || null,
+    arena_enabled: formData.arena_enabled ?? false,
+    virtual_fund_amount: formData.virtual_fund_amount ?? 1000000,
+    arena_round: formData.arena_enabled ? 'registration' : null,
   });
 
   if (error) throw new Error(error.message);
@@ -83,6 +91,11 @@ export async function updateEvent(
     category: string;
     visibility?: string;
     target_facilitator_ids?: string[] | null;
+    // Arena fields
+    entry_type?: string | null;
+    arena_enabled?: boolean;
+    virtual_fund_amount?: number;
+    arena_round?: string | null;
   }
 ) {
   const supabase = createAdminClient();
@@ -103,6 +116,10 @@ export async function updateEvent(
       category: formData.category || 'event',
       ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
       target_facilitator_ids: formData.target_facilitator_ids ?? null,
+      entry_type: formData.entry_type || null,
+      arena_enabled: formData.arena_enabled ?? false,
+      virtual_fund_amount: formData.virtual_fund_amount ?? 1000000,
+      arena_round: formData.arena_round || null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id);
@@ -110,6 +127,120 @@ export async function updateEvent(
   if (error) throw new Error(error.message);
   revalidatePath('/dashboard/events');
   revalidatePath('/dashboard');
+}
+
+export async function getEventStalls(eventId: string) {
+  const supabase = createAdminClient();
+  const { data: stalls, error } = await supabase
+    .from('event_stalls')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  if (!stalls || stalls.length === 0) return [];
+
+  // Fetch user info separately
+  const userIds = [...new Set(stalls.map(s => s.user_id))];
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, full_name, username, avatar_url')
+    .in('id', userIds);
+
+  // Fetch linked startups
+  const startupIds = stalls.map(s => s.startup_id).filter(Boolean);
+  let startups: { id: string; brand_name: string; logo_url: string | null; stage: string }[] = [];
+  if (startupIds.length > 0) {
+    const { data } = await supabase
+      .from('startup_profiles')
+      .select('id, brand_name, logo_url, stage')
+      .in('id', startupIds);
+    startups = data ?? [];
+  }
+
+  const userMap = Object.fromEntries((users ?? []).map(u => [u.id, u]));
+  const startupMap = Object.fromEntries(startups.map(s => [s.id, s]));
+
+  return stalls.map(s => ({
+    ...s,
+    user: userMap[s.user_id] ?? null,
+    startup: s.startup_id ? startupMap[s.startup_id] ?? null : null,
+  }));
+}
+
+export async function getEventAudience(eventId: string) {
+  const supabase = createAdminClient();
+  const { data: audience, error } = await supabase
+    .from('event_audience')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('joined_at', { ascending: true });
+
+  if (error) throw new Error(error.message);
+  if (!audience || audience.length === 0) return [];
+
+  // Fetch user info separately
+  const userIds = [...new Set(audience.map(a => a.user_id))];
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, full_name, username, avatar_url')
+    .in('id', userIds);
+
+  const userMap = Object.fromEntries((users ?? []).map(u => [u.id, u]));
+
+  return audience.map(a => ({
+    ...a,
+    user: userMap[a.user_id] ?? null,
+  }));
+}
+
+export async function getEventLeaderboard(eventId: string) {
+  const supabase = createAdminClient();
+
+  // Get stalls with their total funding
+  const { data: stalls, error: stallError } = await supabase
+    .from('event_stalls')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+
+  if (stallError) throw new Error(stallError.message);
+
+  // Get investments grouped by stall
+  const { data: investments, error: invError } = await supabase
+    .from('event_investments')
+    .select('stall_id, amount')
+    .eq('event_id', eventId);
+
+  if (invError) throw new Error(invError.message);
+
+  // Aggregate funding per stall
+  const fundingMap: Record<string, { total: number; count: number }> = {};
+  for (const inv of investments ?? []) {
+    if (!fundingMap[inv.stall_id]) fundingMap[inv.stall_id] = { total: 0, count: 0 };
+    fundingMap[inv.stall_id].total += inv.amount;
+    fundingMap[inv.stall_id].count += 1;
+  }
+
+  const leaderboard = (stalls ?? []).map((s) => ({
+    ...s,
+    total_funding: fundingMap[s.id]?.total ?? 0,
+    investor_count: fundingMap[s.id]?.count ?? 0,
+  }));
+
+  leaderboard.sort((a, b) => b.total_funding - a.total_funding);
+  return leaderboard;
+}
+
+export async function updateArenaRound(eventId: string, round: 'registration' | 'investment' | 'completed') {
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('events')
+    .update({ arena_round: round, updated_at: new Date().toISOString() })
+    .eq('id', eventId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath('/dashboard/events');
 }
 
 export async function deleteEvent(id: string) {

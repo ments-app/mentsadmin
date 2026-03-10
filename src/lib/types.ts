@@ -156,6 +156,44 @@ export interface Event {
   is_featured: boolean;
   organizer_name: string | null;
   category: 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar';
+  // Startup Investment Arena
+  entry_type: 'startup' | 'project' | null;
+  arena_enabled: boolean;
+  virtual_fund_amount: number;
+  arena_round: 'registration' | 'investment' | 'completed' | null;
+}
+
+export interface EventStall {
+  id: string;
+  event_id: string;
+  user_id: string;
+  stall_name: string;
+  tagline: string | null;
+  description: string | null;
+  demo_url: string | null;
+  pitch_deck_url: string | null;
+  logo_url: string | null;
+  category: string | null;
+  startup_id: string | null;
+  project_id: string | null;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  total_funding?: number;
+  investor_count?: number;
+  user?: { full_name: string; avatar_url: string | null; username: string };
+}
+
+export interface EventInvestment {
+  id: string;
+  event_id: string;
+  stall_id: string;
+  investor_id: string;
+  amount: number;
+  invested_at: string;
+  // Joined
+  stall?: EventStall;
+  investor?: { full_name: string; username: string; avatar_url: string | null };
 }
 
 export interface SchemeMetadata {

@@ -1,31 +1,12 @@
-import { createServerClient } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createAuthClient, createAdminClient } from '@/lib/supabase-server';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
 
   if (code) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookieOptions: { name: 'sb-admin-auth' },
-        cookies: {
-          getAll() { return cookieStore.getAll(); },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {}
-          },
-        },
-      }
-    );
+    const supabase = await createAuthClient();
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
@@ -35,14 +16,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // Get the authenticated user
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      const admin = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
+      const admin = createAdminClient();
 
       // 1. Already has admin_profiles → let middleware route them
       const { data: existingProfile } = await admin
@@ -66,13 +43,21 @@ export async function GET(req: NextRequest) {
         .maybeSingle();
 
       if (mentsUser?.role === 'super_admin') {
+        await admin.from('admin_profiles').upsert({
+          id: user.id,
+          role: 'superadmin',
+          verification_status: 'approved',
+          email: user.email ?? '',
+          display_name: user.user_metadata?.full_name ?? user.email ?? '',
+        }, { onConflict: 'id' });
+
         const url = req.nextUrl.clone();
         url.pathname = '/resolving';
         url.search = '';
         return NextResponse.redirect(url);
       }
 
-      // 3. New user (with or without Ments account) → role selection
+      // 3. New user → role selection
       const url = req.nextUrl.clone();
       url.pathname = '/onboarding';
       url.search = '';

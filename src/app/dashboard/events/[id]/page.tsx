@@ -7,8 +7,9 @@ import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
-import { getEvent, updateEvent, deleteEvent } from '@/actions/events';
+import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound } from '@/actions/events';
 import LocationInput from '@/components/LocationInput';
+import { Users, Store } from 'lucide-react';
 
 const eventTypeOptions = [
   { value: 'online', label: 'Online' },
@@ -22,6 +23,18 @@ const categoryOptions = [
   { value: 'workshop', label: 'Workshop' },
   { value: 'conference', label: 'Conference' },
   { value: 'seminar', label: 'Seminar' },
+];
+
+const entryTypeOptions = [
+  { value: '', label: 'None (Normal Event)' },
+  { value: 'startup', label: 'Startup Entries' },
+  { value: 'project', label: 'Personal Project Entries' },
+];
+
+const arenaRoundOptions = [
+  { value: 'registration', label: 'Round 1 — Stall Registration' },
+  { value: 'investment', label: 'Round 2 — Audience Investment' },
+  { value: 'completed', label: 'Completed — Results Announced' },
 ];
 
 export default function EditEventPage() {
@@ -47,7 +60,20 @@ export default function EditEventPage() {
     is_featured: false,
     organizer_name: '',
     category: 'event',
+    // Arena fields
+    entry_type: '' as string,
+    arena_enabled: false,
+    virtual_fund_amount: 1000000,
+    arena_round: '' as string,
   });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [stallsList, setStallsList] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [audienceList, setAudienceList] = useState<any[]>([]);
+  const [roundSwitching, setRoundSwitching] = useState(false);
 
   useEffect(() => {
     getEvent(id).then((data) => {
@@ -64,8 +90,19 @@ export default function EditEventPage() {
         is_featured: data.is_featured ?? false,
         organizer_name: data.organizer_name ?? '',
         category: data.category ?? 'event',
+        entry_type: data.entry_type ?? '',
+        arena_enabled: data.arena_enabled ?? false,
+        virtual_fund_amount: data.virtual_fund_amount ?? 1000000,
+        arena_round: data.arena_round ?? '',
       });
       setLoading(false);
+
+      // Load arena data if enabled
+      if (data.arena_enabled) {
+        getEventLeaderboard(id).then(setLeaderboard).catch(console.error);
+        getEventStalls(id).then(setStallsList).catch(console.error);
+        getEventAudience(id).then(setAudienceList).catch(console.error);
+      }
     });
   }, [id]);
 
@@ -184,6 +221,181 @@ export default function EditEventPage() {
                 className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted" />
             </div>
           </div>
+        </section>
+
+        {/* ── Investment Arena ── */}
+        <section className="space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Investment Arena</h2>
+
+          <FormField type="checkbox" label="Enable Investment Arena" name="arena_enabled"
+            checked={form.arena_enabled} onChange={(v: boolean) => update('arena_enabled', v)} />
+
+          {form.arena_enabled && (
+            <div className="space-y-4 pl-1 border-l-2 border-primary/30 ml-2">
+              <FormField type="select" label="Entry Type" name="entry_type" value={form.entry_type}
+                onChange={(v: string) => update('entry_type', v)} options={entryTypeOptions} required />
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Virtual Fund per Participant</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted">₹</span>
+                  <input
+                    type="number"
+                    value={form.virtual_fund_amount}
+                    onChange={(e) => update('virtual_fund_amount', parseInt(e.target.value) || 1000000)}
+                    min={100000}
+                    step={100000}
+                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Arena Round Control */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-foreground">Current Round</label>
+                <div className="flex items-center gap-2">
+                  <FormField type="select" label="" name="arena_round" value={form.arena_round}
+                    onChange={(v: string) => update('arena_round', v)} options={arenaRoundOptions} />
+                  <button
+                    type="button"
+                    disabled={roundSwitching || !form.arena_round}
+                    onClick={async () => {
+                      setRoundSwitching(true);
+                      try {
+                        await updateArenaRound(id, form.arena_round as 'registration' | 'investment' | 'completed');
+                      } catch (err) {
+                        console.error(err);
+                      }
+                      setRoundSwitching(false);
+                    }}
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {roundSwitching ? 'Switching...' : 'Switch Round'}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  Switch between rounds to control what participants can do.
+                </p>
+              </div>
+
+              {/* Registered Stalls (Applicants) */}
+              {stallsList.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                    <Store size={14} /> Registered Stalls ({stallsList.length})
+                  </h3>
+                  <div className="rounded-lg border border-card-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-card-border/30">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Stall Name</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Registered By</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Linked Startup</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Category</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Tagline</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stallsList.map((stall, i) => (
+                          <tr key={stall.id} className="border-t border-card-border">
+                            <td className="px-3 py-2 text-muted">{i + 1}</td>
+                            <td className="px-3 py-2 font-medium text-foreground">{stall.stall_name}</td>
+                            <td className="px-3 py-2 text-foreground">
+                              {stall.user?.full_name || stall.user?.username || '—'}
+                            </td>
+                            <td className="px-3 py-2 text-foreground">
+                              {stall.startup?.brand_name ? (
+                                <span className="inline-flex items-center gap-1">
+                                  {stall.startup.brand_name}
+                                  <span className="text-xs text-muted">({stall.startup.stage})</span>
+                                </span>
+                              ) : '—'}
+                            </td>
+                            <td className="px-3 py-2 text-muted capitalize">{stall.category || '—'}</td>
+                            <td className="px-3 py-2 text-muted text-xs max-w-[200px] truncate">{stall.tagline || '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              {stallsList.length === 0 && (
+                <p className="text-xs text-muted italic">No stalls registered yet.</p>
+              )}
+
+              {/* Audience (Investors) */}
+              {audienceList.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                    <Users size={14} /> Audience / Investors ({audienceList.length})
+                  </h3>
+                  <div className="rounded-lg border border-card-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-card-border/30">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Name</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Username</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Remaining Balance</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Invested</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {audienceList.map((a, i) => {
+                          const totalFund = form.virtual_fund_amount || 1000000;
+                          const invested = totalFund - (a.virtual_balance ?? 0);
+                          return (
+                            <tr key={a.id} className="border-t border-card-border">
+                              <td className="px-3 py-2 text-muted">{i + 1}</td>
+                              <td className="px-3 py-2 font-medium text-foreground">{a.user?.full_name || '—'}</td>
+                              <td className="px-3 py-2 text-muted">{a.user?.username || '—'}</td>
+                              <td className="px-3 py-2 text-right text-foreground">₹{(a.virtual_balance ?? 0).toLocaleString('en-IN')}</td>
+                              <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
+                                ₹{invested.toLocaleString('en-IN')}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Leaderboard Preview */}
+              {leaderboard.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">Funding Leaderboard</h3>
+                  <div className="rounded-lg border border-card-border overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-card-border/30">
+                        <tr>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
+                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Stall</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Funding</th>
+                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Investors</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaderboard.map((stall, i) => (
+                          <tr key={stall.id} className="border-t border-card-border">
+                            <td className="px-3 py-2 text-muted">{i + 1}</td>
+                            <td className="px-3 py-2 font-medium text-foreground">{stall.stall_name}</td>
+                            <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
+                              ₹{(stall.total_funding / 100000).toFixed(1)}L
+                            </td>
+                            <td className="px-3 py-2 text-right text-muted">{stall.investor_count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </section>
 
         <section className="space-y-3">

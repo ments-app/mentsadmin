@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   GraduationCap,
   PieChart,
+  BadgeDollarSign,
 } from 'lucide-react';
 
 // ─── Nav definitions per role ──────────────────────────────────
@@ -42,6 +43,7 @@ const SUPERADMIN_NAV = [
   { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
   { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },
   { href: '/dashboard/feed-analytics', label: 'Feed Analytics', icon: BarChart3 },
+  { href: '/dashboard/investors', label: 'Investors', icon: BadgeDollarSign },
 ];
 
 const FACILITATOR_NAV = [
