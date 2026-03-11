@@ -5,68 +5,89 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
 
-  if (code) {
+  const loginUrl = req.nextUrl.clone();
+  loginUrl.pathname = '/login';
+
+  if (!code) {
+    loginUrl.searchParams.set('error', 'auth_failed');
+    return NextResponse.redirect(loginUrl);
+  }
+
+  try {
     const supabase = await createAuthClient();
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      const url = req.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('error', 'auth_failed');
-      return NextResponse.redirect(url);
+      console.error('[auth/callback] Code exchange failed:', error.message);
+      loginUrl.searchParams.set('error', 'auth_failed');
+      return NextResponse.redirect(loginUrl);
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      console.error('[auth/callback] getUser failed:', userError?.message);
+      loginUrl.searchParams.set('error', 'auth_failed');
+      return NextResponse.redirect(loginUrl);
+    }
 
-    if (user) {
-      const admin = createAdminClient();
+    const admin = createAdminClient();
 
-      // 1. Already has admin_profiles → let middleware route them
-      const { data: existingProfile } = await admin
-        .from('admin_profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
+    // 1. Already has admin_profiles → let middleware route them
+    const { data: existingProfile, error: profileError } = await admin
+      .from('admin_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
 
-      if (existingProfile) {
-        const url = req.nextUrl.clone();
-        url.pathname = '/resolving';
-        url.search = '';
-        return NextResponse.redirect(url);
-      }
+    if (profileError) {
+      console.error('[auth/callback] admin_profiles query failed:', profileError.message);
+    }
 
-      // 2. Check if they're a super_admin on the Ments platform
-      const { data: mentsUser } = await admin
-        .from('users')
-        .select('id, role')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (mentsUser?.role === 'super_admin') {
-        await admin.from('admin_profiles').upsert({
-          id: user.id,
-          role: 'superadmin',
-          verification_status: 'approved',
-          email: user.email ?? '',
-          display_name: user.user_metadata?.full_name ?? user.email ?? '',
-        }, { onConflict: 'id' });
-
-        const url = req.nextUrl.clone();
-        url.pathname = '/resolving';
-        url.search = '';
-        return NextResponse.redirect(url);
-      }
-
-      // 3. New user → role selection
+    if (existingProfile) {
       const url = req.nextUrl.clone();
-      url.pathname = '/onboarding';
+      url.pathname = '/resolving';
       url.search = '';
       return NextResponse.redirect(url);
     }
-  }
 
-  const loginUrl = req.nextUrl.clone();
-  loginUrl.pathname = '/login';
-  loginUrl.searchParams.set('error', 'auth_failed');
-  return NextResponse.redirect(loginUrl);
+    // 2. Check if they're a super_admin on the Ments platform
+    const { data: mentsUser, error: mentsError } = await admin
+      .from('users')
+      .select('id, role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (mentsError) {
+      console.error('[auth/callback] users query failed:', mentsError.message);
+    }
+
+    if (mentsUser?.role === 'super_admin') {
+      const { error: upsertError } = await admin.from('admin_profiles').upsert({
+        id: user.id,
+        role: 'superadmin',
+        verification_status: 'approved',
+        email: user.email ?? '',
+        display_name: user.user_metadata?.full_name ?? user.email ?? '',
+      }, { onConflict: 'id' });
+
+      if (upsertError) {
+        console.error('[auth/callback] admin_profiles upsert failed:', upsertError.message);
+      }
+
+      const url = req.nextUrl.clone();
+      url.pathname = '/resolving';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+
+    // 3. New user → role selection
+    const url = req.nextUrl.clone();
+    url.pathname = '/onboarding';
+    url.search = '';
+    return NextResponse.redirect(url);
+  } catch (err) {
+    console.error('[auth/callback] Unexpected error:', err);
+    loginUrl.searchParams.set('error', 'auth_failed');
+    return NextResponse.redirect(loginUrl);
+  }
 }

@@ -96,6 +96,7 @@ export interface Gig {
   deliverables: string | null;
   responsibilities: string | null;
   contact_email: string | null;
+  visibility: 'public' | 'facilitator_only';
 }
 
 export interface Application {
