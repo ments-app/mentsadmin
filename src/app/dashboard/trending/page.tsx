@@ -60,22 +60,22 @@ export default function TrendingAdminPage() {
     switch (status) {
       case 'pinned':
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-            <Pin size={12} />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+            <Pin size={11} />
             Pinned
           </span>
         );
       case 'removed':
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900 dark:text-red-300">
-            <EyeOff size={12} />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">
+            <EyeOff size={11} />
             Removed
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
-            <TrendingUp size={12} />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            <TrendingUp size={11} />
             Trending
           </span>
         );
@@ -83,38 +83,42 @@ export default function TrendingAdminPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
+    <div className="animate-fade-in space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <TrendingUp size={24} className="text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <TrendingUp size={20} className="text-primary" />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold">Trending Management</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Trending Management</h1>
             <p className="text-sm text-muted">Pin, remove, or reset trending posts</p>
           </div>
         </div>
         <button
           onClick={loadPosts}
           disabled={loading}
-          className="flex items-center gap-2 rounded-lg border border-card-border bg-card-bg px-4 py-2 text-sm font-medium transition-colors hover:bg-primary-light"
+          className="btn-secondary gap-2"
         >
-          <RotateCcw size={16} className={loading ? 'animate-spin' : ''} />
+          <RotateCcw size={15} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-card-border bg-card-bg">
+      {/* Table */}
+      <div className="card-elevated rounded-xl overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-card-border">
-              <th className="px-4 py-3 font-medium text-muted w-12">Rank</th>
-              <th className="px-4 py-3 font-medium text-muted">Author</th>
-              <th className="px-4 py-3 font-medium text-muted">Content</th>
-              <th className="px-4 py-3 font-medium text-muted text-right">Likes</th>
-              <th className="px-4 py-3 font-medium text-muted text-right">Replies</th>
-              <th className="px-4 py-3 font-medium text-muted text-right">Score</th>
-              <th className="px-4 py-3 font-medium text-muted">Status</th>
-              <th className="px-4 py-3 font-medium text-muted">Posted</th>
-              <th className="px-4 py-3 font-medium text-muted">Actions</th>
+            <tr className="border-b border-card-border bg-card-bg/60">
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted w-14">Rank</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted">Author</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted">Content</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted text-right">Likes</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted text-right">Replies</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted text-right">Score</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted">Posted</th>
+              <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-card-border">
@@ -122,50 +126,58 @@ export default function TrendingAdminPage() {
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
                   {Array.from({ length: 9 }).map((_, j) => (
-                    <td key={j} className="px-4 py-3">
-                      <div className="h-4 w-3/4 animate-pulse rounded bg-card-border" />
+                    <td key={j} className="px-5 py-4">
+                      <div className="h-4 w-3/4 animate-pulse rounded-md bg-card-border/60" />
                     </td>
                   ))}
                 </tr>
               ))
             ) : posts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-muted">
-                  No trending posts found.
+                <td colSpan={9} className="px-5 py-16 text-center">
+                  <TrendingUp size={40} className="mx-auto mb-3 text-muted/30" />
+                  <p className="text-sm font-medium text-muted">No trending posts found</p>
+                  <p className="mt-1 text-xs text-muted/70">Posts will appear here once they start trending</p>
                 </td>
               </tr>
             ) : (
               posts.map((post, index) => (
-                <tr key={post.id} className={`hover:bg-primary-light/30 ${post.override_status === 'removed' ? 'opacity-50' : ''}`}>
-                  <td className="px-4 py-3 font-mono text-xs text-muted">#{index + 1}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                <tr key={post.id} className={`transition-colors hover:bg-primary/[0.03] ${post.override_status === 'removed' ? 'opacity-50' : ''}`}>
+                  <td className="px-5 py-4">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-card-border/40 font-mono text-xs font-semibold text-muted">
+                      {index + 1}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
                       {post.author.avatar_url ? (
-                        <img src={post.author.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover" />
+                        <img src={post.author.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover ring-2 ring-card-border" />
                       ) : (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-light text-xs font-medium text-primary">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary ring-2 ring-primary/20">
                           {post.author.full_name?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{post.author.full_name}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{post.author.full_name}</p>
                         <p className="text-xs text-muted">@{post.author.username}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 max-w-[200px]">
-                    <p className="truncate text-sm">{post.content || '(media post)'}</p>
+                  <td className="px-5 py-4 max-w-[220px]">
+                    <p className="truncate text-sm text-foreground">{post.content || '(media post)'}</p>
                   </td>
-                  <td className="px-4 py-3 text-right font-mono text-sm">{post.likes}</td>
-                  <td className="px-4 py-3 text-right font-mono text-sm">{post.replies}</td>
-                  <td className="px-4 py-3 text-right">
-                    <span className="font-mono text-sm font-medium text-primary">{post.engagement_score}</span>
+                  <td className="px-5 py-4 text-right font-mono text-sm text-foreground">{post.likes}</td>
+                  <td className="px-5 py-4 text-right font-mono text-sm text-foreground">{post.replies}</td>
+                  <td className="px-5 py-4 text-right">
+                    <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 font-mono text-sm font-bold text-primary">
+                      {post.engagement_score}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">{getStatusBadge(post.override_status)}</td>
-                  <td className="px-4 py-3 text-xs text-muted whitespace-nowrap">
+                  <td className="px-5 py-4">{getStatusBadge(post.override_status)}</td>
+                  <td className="px-5 py-4 text-xs text-muted whitespace-nowrap">
                     {format(new Date(post.created_at), 'MMM d, HH:mm')}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-1">
                       {actionLoading === post.id ? (
                         <Loader2 size={16} className="animate-spin text-muted" />
@@ -175,27 +187,27 @@ export default function TrendingAdminPage() {
                             <button
                               onClick={() => handlePin(post.id)}
                               title="Pin to top"
-                              className="rounded p-1.5 text-muted transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-950"
+                              className="rounded-lg p-2 text-muted transition-all hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40"
                             >
-                              <Pin size={16} />
+                              <Pin size={15} />
                             </button>
                           )}
                           {post.override_status !== 'removed' && (
                             <button
                               onClick={() => handleRemove(post.id)}
                               title="Remove from trending"
-                              className="rounded p-1.5 text-muted transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
+                              className="rounded-lg p-2 text-muted transition-all hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
                             >
-                              <EyeOff size={16} />
+                              <EyeOff size={15} />
                             </button>
                           )}
                           {post.override_status && (
                             <button
                               onClick={() => handleReset(post.id)}
                               title="Reset to auto"
-                              className="rounded p-1.5 text-muted transition-colors hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950"
+                              className="rounded-lg p-2 text-muted transition-all hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/40"
                             >
-                              <RotateCcw size={16} />
+                              <RotateCcw size={15} />
                             </button>
                           )}
                         </>

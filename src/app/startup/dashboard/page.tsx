@@ -41,10 +41,10 @@ export default function StartupDashboardPage() {
   ];
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       {/* Startup profile hero */}
       {!loading && (
-        <div className="mb-8 rounded-xl border border-card-border bg-card-bg p-5">
+        <div className="card-elevated rounded-xl p-6">
           {startup ? (
             <div className="flex items-center gap-4">
               {startup.logo_url ? (
@@ -56,23 +56,23 @@ export default function StartupDashboardPage() {
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-xl font-bold text-foreground">{startup.brand_name}</h1>
+                  <h1 className="text-2xl font-semibold text-foreground">{startup.brand_name}</h1>
                   {startup.stage && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                       {STAGE_LABELS[startup.stage] || startup.stage}
                     </span>
                   )}
                   {startup.is_actively_raising && (
-                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                    <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900 dark:text-purple-300">
                       Raising
                     </span>
                   )}
                 </div>
                 {startup.tagline && (
-                  <p className="mt-0.5 text-sm text-muted truncate">{startup.tagline}</p>
+                  <p className="mt-1 text-sm text-muted truncate">{startup.tagline}</p>
                 )}
                 {(startup.city || startup.country) && (
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted">
                     <MapPin size={11} />
                     {[startup.city, startup.country].filter(Boolean).join(', ')}
                   </p>
@@ -80,7 +80,7 @@ export default function StartupDashboardPage() {
               </div>
               <Link
                 href="/startup/profile"
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-card-border px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-light hover:text-primary"
+                className="btn-secondary flex shrink-0 items-center gap-1.5"
               >
                 View Profile <ArrowRight size={14} />
               </Link>
@@ -91,12 +91,12 @@ export default function StartupDashboardPage() {
                 <Building2 size={24} className="text-primary" />
               </div>
               <div>
-                <h1 className="font-semibold text-foreground">Welcome to your dashboard</h1>
-                <p className="mt-0.5 text-sm text-muted">Your startup profile isn't set up yet.</p>
+                <h1 className="text-lg font-semibold text-foreground">Welcome to your dashboard</h1>
+                <p className="mt-1 text-sm text-muted">Your startup profile isn't set up yet.</p>
               </div>
               <Link
                 href="/startup/profile"
-                className="ml-auto flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+                className="btn-primary ml-auto flex shrink-0 items-center gap-1.5"
               >
                 Set up profile <ArrowRight size={14} />
               </Link>
@@ -106,7 +106,7 @@ export default function StartupDashboardPage() {
       )}
 
       {loading && (
-        <div className="mb-8 h-24 animate-pulse rounded-xl bg-card-border" />
+        <div className="h-24 animate-pulse rounded-xl bg-card-border/50" />
       )}
 
       {/* Stats */}
@@ -117,36 +117,36 @@ export default function StartupDashboardPage() {
             <Link
               key={card.label}
               href={card.href}
-              className="rounded-xl border border-card-border bg-card-bg p-5 hover:border-primary/40 transition-colors"
+              className="card-elevated rounded-xl p-5"
             >
-              <div className={`mb-3 inline-flex rounded-lg p-2 ${card.bg}`}>
+              <div className={`mb-3 inline-flex rounded-lg p-2.5 ${card.bg}`}>
                 <Icon size={18} className={card.color} />
               </div>
               <p className="text-2xl font-bold text-foreground">
-                {loading ? '—' : (card.value ?? 0)}
+                {loading ? '--' : (card.value ?? 0)}
               </p>
-              <p className="mt-1 text-xs text-muted">{card.label}</p>
+              <p className="mt-1 text-xs font-medium text-muted">{card.label}</p>
             </Link>
           );
         })}
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8">
-        <h2 className="mb-4 font-semibold text-foreground">Quick Actions</h2>
+      <div>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: 'Post a Job', href: '/startup/jobs', icon: Briefcase },
-            { label: 'Post a Gig', href: '/startup/gigs', icon: Zap },
-            { label: 'Create Event', href: '/startup/events', icon: CalendarDays },
-            { label: 'Run Competition', href: '/startup/competitions', icon: Trophy },
+            { label: 'Post a Job', href: '/startup/jobs/new', icon: Briefcase },
+            { label: 'Post a Gig', href: '/startup/gigs/new', icon: Zap },
+            { label: 'Create Event', href: '/startup/events/new', icon: CalendarDays },
+            { label: 'Run Competition', href: '/startup/competitions/new', icon: Trophy },
           ].map(action => {
             const Icon = action.icon;
             return (
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex items-center gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                className="card-elevated flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium text-foreground"
               >
                 <Icon size={16} className="text-primary shrink-0" />
                 {action.label}
@@ -158,10 +158,10 @@ export default function StartupDashboardPage() {
 
       {/* Traction summary if available */}
       {!loading && startup?.traction_metrics && (
-        <div className="mt-8 rounded-xl border border-card-border bg-card-bg p-5">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={15} className="text-primary" />
-            <h3 className="font-semibold text-foreground text-sm">Traction</h3>
+        <div className="card-elevated rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={16} className="text-primary" />
+            <h3 className="font-semibold text-foreground">Traction</h3>
           </div>
           <p className="text-sm text-muted leading-relaxed">{startup.traction_metrics}</p>
         </div>

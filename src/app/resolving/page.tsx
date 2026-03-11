@@ -18,9 +18,12 @@ export default function ResolvingPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <RefreshCw className="mx-auto animate-spin text-primary" size={32} />
-        <p className="mt-4 text-sm text-muted">Loading your dashboard...</p>
+      <div className="animate-fade-in text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+          <RefreshCw className="animate-spin text-primary" size={28} />
+        </div>
+        <p className="text-sm font-medium text-foreground">Loading your dashboard...</p>
+        <p className="mt-1 text-xs text-muted">This should only take a moment</p>
       </div>
     </div>
   );

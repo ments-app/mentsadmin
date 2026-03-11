@@ -46,10 +46,10 @@ export default function FacilitatorDashboardPage() {
   ];
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-foreground">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
           {loading ? 'Welcome back!' : `Welcome back, ${profile?.display_name ?? 'Facilitator'}!`}
         </h1>
         {fp && (
@@ -61,15 +61,15 @@ export default function FacilitatorDashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        {statCards.map(card => {
+        {statCards.map((card, i) => {
           const Icon = card.icon;
           return (
             <Link
               key={card.label}
               href={card.href}
-              className="rounded-xl border border-card-border bg-card-bg p-5 hover:border-primary/40 transition-colors"
+              className={`card-elevated p-5 stagger-${i + 1} animate-fade-in`}
             >
-              <div className={`mb-3 inline-flex rounded-lg p-2 ${card.bg}`}>
+              <div className={`mb-3 inline-flex rounded-xl p-2.5 ${card.bg}`}>
                 <Icon size={20} className={card.color} />
               </div>
               <p className="text-2xl font-bold text-foreground">
@@ -82,8 +82,8 @@ export default function FacilitatorDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8">
-        <h2 className="mb-4 font-semibold text-foreground">Quick Actions</h2>
+      <div>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">Quick Actions</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: 'Verify a Startup', href: '/facilitator/startups', icon: Rocket },
@@ -96,9 +96,11 @@ export default function FacilitatorDashboardPage() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex items-center gap-3 rounded-xl border border-card-border bg-card-bg px-4 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                className="card-elevated flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-foreground"
               >
-                <Icon size={16} className="text-primary shrink-0" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon size={15} className="text-primary" />
+                </div>
                 {action.label}
               </Link>
             );
@@ -107,12 +109,14 @@ export default function FacilitatorDashboardPage() {
       </div>
 
       {/* Ecosystem Note */}
-      <div className="mt-8 rounded-xl border border-primary/20 bg-primary/5 p-5">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
         <div className="flex items-start gap-3">
-          <TrendingUp size={18} className="text-primary mt-0.5 shrink-0" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+            <TrendingUp size={16} className="text-primary" />
+          </div>
           <div>
             <h3 className="font-semibold text-foreground text-sm">Your Ecosystem</h3>
-            <p className="mt-1 text-xs text-muted">
+            <p className="mt-1 text-xs text-muted leading-relaxed">
               You can only see data for startups you've verified and content you've created.
               Data from other facilitators is not accessible to you.
             </p>

@@ -123,11 +123,11 @@ export default function StartupEditEventPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
+      <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
         <div className="mt-6 space-y-4">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 animate-pulse rounded-xl bg-card-border/50" />
           ))}
         </div>
       </div>
@@ -135,33 +135,33 @@ export default function StartupEditEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in mx-auto max-w-2xl">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Event</h1>
-          <p className="mt-1 text-muted text-sm">Update event details</p>
+          <h1 className="text-2xl font-semibold text-foreground">Edit Event</h1>
+          <p className="mt-1 text-sm text-muted">Update event details</p>
         </div>
-        <button onClick={() => setShowDelete(true)} className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover">
+        <button onClick={() => setShowDelete(true)} className="btn-danger">
           Delete
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-danger dark:bg-red-950 dark:border-red-900">{error}</div>
         )}
 
         {/* Posting Visibility */}
-        <div className="rounded-lg border border-card-border p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Where to Post</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Where to Post</h2>
           <p className="text-sm text-muted">Choose who can see this event.</p>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => update('visibility', 'public')}
-              className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+              className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all ${
                 form.visibility === 'public'
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                   : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
               }`}
             >
@@ -174,9 +174,9 @@ export default function StartupEditEventPage() {
             <button
               type="button"
               onClick={() => update('visibility', 'facilitator_only')}
-              className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+              className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all ${
                 form.visibility === 'facilitator_only'
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                   : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
               }`}
             >
@@ -189,7 +189,7 @@ export default function StartupEditEventPage() {
           </div>
 
           {form.visibility === 'facilitator_only' && (
-            <div className="mt-1 space-y-2 border-t border-card-border pt-3">
+            <div className="mt-1 space-y-2 border-t border-card-border pt-4">
               <div>
                 <p className="text-sm font-medium text-foreground">Select Facilitators</p>
                 <p className="text-xs text-muted mt-0.5">Leave all unchecked to share with all your approved facilitators.</p>
@@ -197,9 +197,9 @@ export default function StartupEditEventPage() {
               {facilitators.length === 0 ? (
                 <p className="text-sm text-amber-600 dark:text-amber-400">No approved facilitators found.</p>
               ) : (
-                <div className="space-y-1.5 rounded-lg border border-card-border bg-background p-3">
+                <div className="space-y-1.5 rounded-xl border border-card-border bg-background p-3">
                   {facilitators.map((f) => (
-                    <label key={f.id} className="flex items-center gap-3 cursor-pointer hover:bg-card-border/20 rounded px-1 py-1">
+                    <label key={f.id} className="flex items-center gap-3 cursor-pointer hover:bg-card-border/20 rounded-lg px-2 py-1.5 transition-colors">
                       <input
                         type="checkbox"
                         checked={form.target_facilitator_ids.includes(f.id)}
@@ -222,8 +222,9 @@ export default function StartupEditEventPage() {
           )}
         </div>
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Basic Info</h2>
+        {/* Basic Info */}
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Info</h2>
           <FormField type="text" label="Title" name="title" value={form.title} onChange={(v) => update('title', v)} required placeholder="Event title" />
           <FormField type="textarea" label="Description" name="description" value={form.description} onChange={(v) => update('description', v)} placeholder="Describe the event..." rows={4} />
 
@@ -234,7 +235,7 @@ export default function StartupEditEventPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <DateTimePicker label="Event Date" name="event_date" value={form.event_date} onChange={(v) => update('event_date', v)} />
-            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
           </div>
 
           <FormField type="text" label="Organizer Name" name="organizer_name" value={form.organizer_name} onChange={(v) => update('organizer_name', v)} placeholder="e.g. Your Startup Name" />
@@ -242,12 +243,12 @@ export default function StartupEditEventPage() {
           <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url} onChange={(v) => update('banner_image_url', v)} />
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Tags</label>
-            <div className="flex flex-wrap gap-2 rounded-lg border border-card-border bg-background p-2 min-h-[42px]">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Tags</label>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-card-border bg-background p-2.5 min-h-[42px]">
               {form.tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)}><X size={10} /></button>
+                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-primary/70 transition-colors"><X size={10} /></button>
                 </span>
               ))}
               <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag}
@@ -255,21 +256,22 @@ export default function StartupEditEventPage() {
                 className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted" />
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Settings</h2>
+        {/* Settings */}
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Settings</h2>
           <div className="flex flex-wrap gap-6">
             <FormField type="checkbox" label="Active (visible on hub)" name="is_active" checked={form.is_active} onChange={(v) => update('is_active', v)} />
             <FormField type="checkbox" label="Featured" name="is_featured" checked={form.is_featured} onChange={(v) => update('is_featured', v)} />
           </div>
-        </section>
+        </div>
 
-        <div className="flex gap-3 pt-4 border-t border-card-border">
-          <button type="submit" disabled={saving} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        <div className="flex gap-3 pt-2 border-t border-card-border">
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

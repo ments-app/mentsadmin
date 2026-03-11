@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { registerAsFacilitator } from '@/actions/rbac';
 import { supabase } from '@/lib/supabase';
-import { Upload, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Upload, ArrowLeft, CheckCircle2, Building2 } from 'lucide-react';
 
 const ORG_TYPES = [
   { value: 'ecell', label: 'E-Cell' },
@@ -93,17 +93,17 @@ export default function FacilitatorOnboardingPage() {
   if (step === 3) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md text-center">
+        <div className="w-full max-w-md text-center animate-fade-in">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
             <CheckCircle2 size={40} className="text-green-600 dark:text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-foreground">Application Submitted!</h2>
-          <p className="mt-3 text-muted">
-            Your verification request has been submitted. Our team will review it and get back to you within 2–3 business days.
+          <p className="mt-3 text-muted leading-relaxed">
+            Your verification request has been submitted. Our team will review it and get back to you within 2-3 business days.
           </p>
           <button
             onClick={() => router.push('/pending-verification')}
-            className="mt-6 w-full rounded-lg bg-primary px-4 py-2.5 font-medium text-white"
+            className="btn-primary mt-8 w-full py-2.5"
           >
             View Status
           </button>
@@ -114,19 +114,27 @@ export default function FacilitatorOnboardingPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-xl">
+      <div className="w-full max-w-xl animate-fade-in">
         <div className="mb-8">
           <button
             onClick={() => router.push('/onboarding')}
-            className="flex items-center gap-1 text-sm text-muted hover:text-foreground"
+            className="btn-ghost text-sm"
           >
             <ArrowLeft size={16} /> Back
           </button>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">Get Verified as a Facilitator</h1>
-          <p className="mt-1 text-sm text-muted">Complete your organisation profile to get started.</p>
+
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <Building2 size={20} className="text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground">Get Verified as a Facilitator</h1>
+              <p className="text-sm text-muted">Complete your organisation profile to get started.</p>
+            </div>
+          </div>
 
           {/* Progress */}
-          <div className="mt-4 flex gap-2">
+          <div className="mt-6 flex gap-2">
             {[1, 2].map(s => (
               <div
                 key={s}
@@ -137,12 +145,12 @@ export default function FacilitatorOnboardingPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-danger dark:bg-red-950">{error}</div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit}>
           {step === 1 && (
-            <>
+            <div className="card-elevated p-6 space-y-5">
               <h2 className="font-semibold text-foreground">Your Details</h2>
 
               <Field label="Your Full Name">
@@ -202,15 +210,15 @@ export default function FacilitatorOnboardingPage() {
                   setError('');
                   setStep(2);
                 }}
-                className="w-full rounded-lg bg-primary px-4 py-2.5 font-medium text-white"
+                className="btn-primary w-full py-2.5"
               >
                 Continue
               </button>
-            </>
+            </div>
           )}
 
           {step === 2 && (
-            <>
+            <div className="card-elevated p-6 space-y-5">
               <h2 className="font-semibold text-foreground">Contact & Documents</h2>
 
               <Field label="Official Email">
@@ -257,12 +265,16 @@ export default function FacilitatorOnboardingPage() {
               </Field>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
-                  Supporting Document <span className="text-muted">(optional — PDF/image)</span>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Supporting Document <span className="text-muted">(optional -- PDF/image)</span>
                 </label>
-                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-card-border bg-background p-4 text-sm text-muted hover:border-primary hover:text-primary transition-colors">
-                  <Upload size={18} />
-                  {documentUrl ? 'Document uploaded ✓' : docUploading ? 'Uploading...' : 'Click to upload'}
+                <label className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed p-5 text-sm transition-all duration-150 ${
+                  documentUrl
+                    ? 'border-green-300 bg-green-50/50 dark:border-green-800 dark:bg-green-950/30 text-green-700 dark:text-green-300'
+                    : 'border-card-border bg-background text-muted hover:border-primary hover:text-primary'
+                }`}>
+                  {documentUrl ? <CheckCircle2 size={18} /> : <Upload size={18} />}
+                  {documentUrl ? 'Document uploaded successfully' : docUploading ? 'Uploading...' : 'Click to upload'}
                   <input
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
@@ -277,19 +289,19 @@ export default function FacilitatorOnboardingPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="flex-1 rounded-lg border border-card-border bg-background px-4 py-2.5 font-medium text-foreground"
+                  className="btn-secondary flex-1 py-2.5"
                 >
                   Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 rounded-lg bg-primary px-4 py-2.5 font-medium text-white disabled:opacity-50"
+                  className="btn-primary flex-1 py-2.5"
                 >
                   {loading ? 'Submitting...' : 'Submit for Verification'}
                 </button>
               </div>
-            </>
+            </div>
           )}
         </form>
       </div>
@@ -297,12 +309,12 @@ export default function FacilitatorOnboardingPage() {
   );
 }
 
-const inputCls = 'w-full rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary';
+const inputCls = 'w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-foreground">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
       {children}
     </div>
   );

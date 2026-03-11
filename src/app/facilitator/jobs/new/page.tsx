@@ -116,26 +116,28 @@ export default function FacilitatorNewJobPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold text-foreground">New Job</h1>
-      <p className="mt-1 text-muted">Create a new job posting</p>
+    <div className="mx-auto max-w-2xl animate-fade-in">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">New Job</h1>
+        <p className="mt-1 text-sm text-muted">Create a new job posting</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-danger dark:bg-red-950">{error}</div>
         )}
 
         {/* --- Visibility --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Who can see this?</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Who can see this?</h2>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => update('visibility', 'public')}
               className={cn(
-                'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors',
+                'flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all duration-150',
                 form.visibility === 'public'
-                  ? 'border-primary bg-primary/5'
+                  ? 'border-primary bg-primary/5 shadow-sm'
                   : 'border-card-border hover:border-primary/50'
               )}
             >
@@ -149,9 +151,9 @@ export default function FacilitatorNewJobPage() {
               type="button"
               onClick={() => update('visibility', 'email_restricted')}
               className={cn(
-                'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors',
+                'flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all duration-150',
                 form.visibility === 'email_restricted'
-                  ? 'border-primary bg-primary/5'
+                  ? 'border-primary bg-primary/5 shadow-sm'
                   : 'border-card-border hover:border-primary/50'
               )}
             >
@@ -163,7 +165,7 @@ export default function FacilitatorNewJobPage() {
             </button>
           </div>
           {form.visibility === 'email_restricted' && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
               Only students in your Access List will see this.{' '}
               <Link href="/facilitator/students" className="font-medium underline">
                 Manage Access List →
@@ -173,8 +175,8 @@ export default function FacilitatorNewJobPage() {
         </div>
 
         {/* --- Basic Info --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Information</h2>
           <FormField type="text" label="Title" name="title" value={form.title} onChange={(v) => update('title', v)} required placeholder="Job title" />
           <FormField type="text" label="Company" name="company" value={form.company} onChange={(v) => update('company', v)} required placeholder="Company name" />
           <div className="grid grid-cols-2 gap-4">
@@ -186,9 +188,9 @@ export default function FacilitatorNewJobPage() {
             <FormField type="select" label="Experience Level" name="experience_level" value={form.experience_level} onChange={(v) => update('experience_level', v)} options={experienceLevelOptions} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Salary Range</label>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Salary Range</label>
               <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
             </div>
           </div>
@@ -196,14 +198,14 @@ export default function FacilitatorNewJobPage() {
         </div>
 
         {/* --- Company Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Company Details</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Company Details</h2>
           <FormField type="url" label="Company Website" name="company_website" value={form.company_website} onChange={(v) => update('company_website', v)} placeholder="https://example.com" />
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Company Logo URL</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Company Logo URL</label>
             <div className="flex gap-2">
-              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" />
+              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="btn-secondary whitespace-nowrap">
                 {fetchingLogo ? 'Fetching...' : 'Fetch from Website'}
               </button>
             </div>
@@ -211,13 +213,13 @@ export default function FacilitatorNewJobPage() {
         </div>
 
         {/* --- Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
+        <div className="card-elevated p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Details</h2>
+            <h2 className="text-base font-semibold text-foreground">Details</h2>
             <span className="text-xs text-muted">AI can generate content based on the info above</span>
           </div>
           {(['description', 'responsibilities', 'requirements', 'benefits'] as const).map((field) => (
-            <div key={field} className="space-y-1">
+            <div key={field} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-foreground">{field === 'benefits' ? 'Benefits & Perks' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                 <AiFieldButton field={field} type="job" context={{ title: form.title, company: form.company, category: form.category, job_type: form.job_type, experience_level: form.experience_level }} onGenerated={(text) => update(field, text)} disabled={!form.title} />
@@ -228,24 +230,24 @@ export default function FacilitatorNewJobPage() {
         </div>
 
         {/* --- Skills --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Skills Required</h2>
           <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
         {/* --- Contact --- */}
-        <div className="rounded-lg border border-card-border p-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Contact</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Contact</h2>
           <FormField type="email" label="Contact Email" name="contact_email" value={form.contact_email} onChange={(v) => update('contact_email', v)} placeholder="hr@example.com" />
         </div>
 
         <FormField type="checkbox" label="Active" name="is_active" checked={form.is_active} onChange={(v) => update('is_active', v)} />
 
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={loading} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        <div className="flex gap-3 pt-2">
+          <button type="submit" disabled={loading} className="btn-primary py-2.5 px-6">
             {loading ? 'Creating...' : 'Create Job'}
           </button>
-          <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary py-2.5 px-6">
             Cancel
           </button>
         </div>

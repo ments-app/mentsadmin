@@ -66,7 +66,7 @@ export default function StartupOnboardingPage() {
     if (!profile.fullName.trim()) { setError('Full name is required'); return; }
     if (!profile.username.trim()) { setError('Username is required'); return; }
     if (!/^[a-z0-9_]{3,20}$/.test(profile.username.toLowerCase())) {
-      setError('Username must be 3–20 chars: letters, numbers, underscores only');
+      setError('Username must be 3-20 chars: letters, numbers, underscores only');
       return;
     }
     if (!startup.brandName.trim()) { setError('Brand name is required'); return; }
@@ -91,22 +91,27 @@ export default function StartupOnboardingPage() {
     router.push('/startup/dashboard');
   }
 
-  // ── Checking state ───────────────────────────────────────────
+  // -- Checking state
   if (step === 'checking') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background">
-        <Loader2 size={24} className="animate-spin text-primary" />
-        <p className="text-sm text-muted">Checking your account...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
+        <div className="animate-fade-in text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <Loader2 size={24} className="animate-spin text-primary" />
+          </div>
+          <p className="text-sm font-medium text-foreground">Checking your account...</p>
+          <p className="mt-1 text-xs text-muted">This will only take a moment</p>
+        </div>
       </div>
     );
   }
 
-  // ── Found Ments account ──────────────────────────────────────
+  // -- Found Ments account
   if (step === 'found') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+        <div className="w-full max-w-sm text-center animate-fade-in">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="h-20 w-20 rounded-full object-cover" />
             ) : (
@@ -128,10 +133,10 @@ export default function StartupOnboardingPage() {
     );
   }
 
-  // ── New user wizard ──────────────────────────────────────────
+  // -- New user wizard
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-lg animate-fade-in">
 
         {/* Brand */}
         <div className="mb-8 text-center">
@@ -139,7 +144,7 @@ export default function StartupOnboardingPage() {
             <Rocket size={14} className="text-primary" />
             <span className="text-sm font-medium text-primary">Ments for Startups</span>
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-foreground">
+          <h1 className="mt-4 text-2xl font-semibold text-foreground">
             {step === 1 ? 'Create your profile' : 'Set up your startup'}
           </h1>
           <p className="mt-1.5 text-sm text-muted">
@@ -153,9 +158,9 @@ export default function StartupOnboardingPage() {
         <div className="mb-8 flex items-center gap-2">
           {([1, 2] as const).map((s) => (
             <div key={s} className="flex flex-1 items-center gap-2">
-              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors ${
-                s < step ? 'bg-primary text-white' :
-                s === step ? 'border-2 border-primary text-primary' :
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-200 ${
+                s < step ? 'bg-primary text-white shadow-sm' :
+                s === step ? 'border-2 border-primary text-primary bg-primary/5' :
                 'border border-card-border text-muted'
               }`}>
                 {s < step ? <CheckCircle2 size={14} /> : s}
@@ -163,14 +168,14 @@ export default function StartupOnboardingPage() {
               <span className={`text-xs font-medium ${s === step ? 'text-foreground' : 'text-muted'}`}>
                 {s === 1 ? 'Your Profile' : 'Your Startup'}
               </span>
-              {s < 2 && <div className={`flex-1 h-px ${s < step ? 'bg-primary' : 'bg-card-border'}`} />}
+              {s < 2 && <div className={`flex-1 h-px transition-colors ${s < step ? 'bg-primary' : 'bg-card-border'}`} />}
             </div>
           ))}
         </div>
 
-        <div className="rounded-xl border border-card-border bg-card-bg p-6">
+        <div className="card-elevated p-6">
           {error && (
-            <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-danger dark:bg-red-950">
+            <div className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-danger dark:bg-red-950">
               {error}
             </div>
           )}
@@ -178,8 +183,8 @@ export default function StartupOnboardingPage() {
           {step === 1 && (
             <div className="space-y-5">
               {avatarUrl && (
-                <div className="flex items-center gap-3">
-                  <img src={avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover border border-card-border" />
+                <div className="flex items-center gap-3 rounded-xl bg-primary/5 p-3">
+                  <img src={avatarUrl} alt="" className="h-12 w-12 rounded-full object-cover border-2 border-primary/20" />
                   <div>
                     <p className="text-sm font-medium text-foreground">Profile picture from Google</p>
                     <p className="text-xs text-muted">This will be your avatar on the platform</p>
@@ -188,7 +193,7 @@ export default function StartupOnboardingPage() {
               )}
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
                   Full Name <span className="text-danger">*</span>
                 </label>
                 <input
@@ -196,16 +201,16 @@ export default function StartupOnboardingPage() {
                   value={profile.fullName}
                   onChange={e => setProfile(p => ({ ...p, fullName: e.target.value }))}
                   placeholder="Jane Smith"
-                  className="w-full rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
                   Username <span className="text-danger">*</span>
                 </label>
-                <div className="flex items-center rounded-lg border border-card-border bg-background focus-within:border-primary">
-                  <span className="pl-3 text-sm text-muted">@</span>
+                <div className="flex items-center rounded-xl border border-card-border bg-background focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors">
+                  <span className="pl-3.5 text-sm text-muted">@</span>
                   <input
                     type="text"
                     value={profile.username}
@@ -215,7 +220,7 @@ export default function StartupOnboardingPage() {
                     className="flex-1 bg-transparent px-2 py-2.5 text-sm text-foreground outline-none"
                   />
                 </div>
-                <p className="mt-1 text-xs text-muted">3–20 chars, letters, numbers and underscores only</p>
+                <p className="mt-1.5 text-xs text-muted">3-20 chars, letters, numbers and underscores only</p>
               </div>
 
               <button
@@ -223,19 +228,19 @@ export default function StartupOnboardingPage() {
                   setError('');
                   if (!profile.fullName.trim()) { setError('Full name is required'); return; }
                   if (!profile.username.trim() || !/^[a-z0-9_]{3,20}$/.test(profile.username)) {
-                    setError('Username must be 3–20 chars: letters, numbers, underscores only');
+                    setError('Username must be 3-20 chars: letters, numbers, underscores only');
                     return;
                   }
                   setStep(2);
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-white transition-colors hover:bg-primary/90"
+                className="btn-primary w-full py-2.5"
               >
                 Continue <ArrowRight size={16} />
               </button>
 
               <button
                 onClick={() => router.push('/onboarding')}
-                className="flex w-full items-center justify-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
+                className="btn-ghost w-full justify-center text-sm"
               >
                 <ArrowLeft size={14} /> Back to role selection
               </button>
@@ -245,7 +250,7 @@ export default function StartupOnboardingPage() {
           {step === 2 && (
             <div className="space-y-5">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
                   Brand / Startup Name <span className="text-danger">*</span>
                 </label>
                 <input
@@ -253,16 +258,16 @@ export default function StartupOnboardingPage() {
                   value={startup.brandName}
                   onChange={e => setStartup(p => ({ ...p, brandName: e.target.value }))}
                   placeholder="Acme Technologies"
-                  className="w-full rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+                  className="w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Current Stage</label>
+                <label className="mb-2 block text-sm font-medium text-foreground">Current Stage</label>
                 <div className="space-y-2">
                   {STAGES.map(s => (
-                    <label key={s.value} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
-                      startup.stage === s.value ? 'border-primary bg-primary/5' : 'border-card-border hover:bg-primary-light/30'
+                    <label key={s.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3.5 transition-all duration-150 ${
+                      startup.stage === s.value ? 'border-primary bg-primary/5 shadow-sm' : 'border-card-border hover:border-primary/30 hover:bg-surface-hover'
                     }`}>
                       <input type="radio" name="stage" value={s.value} checked={startup.stage === s.value}
                         onChange={() => setStartup(p => ({ ...p, stage: s.value }))} className="accent-primary" />
@@ -277,7 +282,7 @@ export default function StartupOnboardingPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">
                     Contact Email <span className="text-danger">*</span>
                   </label>
                   <input
@@ -285,37 +290,39 @@ export default function StartupOnboardingPage() {
                     value={startup.startupEmail}
                     onChange={e => setStartup(p => ({ ...p, startupEmail: e.target.value }))}
                     placeholder="hello@startup.com"
-                    className="w-full rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Contact Phone</label>
+                  <label className="mb-1.5 block text-sm font-medium text-foreground">Contact Phone</label>
                   <input
                     type="tel"
                     value={startup.startupPhone}
                     onChange={e => setStartup(p => ({ ...p, startupPhone: e.target.value }))}
                     placeholder="+91 9876543210"
-                    className="w-full rounded-lg border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+                    className="w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted">
-                <p className="font-medium text-primary mb-0.5">You're all set</p>
-                Your startup goes live on the Ments platform immediately — no review required. Complete your full profile from the dashboard.
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="text-sm font-medium text-primary mb-1">You're all set</p>
+                <p className="text-xs text-muted leading-relaxed">
+                  Your startup goes live on the Ments platform immediately -- no review required. Complete your full profile from the dashboard.
+                </p>
               </div>
 
               <div className="flex gap-3">
                 <button
                   onClick={() => { setError(''); setStep(1); }}
-                  className="flex items-center gap-2 rounded-lg border border-card-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
+                  className="btn-secondary py-2.5"
                 >
                   <ArrowLeft size={15} /> Back
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+                  className="btn-primary flex-1 py-2.5"
                 >
                   {loading ? <Loader2 size={16} className="animate-spin" /> : <Building2 size={16} />}
                   {loading ? 'Creating your account...' : 'Launch my startup'}

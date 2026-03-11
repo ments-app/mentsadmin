@@ -32,9 +32,9 @@ const entryTypeOptions = [
 ];
 
 const arenaRoundOptions = [
-  { value: 'registration', label: 'Round 1 — Stall Registration' },
-  { value: 'investment', label: 'Round 2 — Audience Investment' },
-  { value: 'completed', label: 'Completed — Results Announced' },
+  { value: 'registration', label: 'Round 1 -- Stall Registration' },
+  { value: 'investment', label: 'Round 2 -- Audience Investment' },
+  { value: 'completed', label: 'Completed -- Results Announced' },
 ];
 
 export default function EditEventPage() {
@@ -149,11 +149,11 @@ export default function EditEventPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
-        <div className="mt-6 space-y-4">
+      <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
+        <div className="mt-8 space-y-6">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 animate-pulse rounded-xl bg-card-border/50" />
           ))}
         </div>
       </div>
@@ -161,25 +161,24 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-2xl animate-fade-in">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Event</h1>
-          <p className="mt-1 text-muted text-sm">Update event details</p>
+          <h1 className="text-2xl font-semibold text-foreground">Edit Event</h1>
+          <p className="mt-1 text-sm text-muted">Update event details</p>
         </div>
-        <button onClick={() => setShowDelete(true)}
-          className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover">
+        <button onClick={() => setShowDelete(true)} className="btn-danger">
           Delete
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-danger dark:border-red-800 dark:bg-red-950">{error}</div>
         )}
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Basic Info</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Info</h2>
           <FormField type="text" label="Title" name="title" value={form.title}
             onChange={(v) => update('title', v)} required placeholder="Event title" />
           <FormField type="textarea" label="Description" name="description" value={form.description}
@@ -195,7 +194,7 @@ export default function EditEventPage() {
           <div className="grid grid-cols-2 gap-4">
             <DateTimePicker label="Event Date" name="event_date" value={form.event_date}
               onChange={(v) => update('event_date', v)} />
-            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
           </div>
 
           <FormField type="text" label="Organizer Name" name="organizer_name" value={form.organizer_name}
@@ -208,12 +207,12 @@ export default function EditEventPage() {
             onChange={(v) => update('banner_image_url', v)} />
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Tags</label>
-            <div className="flex flex-wrap gap-2 rounded-lg border border-card-border bg-background p-2 min-h-[42px]">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Tags</label>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-card-border bg-background p-2.5 min-h-[44px] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-shadow">
               {form.tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-900/20 px-2.5 py-0.5 text-xs font-medium text-indigo-600 dark:text-indigo-300">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)}><X size={10} /></button>
+                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500 transition-colors"><X size={10} /></button>
                 </span>
               ))}
               <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={addTag}
@@ -221,38 +220,38 @@ export default function EditEventPage() {
                 className="flex-1 min-w-[120px] bg-transparent text-sm outline-none text-foreground placeholder:text-muted" />
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* ── Investment Arena ── */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Investment Arena</h2>
+        {/* -- Investment Arena -- */}
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Investment Arena</h2>
 
           <FormField type="checkbox" label="Enable Investment Arena" name="arena_enabled"
             checked={form.arena_enabled} onChange={(v: boolean) => update('arena_enabled', v)} />
 
           {form.arena_enabled && (
-            <div className="space-y-4 pl-1 border-l-2 border-primary/30 ml-2">
+            <div className="space-y-5 pl-4 border-l-2 border-primary/30 ml-1">
               <FormField type="select" label="Entry Type" name="entry_type" value={form.entry_type}
                 onChange={(v: string) => update('entry_type', v)} options={entryTypeOptions} required />
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Virtual Fund per Participant</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Virtual Fund per Participant</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted">₹</span>
+                  <span className="text-sm text-muted font-medium">&#x20B9;</span>
                   <input
                     type="number"
                     value={form.virtual_fund_amount}
                     onChange={(e) => update('virtual_fund_amount', parseInt(e.target.value) || 1000000)}
                     min={100000}
                     step={100000}
-                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
                   />
                 </div>
               </div>
 
               {/* Arena Round Control */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Current Round</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Current Round</label>
                 <div className="flex items-center gap-2">
                   <FormField type="select" label="" name="arena_round" value={form.arena_round}
                     onChange={(v: string) => update('arena_round', v)} options={arenaRoundOptions} />
@@ -268,12 +267,12 @@ export default function EditEventPage() {
                       }
                       setRoundSwitching(false);
                     }}
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                    className="btn-primary whitespace-nowrap"
                   >
                     {roundSwitching ? 'Switching...' : 'Switch Round'}
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-1.5 text-xs text-muted">
                   Switch between rounds to control what participants can do.
                 </p>
               </div>
@@ -281,30 +280,30 @@ export default function EditEventPage() {
               {/* Registered Stalls (Applicants) */}
               {stallsList.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
                     <Store size={14} /> Registered Stalls ({stallsList.length})
                   </h3>
-                  <div className="rounded-lg border border-card-border overflow-hidden">
+                  <div className="rounded-xl border border-card-border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-card-border/30">
+                      <thead className="bg-card-border/10">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Stall Name</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Registered By</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Linked Startup</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Category</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Tagline</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">#</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Stall Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Registered By</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Linked Startup</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Category</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Tagline</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-card-border">
                         {stallsList.map((stall, i) => (
-                          <tr key={stall.id} className="border-t border-card-border">
-                            <td className="px-3 py-2 text-muted">{i + 1}</td>
-                            <td className="px-3 py-2 font-medium text-foreground">{stall.stall_name}</td>
-                            <td className="px-3 py-2 text-foreground">
+                          <tr key={stall.id} className="hover:bg-card-border/5 transition-colors">
+                            <td className="px-4 py-3 text-muted">{i + 1}</td>
+                            <td className="px-4 py-3 font-medium text-foreground">{stall.stall_name}</td>
+                            <td className="px-4 py-3 text-foreground">
                               {stall.user?.full_name || stall.user?.username || '—'}
                             </td>
-                            <td className="px-3 py-2 text-foreground">
+                            <td className="px-4 py-3 text-foreground">
                               {stall.startup?.brand_name ? (
                                 <span className="inline-flex items-center gap-1">
                                   {stall.startup.brand_name}
@@ -312,8 +311,8 @@ export default function EditEventPage() {
                                 </span>
                               ) : '—'}
                             </td>
-                            <td className="px-3 py-2 text-muted capitalize">{stall.category || '—'}</td>
-                            <td className="px-3 py-2 text-muted text-xs max-w-[200px] truncate">{stall.tagline || '—'}</td>
+                            <td className="px-4 py-3 text-muted capitalize">{stall.category || '—'}</td>
+                            <td className="px-4 py-3 text-muted text-xs max-w-[200px] truncate">{stall.tagline || '—'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -322,38 +321,38 @@ export default function EditEventPage() {
                 </div>
               )}
               {stallsList.length === 0 && (
-                <p className="text-xs text-muted italic">No stalls registered yet.</p>
+                <p className="text-xs text-muted italic py-2">No stalls registered yet.</p>
               )}
 
               {/* Audience (Investors) */}
               {audienceList.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
                     <Users size={14} /> Audience / Investors ({audienceList.length})
                   </h3>
-                  <div className="rounded-lg border border-card-border overflow-hidden">
+                  <div className="rounded-xl border border-card-border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-card-border/30">
+                      <thead className="bg-card-border/10">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Name</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Username</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Remaining Balance</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Invested</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">#</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Name</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Username</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Remaining Balance</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Invested</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-card-border">
                         {audienceList.map((a, i) => {
                           const totalFund = form.virtual_fund_amount || 1000000;
                           const invested = totalFund - (a.virtual_balance ?? 0);
                           return (
-                            <tr key={a.id} className="border-t border-card-border">
-                              <td className="px-3 py-2 text-muted">{i + 1}</td>
-                              <td className="px-3 py-2 font-medium text-foreground">{a.user?.full_name || '—'}</td>
-                              <td className="px-3 py-2 text-muted">{a.user?.username || '—'}</td>
-                              <td className="px-3 py-2 text-right text-foreground">₹{(a.virtual_balance ?? 0).toLocaleString('en-IN')}</td>
-                              <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
-                                ₹{invested.toLocaleString('en-IN')}
+                            <tr key={a.id} className="hover:bg-card-border/5 transition-colors">
+                              <td className="px-4 py-3 text-muted">{i + 1}</td>
+                              <td className="px-4 py-3 font-medium text-foreground">{a.user?.full_name || '—'}</td>
+                              <td className="px-4 py-3 text-muted">{a.user?.username || '—'}</td>
+                              <td className="px-4 py-3 text-right text-foreground">&#x20B9;{(a.virtual_balance ?? 0).toLocaleString('en-IN')}</td>
+                              <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
+                                &#x20B9;{invested.toLocaleString('en-IN')}
                               </td>
                             </tr>
                           );
@@ -367,26 +366,26 @@ export default function EditEventPage() {
               {/* Leaderboard Preview */}
               {leaderboard.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-2">Funding Leaderboard</h3>
-                  <div className="rounded-lg border border-card-border overflow-hidden">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">Funding Leaderboard</h3>
+                  <div className="rounded-xl border border-card-border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-card-border/30">
+                      <thead className="bg-card-border/10">
                         <tr>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">#</th>
-                          <th className="px-3 py-2 text-left text-xs font-medium text-muted">Stall</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Funding</th>
-                          <th className="px-3 py-2 text-right text-xs font-medium text-muted">Investors</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">#</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Stall</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Funding</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Investors</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-card-border">
                         {leaderboard.map((stall, i) => (
-                          <tr key={stall.id} className="border-t border-card-border">
-                            <td className="px-3 py-2 text-muted">{i + 1}</td>
-                            <td className="px-3 py-2 font-medium text-foreground">{stall.stall_name}</td>
-                            <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
-                              ₹{(stall.total_funding / 100000).toFixed(1)}L
+                          <tr key={stall.id} className="hover:bg-card-border/5 transition-colors">
+                            <td className="px-4 py-3 text-muted">{i + 1}</td>
+                            <td className="px-4 py-3 font-medium text-foreground">{stall.stall_name}</td>
+                            <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
+                              &#x20B9;{(stall.total_funding / 100000).toFixed(1)}L
                             </td>
-                            <td className="px-3 py-2 text-right text-muted">{stall.investor_count}</td>
+                            <td className="px-4 py-3 text-right text-muted">{stall.investor_count}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -396,25 +395,23 @@ export default function EditEventPage() {
               )}
             </div>
           )}
-        </section>
+        </div>
 
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Settings</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-3">
+          <h2 className="text-base font-semibold text-foreground">Settings</h2>
           <div className="flex flex-wrap gap-6">
             <FormField type="checkbox" label="Active (visible on hub)" name="is_active"
               checked={form.is_active} onChange={(v) => update('is_active', v)} />
             <FormField type="checkbox" label="Featured" name="is_featured"
               checked={form.is_featured} onChange={(v) => update('is_featured', v)} />
           </div>
-        </section>
+        </div>
 
-        <div className="flex gap-3 pt-4 border-t border-card-border">
-          <button type="submit" disabled={saving}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        <div className="flex gap-3 pt-2 pb-8">
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={() => router.back()}
-            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

@@ -23,7 +23,7 @@ const columns: Column<Job & { _appCount?: number }>[] = [
       </span>
     ),
   },
-  { key: 'location', label: 'Location', render: (item) => item.location || '—' },
+  { key: 'location', label: 'Location', render: (item) => item.location || '--' },
   {
     key: 'visibility',
     label: 'Visibility',
@@ -108,31 +108,29 @@ export default function StartupJobsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Jobs</h1>
-          <p className="mt-1 text-muted">Manage job postings</p>
+          <h1 className="text-2xl font-semibold text-foreground">Jobs</h1>
+          <p className="mt-1 text-sm text-muted">Manage job postings</p>
         </div>
         <Link
           href="/startup/jobs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          className="btn-primary flex items-center gap-2"
         >
           <Plus size={16} />
           Add Job
         </Link>
       </div>
 
-      <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={jobs}
-          loading={loading}
-          editHref={(item) => `/startup/jobs/${item.id}`}
-          onDelete={setDeleteTarget}
-          emptyMessage="No jobs yet. Create your first one!"
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={jobs}
+        loading={loading}
+        editHref={(item) => `/startup/jobs/${item.id}`}
+        onDelete={setDeleteTarget}
+        emptyMessage="No jobs yet. Create your first one!"
+      />
 
       <DeleteConfirmModal
         open={!!deleteTarget}

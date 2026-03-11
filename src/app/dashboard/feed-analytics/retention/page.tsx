@@ -1,6 +1,7 @@
 import { getRetentionMetrics } from '@/actions/feed-analytics';
 import { RetentionCohort } from '@/components/analytics/RetentionCohort';
 import Link from 'next/link';
+import { ArrowLeft, UserCheck } from 'lucide-react';
 
 export default async function RetentionPage() {
   let retention = {
@@ -17,16 +18,23 @@ export default async function RetentionPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-sidebar-heading">User Retention</h1>
-          <p className="text-sm text-sidebar-text/60 mt-1">DAU/WAU/MAU trends and session depth analysis</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <UserCheck size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">User Retention</h1>
+            <p className="text-sm text-muted">DAU/WAU/MAU trends and session depth analysis</p>
+          </div>
         </div>
         <Link
           href="/dashboard/feed-analytics"
-          className="px-4 py-2 text-sm font-medium rounded-lg border border-sidebar-border bg-sidebar-bg text-sidebar-text hover:bg-sidebar-hover transition-colors"
+          className="btn-secondary gap-2"
         >
+          <ArrowLeft size={15} />
           Back to Overview
         </Link>
       </div>

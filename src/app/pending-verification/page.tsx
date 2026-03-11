@@ -45,7 +45,7 @@ function PendingVerificationContent() {
       bg: 'bg-yellow-50 dark:bg-yellow-900/20',
       border: 'border-yellow-200 dark:border-yellow-800',
       title: 'Verification Under Review',
-      message: 'Your application is being reviewed by our team. This typically takes 2–3 business days.',
+      message: 'Your application is being reviewed by our team. This typically takes 2-3 business days.',
     },
     rejected: {
       icon: XCircle,
@@ -79,35 +79,39 @@ function PendingVerificationContent() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <RefreshCw className="animate-spin text-primary" size={28} />
+        <div className="animate-fade-in flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+          <RefreshCw className="animate-spin text-primary" size={24} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
-        <div className={`rounded-xl border ${config.border} ${config.bg} p-8 text-center`}>
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-card-bg shadow-sm">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className={`rounded-2xl border ${config.border} ${config.bg} p-8 text-center`}>
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-card-bg shadow-sm">
             <Icon size={32} className={config.iconColor} />
           </div>
           <h1 className="text-xl font-bold text-foreground">{config.title}</h1>
-          <p className="mt-2 text-sm text-muted">{config.message}</p>
+          <p className="mt-3 text-sm text-muted leading-relaxed">{config.message}</p>
         </div>
 
         {facilitatorProfile && (
-          <div className="mt-6 rounded-xl border border-card-border bg-card-bg p-6">
-            <h2 className="font-semibold text-foreground mb-3">Your Application</h2>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
+          <div className="card-elevated mt-6 p-6">
+            <h2 className="font-semibold text-foreground mb-4">Your Application</h2>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between items-center py-1">
                 <dt className="text-muted">Organisation</dt>
                 <dd className="text-foreground font-medium">{facilitatorProfile.organisation_name}</dd>
               </div>
-              <div className="flex justify-between">
+              <div className="h-px bg-card-border" />
+              <div className="flex justify-between items-center py-1">
                 <dt className="text-muted">Point of Contact</dt>
                 <dd className="text-foreground">{facilitatorProfile.poc_name}</dd>
               </div>
-              <div className="flex justify-between">
+              <div className="h-px bg-card-border" />
+              <div className="flex justify-between items-center py-1">
                 <dt className="text-muted">Status</dt>
                 <dd>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
@@ -127,7 +131,7 @@ function PendingVerificationContent() {
           {status === 'pending' && (
             <button
               onClick={() => window.location.reload()}
-              className="flex items-center justify-center gap-2 w-full rounded-lg border border-card-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-card-border/20"
+              className="btn-secondary w-full py-2.5"
             >
               <RefreshCw size={14} />
               Check Status
@@ -137,7 +141,7 @@ function PendingVerificationContent() {
           {status === 'approved' && (
             <button
               onClick={() => router.push('/facilitator/dashboard')}
-              className="w-full rounded-lg bg-primary px-4 py-2.5 font-medium text-white"
+              className="btn-primary w-full py-2.5"
             >
               Go to Dashboard
             </button>
@@ -145,7 +149,7 @@ function PendingVerificationContent() {
 
           <button
             onClick={handleLogout}
-            className="w-full rounded-lg border border-card-border bg-background px-4 py-2.5 text-sm font-medium text-muted hover:text-foreground"
+            className="btn-ghost w-full justify-center py-2.5"
           >
             Sign Out
           </button>

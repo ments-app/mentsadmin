@@ -2,6 +2,7 @@ import { getFeedAnalyticsSummary, getFeedAnalyticsDaily } from '@/actions/feed-a
 import { StatsOverview } from '@/components/analytics/StatsOverview';
 import { EngagementChart } from '@/components/analytics/EngagementChart';
 import Link from 'next/link';
+import { BarChart3, FileText, FlaskConical, UserCheck } from 'lucide-react';
 
 export default async function FeedAnalyticsPage() {
   let stats = {
@@ -26,32 +27,36 @@ export default async function FeedAnalyticsPage() {
     console.error('Error loading feed analytics:', error);
   }
 
+  const navLinks = [
+    { href: '/dashboard/feed-analytics/content', label: 'Content', icon: FileText },
+    { href: '/dashboard/feed-analytics/experiments', label: 'A/B Tests', icon: FlaskConical },
+    { href: '/dashboard/feed-analytics/retention', label: 'Retention', icon: UserCheck },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-sidebar-heading">Feed Analytics</h1>
-          <p className="text-sm text-sidebar-text/60 mt-1">AI-powered feed engine performance metrics</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <BarChart3 size={20} className="text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground">Feed Analytics</h1>
+            <p className="text-sm text-muted">AI-powered feed engine performance metrics</p>
+          </div>
         </div>
         <div className="flex gap-2">
-          <Link
-            href="/dashboard/feed-analytics/content"
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-sidebar-border bg-sidebar-bg text-sidebar-text hover:bg-sidebar-hover transition-colors"
-          >
-            Content
-          </Link>
-          <Link
-            href="/dashboard/feed-analytics/experiments"
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-sidebar-border bg-sidebar-bg text-sidebar-text hover:bg-sidebar-hover transition-colors"
-          >
-            A/B Tests
-          </Link>
-          <Link
-            href="/dashboard/feed-analytics/retention"
-            className="px-4 py-2 text-sm font-medium rounded-lg border border-sidebar-border bg-sidebar-bg text-sidebar-text hover:bg-sidebar-hover transition-colors"
-          >
-            Retention
-          </Link>
+          {navLinks.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="btn-secondary gap-2"
+            >
+              <Icon size={14} />
+              {label}
+            </Link>
+          ))}
         </div>
       </div>
 

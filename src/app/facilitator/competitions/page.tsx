@@ -59,7 +59,7 @@ const columns: Column<CompetitionWithCount>[] = [
         }`}
       >
         {item.participation_type === 'team'
-          ? `Team (${item.team_size_min}–${item.team_size_max})`
+          ? `Team (${item.team_size_min}-${item.team_size_max})`
           : 'Individual'}
       </span>
     ),
@@ -129,22 +129,19 @@ export default function FacilitatorCompetitionsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Competitions</h1>
-          <p className="mt-1 text-muted text-sm">Manage hub competitions</p>
+          <h1 className="text-2xl font-semibold text-foreground">Competitions</h1>
+          <p className="mt-1 text-sm text-muted">Manage hub competitions</p>
         </div>
-        <Link
-          href="/facilitator/competitions/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
+        <Link href="/facilitator/competitions/new" className="btn-primary">
           <Plus size={16} />
           Add Competition
         </Link>
       </div>
 
-      <div className="mt-6">
+      <div className="card-elevated overflow-hidden">
         <DataTable
           columns={columns}
           data={competitions}

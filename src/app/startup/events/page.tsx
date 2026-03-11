@@ -40,7 +40,7 @@ const columns: Column<Event>[] = [
   {
     key: 'event_date',
     label: 'Date',
-    render: (item) => item.event_date ? format(new Date(item.event_date), 'MMM d, yyyy h:mm a') : '—',
+    render: (item) => item.event_date ? format(new Date(item.event_date), 'MMM d, yyyy h:mm a') : '--',
   },
   {
     key: 'event_type',
@@ -51,7 +51,7 @@ const columns: Column<Event>[] = [
       </span>
     ),
   },
-  { key: 'organizer_name', label: 'Organizer', render: (item) => item.organizer_name || '—' },
+  { key: 'organizer_name', label: 'Organizer', render: (item) => item.organizer_name || '--' },
   {
     key: 'is_active',
     label: 'Status',
@@ -96,28 +96,26 @@ export default function StartupEventsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Events</h1>
-          <p className="mt-1 text-muted">Manage events hosted by your startup</p>
+          <h1 className="text-2xl font-semibold text-foreground">Events</h1>
+          <p className="mt-1 text-sm text-muted">Manage events hosted by your startup</p>
         </div>
-        <Link href="/startup/events/new" className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">
+        <Link href="/startup/events/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           Add Event
         </Link>
       </div>
 
-      <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={events}
-          loading={loading}
-          editHref={(item) => `/startup/events/${item.id}`}
-          onDelete={setDeleteTarget}
-          emptyMessage="No events yet. Create your first one!"
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={events}
+        loading={loading}
+        editHref={(item) => `/startup/events/${item.id}`}
+        onDelete={setDeleteTarget}
+        emptyMessage="No events yet. Create your first one!"
+      />
 
       <DeleteConfirmModal
         open={!!deleteTarget}

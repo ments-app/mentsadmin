@@ -42,14 +42,14 @@ const columns: Column<CompetitionWithCount>[] = [
         <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
           {domainLabels[item.domain] ?? item.domain}
         </span>
-      ) : '—',
+      ) : '--',
   },
   {
     key: 'participation_type',
     label: 'Type',
     render: (item) => (
       <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.participation_type === 'team' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
-        {item.participation_type === 'team' ? `Team (${item.team_size_min}–${item.team_size_max})` : 'Individual'}
+        {item.participation_type === 'team' ? `Team (${item.team_size_min}--${item.team_size_max})` : 'Individual'}
       </span>
     ),
   },
@@ -75,12 +75,12 @@ const columns: Column<CompetitionWithCount>[] = [
   {
     key: 'deadline',
     label: 'Deadline',
-    render: (item) => item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : '—',
+    render: (item) => item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : '--',
   },
   {
     key: 'prize_pool',
     label: 'Prize',
-    render: (item) => item.prize_pool || '—',
+    render: (item) => item.prize_pool || '--',
   },
 ];
 
@@ -112,28 +112,26 @@ export default function StartupCompetitionsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Competitions</h1>
-          <p className="mt-1 text-muted text-sm">Competitions organized by your startup</p>
+          <h1 className="text-2xl font-semibold text-foreground">Competitions</h1>
+          <p className="mt-1 text-sm text-muted">Competitions organized by your startup</p>
         </div>
-        <Link href="/startup/competitions/new" className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">
+        <Link href="/startup/competitions/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           Add Competition
         </Link>
       </div>
 
-      <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={competitions}
-          loading={loading}
-          editHref={(item) => `/startup/competitions/${item.id}`}
-          onDelete={setDeleteTarget}
-          emptyMessage="No competitions yet. Create your first one!"
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={competitions}
+        loading={loading}
+        editHref={(item) => `/startup/competitions/${item.id}`}
+        onDelete={setDeleteTarget}
+        emptyMessage="No competitions yet. Create your first one!"
+      />
 
       <DeleteConfirmModal
         open={!!deleteTarget}

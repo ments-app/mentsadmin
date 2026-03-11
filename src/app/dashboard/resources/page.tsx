@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, BookOpen } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -24,7 +24,7 @@ const columns: Column<Resource>[] = [
     key: 'category',
     label: 'Category',
     render: (item) => (
-      <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium capitalize text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+      <span className="inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium capitalize text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
         {categoryLabels[item.category] || item.category}
       </span>
     ),
@@ -35,10 +35,10 @@ const columns: Column<Resource>[] = [
     label: 'Status',
     render: (item) => (
       <span
-        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
           item.is_active
-            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
         }`}
       >
         {item.is_active ? 'Active' : 'Inactive'}
@@ -48,7 +48,9 @@ const columns: Column<Resource>[] = [
   {
     key: 'created_at',
     label: 'Created',
-    render: (item) => format(new Date(item.created_at), 'MMM d, yyyy'),
+    render: (item) => (
+      <span className="text-muted">{format(new Date(item.created_at), 'MMM d, yyyy')}</span>
+    ),
   },
 ];
 
@@ -80,31 +82,25 @@ export default function ResourcesPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Resources</h1>
-          <p className="mt-1 text-muted">Manage resources — schemes, accelerators, offers, tools & more</p>
+          <h1 className="text-2xl font-semibold text-foreground">Resources</h1>
+          <p className="mt-1 text-sm text-muted">Manage resources -- schemes, accelerators, offers, tools & more</p>
         </div>
         <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard/resources/import"
-            className="flex items-center gap-2 rounded-lg border border-card-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
-          >
+          <Link href="/dashboard/resources/import" className="btn-secondary flex items-center gap-2">
             <Upload size={16} />
             Import CSV
           </Link>
-          <Link
-            href="/dashboard/resources/new"
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-          >
+          <Link href="/dashboard/resources/new" className="btn-primary flex items-center gap-2">
             <Plus size={16} />
             Add Resource
           </Link>
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="card-elevated rounded-xl">
         <DataTable
           columns={columns}
           data={resources}
@@ -114,6 +110,26 @@ export default function ResourcesPage() {
           emptyMessage="No resources yet. Create your first one!"
         />
       </div>
+
+      {!loading && resources.length === 0 && (
+        <div className="card-elevated rounded-xl flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 mb-4">
+            <BookOpen size={24} className="text-indigo-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">No resources yet</h3>
+          <p className="mt-1 text-sm text-muted max-w-sm">Add resources or import from CSV to get started.</p>
+          <div className="flex items-center gap-3 mt-4">
+            <Link href="/dashboard/resources/import" className="btn-secondary flex items-center gap-2">
+              <Upload size={16} />
+              Import CSV
+            </Link>
+            <Link href="/dashboard/resources/new" className="btn-primary flex items-center gap-2">
+              <Plus size={16} />
+              Add Resource
+            </Link>
+          </div>
+        </div>
+      )}
 
       <DeleteConfirmModal
         open={!!deleteTarget}

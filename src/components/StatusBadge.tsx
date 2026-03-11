@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, XCircle, ShieldAlert, HelpCircle } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StatusBadgeProps {
   status: string;
@@ -7,68 +7,78 @@ interface StatusBadgeProps {
 
 const CONFIG: Record<string, {
   label: string;
-  icon: React.ElementType;
+  dot: string;
   classes: string;
 }> = {
   approved: {
     label: 'Verified',
-    icon: CheckCircle2,
-    classes: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+    dot: 'bg-emerald-500',
+    classes: 'bg-emerald-50 text-emerald-700 ring-emerald-600/10 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
   },
   pending: {
     label: 'Pending',
-    icon: Clock,
-    classes: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400',
+    dot: 'bg-amber-500',
+    classes: 'bg-amber-50 text-amber-700 ring-amber-600/10 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
   },
   rejected: {
     label: 'Rejected',
-    icon: XCircle,
-    classes: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+    dot: 'bg-red-500',
+    classes: 'bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
   },
   suspended: {
     label: 'Suspended',
-    icon: ShieldAlert,
-    classes: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400',
+    dot: 'bg-orange-500',
+    classes: 'bg-orange-50 text-orange-700 ring-orange-600/10 dark:bg-orange-500/10 dark:text-orange-400 dark:ring-orange-500/20',
   },
-  // Content-level statuses
   active: {
     label: 'Active',
-    icon: CheckCircle2,
-    classes: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+    dot: 'bg-emerald-500',
+    classes: 'bg-emerald-50 text-emerald-700 ring-emerald-600/10 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
   },
   inactive: {
     label: 'Inactive',
-    icon: XCircle,
-    classes: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    dot: 'bg-gray-400',
+    classes: 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-500/10 dark:text-gray-400 dark:ring-gray-500/20',
   },
   pinned: {
     label: 'Pinned',
-    icon: CheckCircle2,
-    classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+    dot: 'bg-blue-500',
+    classes: 'bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
   },
   removed: {
     label: 'Removed',
-    icon: XCircle,
-    classes: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+    dot: 'bg-red-500',
+    classes: 'bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
   },
 };
 
-export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
-  const config = CONFIG[status] ?? {
-    label: status,
-    icon: HelpCircle,
-    classes: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  };
+const FALLBACK = {
+  label: '',
+  dot: 'bg-gray-400',
+  classes: 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-500/10 dark:text-gray-400 dark:ring-gray-500/20',
+};
 
-  const Icon = config.icon;
+export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
+  const config = CONFIG[status] ?? { ...FALLBACK, label: status };
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-medium ${config.classes} ${
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
-      }`}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full font-medium ring-1 ring-inset',
+        config.classes,
+        size === 'sm'
+          ? 'px-2 py-0.5 text-[11px]'
+          : 'px-2.5 py-1 text-xs'
+      )}
     >
-      <Icon size={size === 'sm' ? 10 : 12} />
+      <span
+        className={cn(
+          'shrink-0 rounded-full',
+          config.dot,
+          size === 'sm' ? 'h-1.5 w-1.5' : 'h-2 w-2'
+        )}
+        aria-hidden="true"
+      />
       {config.label}
     </span>
   );

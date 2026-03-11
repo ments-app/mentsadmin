@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Trophy, User, CheckCircle, X, Minus } from 'lucide-react';
+import { ArrowLeft, Trophy, User, CheckCircle, X, Minus, Search, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { getCompetition, getCompetitionRegistrations, updateRegistrationStatus } from '@/actions/competitions';
 
@@ -82,37 +82,39 @@ export default function CompetitionRegistrationsPage() {
   };
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <Link href={`/dashboard/competitions/${id}`}
-          className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors">
-          <ArrowLeft size={15} />
-          Back to Edit
-        </Link>
-      </div>
+    <div className="animate-fade-in">
+      {/* Breadcrumb */}
+      <Link href={`/dashboard/competitions/${id}`}
+        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors mb-4">
+        <ArrowLeft size={15} />
+        Back to Edit
+      </Link>
 
+      {/* Page Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Registrations</h1>
-          <p className="mt-1 text-muted text-sm">{title}</p>
+          <h1 className="text-2xl font-semibold text-foreground">Registrations</h1>
+          <p className="mt-1 text-sm text-muted">{title}</p>
         </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-foreground">{entries.length}</div>
-          <div className="text-xs text-muted">Total Registered</div>
+        <div className="card-elevated rounded-xl px-5 py-3 text-center">
+          <div className="flex items-center gap-2">
+            <Users size={18} className="text-primary" />
+            <span className="text-2xl font-bold text-foreground">{entries.length}</span>
+          </div>
+          <div className="text-xs text-muted mt-0.5">Total Registered</div>
         </div>
       </div>
 
-      {/* Stats pills */}
-      <div className="flex flex-wrap gap-2 mb-4">
+      {/* Filter pills */}
+      <div className="flex flex-wrap gap-2 mb-6">
         {(['all', 'registered', 'shortlisted', 'winner', 'rejected'] as const).map((s) => (
           <button
             key={s}
             onClick={() => setFilterStatus(s)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors capitalize ${
+            className={`rounded-full px-4 py-1.5 text-xs font-medium transition-all capitalize ${
               filterStatus === s
-                ? 'bg-primary text-white'
-                : 'border border-card-border text-muted hover:text-foreground'
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-card-bg border border-card-border text-muted hover:text-foreground hover:border-primary/30'
             }`}
           >
             {s === 'all' ? 'All' : statusLabels[s]} ({counts[s]})
@@ -121,45 +123,49 @@ export default function CompetitionRegistrationsPage() {
       </div>
 
       {/* Search */}
-      <div className="mb-4">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or email..."
-          className="w-full max-w-sm rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-        />
+      <div className="mb-6">
+        <div className="relative max-w-sm">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name or email..."
+            className="w-full rounded-xl border border-card-border bg-background pl-10 pr-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+          />
+        </div>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-card-border" />
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-card-border" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-card-border py-16 text-center text-muted text-sm">
-          No registrations found.
+        <div className="card-elevated rounded-xl py-16 text-center">
+          <Users size={40} className="mx-auto text-muted/30 mb-3" />
+          <p className="text-sm text-muted">No registrations found.</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-card-border overflow-hidden">
+        <div className="card-elevated rounded-xl overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-card/60 border-b border-card-border">
-              <tr>
-                <th className="px-4 py-3 text-left font-medium text-muted">Participant</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Registered</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Actions</th>
+            <thead>
+              <tr className="border-b border-card-border bg-card-bg/50">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted uppercase tracking-wider">Participant</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted uppercase tracking-wider">Registered</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted uppercase tracking-wider">Status</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold text-muted uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-card-border">
               {filtered.map((entry) => (
-                <tr key={entry.id} className="hover:bg-card/40 transition-colors">
-                  <td className="px-4 py-3">
+                <tr key={entry.id} className="hover:bg-primary/[0.02] transition-colors">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-3">
                       {entry.users?.avatar_url ? (
-                        <img src={entry.users.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                        <img src={entry.users.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-card-border" />
                       ) : (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary ring-2 ring-primary/20">
                           <User size={14} />
                         </div>
                       )}
@@ -171,47 +177,47 @@ export default function CompetitionRegistrationsPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-muted">
+                  <td className="px-5 py-4 text-sm text-muted">
                     {format(new Date(entry.created_at), 'dd MMM yyyy, HH:mm')}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[entry.status]}`}>
+                  <td className="px-5 py-4">
+                    <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[entry.status]}`}>
                       {statusLabels[entry.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-4">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setStatus(entry.id, 'shortlisted')}
                         disabled={updating === entry.id || entry.status === 'shortlisted'}
                         title="Shortlist"
-                        className="rounded p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:opacity-40 transition-colors"
+                        className="rounded-lg p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:opacity-30 transition-colors"
                       >
-                        <CheckCircle size={14} />
+                        <CheckCircle size={15} />
                       </button>
                       <button
                         onClick={() => setStatus(entry.id, 'winner')}
                         disabled={updating === entry.id || entry.status === 'winner'}
                         title="Mark as Winner"
-                        className="rounded p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 disabled:opacity-40 transition-colors"
+                        className="rounded-lg p-2 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 disabled:opacity-30 transition-colors"
                       >
-                        <Trophy size={14} />
+                        <Trophy size={15} />
                       </button>
                       <button
                         onClick={() => setStatus(entry.id, 'rejected')}
                         disabled={updating === entry.id || entry.status === 'rejected'}
                         title="Reject"
-                        className="rounded p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-40 transition-colors"
+                        className="rounded-lg p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-30 transition-colors"
                       >
-                        <X size={14} />
+                        <X size={15} />
                       </button>
                       <button
                         onClick={() => setStatus(entry.id, 'registered')}
                         disabled={updating === entry.id || entry.status === 'registered'}
                         title="Reset to Registered"
-                        className="rounded p-1.5 text-muted hover:bg-card-border/50 disabled:opacity-40 transition-colors"
+                        className="rounded-lg p-2 text-muted hover:bg-card-border/50 disabled:opacity-30 transition-colors"
                       >
-                        <Minus size={14} />
+                        <Minus size={15} />
                       </button>
                     </div>
                   </td>

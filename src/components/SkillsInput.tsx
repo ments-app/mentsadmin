@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 const ALL_SKILLS = [
   // ── Programming Languages ──────────────────────────────────────
@@ -254,14 +255,22 @@ export default function SkillsInput({ value, onChange }: Props) {
     <div className="space-y-3">
       {/* Selected skills */}
       {value.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {value.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+              className={cn(
+                'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium',
+                'bg-input-focus/10 text-input-focus',
+                'transition-all duration-150'
+              )}
             >
               {skill}
-              <button type="button" onClick={() => remove(skill)} className="ml-0.5 hover:text-purple-900 dark:hover:text-purple-100">
+              <button
+                type="button"
+                onClick={() => remove(skill)}
+                className="ml-0.5 rounded-sm p-0.5 transition-colors hover:bg-input-focus/20"
+              >
                 <X size={10} />
               </button>
             </span>
@@ -278,17 +287,22 @@ export default function SkillsInput({ value, onChange }: Props) {
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search skills or type a custom one and press Enter"
-          className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted"
+          className={cn(
+            'w-full rounded-lg border bg-input-bg px-3.5 py-2.5 text-sm text-foreground',
+            'shadow-[var(--shadow-sm)] transition-all duration-200 placeholder:text-muted/50',
+            'focus:outline-none focus:ring-2 focus:ring-input-focus/25 focus:border-input-focus',
+            'border-input-border'
+          )}
         />
 
         {open && filtered.length > 0 && (
-          <ul className="absolute z-50 mt-1 w-full rounded-lg border border-card-border bg-background shadow-lg overflow-hidden">
+          <ul className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-input-border bg-card-bg py-1 shadow-lg">
             {filtered.map((skill) => (
               <li key={skill}>
                 <button
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); add(skill); }}
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                  className="w-full px-3.5 py-2 text-left text-sm text-foreground transition-all duration-150 hover:bg-input-focus/10 hover:text-input-focus"
                 >
                   {skill}
                 </button>

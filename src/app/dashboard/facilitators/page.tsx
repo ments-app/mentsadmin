@@ -89,118 +89,121 @@ export default function FacilitatorsPage() {
   };
 
   return (
-    <div>
-      <div className="mb-6 flex items-start justify-between">
+    <div className="animate-fade-in">
+      {/* Page Header */}
+      <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Facilitators</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Facilitators</h1>
           <p className="mt-1 text-sm text-muted">Manage facilitator verification requests</p>
         </div>
         <button
           onClick={() => load(filter)}
-          className="flex items-center gap-2 rounded-lg border border-card-border px-3 py-2 text-sm text-muted hover:text-foreground"
+          className="btn-ghost gap-2"
         >
           <RefreshCw size={14} />
           Refresh
         </button>
       </div>
 
-      {/* Filter tabs */}
-      <div className="mb-4 flex gap-2 overflow-x-auto">
-        {(['all', 'pending', 'approved', 'rejected', 'suspended'] as FilterType[]).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
-              filter === f
-                ? 'bg-primary text-white'
-                : 'bg-card-bg border border-card-border text-muted hover:text-foreground'
-            }`}
-          >
-            {f === 'pending' && <Clock size={12} />}
-            {f === 'approved' && <CheckCircle2 size={12} />}
-            {f === 'rejected' && <XCircle size={12} />}
-            {f === 'suspended' && <ShieldAlert size={12} />}
-            <span className="capitalize">{f}</span>
-            <span className={`rounded-full px-1.5 py-0.5 text-xs ${
-              filter === f ? 'bg-white/20' : 'bg-card-border'
-            }`}>
-              {counts[f]}
-            </span>
-          </button>
-        ))}
+      {/* Stats Cards */}
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-5">
+        {(['all', 'pending', 'approved', 'rejected', 'suspended'] as FilterType[]).map((f, i) => {
+          const icons = { all: null, pending: <Clock size={16} />, approved: <CheckCircle2 size={16} />, rejected: <XCircle size={16} />, suspended: <ShieldAlert size={16} /> };
+          const colors = { all: 'text-foreground', pending: 'text-amber-600', approved: 'text-emerald-600', rejected: 'text-red-600', suspended: 'text-orange-600' };
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`card-elevated rounded-xl p-4 text-left transition-all ${
+                filter === f ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
+              }`}
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-2xl font-bold ${colors[f]}`}>{counts[f]}</span>
+                {icons[f] && <span className={colors[f]}>{icons[f]}</span>}
+              </div>
+              <p className="mt-1 text-xs font-medium capitalize text-muted">{f}</p>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search */}
-      <div className="mb-4 relative">
+      <div className="mb-6 relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
         <input
           type="text"
           placeholder="Search by organisation or email..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-card-border bg-card-bg pl-9 pr-4 py-2 text-sm text-foreground placeholder:text-muted outline-none focus:border-primary"
+          className="w-full rounded-xl border border-card-border bg-card-bg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted/60 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
         />
       </div>
 
       {/* Table */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <RefreshCw className="animate-spin text-primary" size={24} />
+        <div className="flex flex-col items-center justify-center py-16">
+          <RefreshCw className="animate-spin text-primary" size={28} />
+          <p className="mt-3 text-sm text-muted">Loading facilitators...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-12 text-center text-muted">
-          <Building2 size={40} className="mx-auto mb-3 opacity-30" />
-          <p>No facilitators found</p>
+        <div className="card-elevated rounded-xl py-16 text-center">
+          <Building2 size={48} className="mx-auto mb-4 text-muted/30" />
+          <p className="text-base font-medium text-foreground">No facilitators found</p>
+          <p className="mt-1 text-sm text-muted">
+            {search ? 'Try adjusting your search terms' : 'Facilitator applications will appear here'}
+          </p>
         </div>
       ) : (
-        <div className="rounded-xl border border-card-border bg-card-bg overflow-hidden">
+        <div className="card-elevated overflow-hidden rounded-xl">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-card-border bg-background">
-                <th className="px-4 py-3 text-left font-medium text-muted">Organisation</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Contact</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Submitted</th>
-                <th className="px-4 py-3 text-left font-medium text-muted">Status</th>
-                <th className="px-4 py-3 text-right font-medium text-muted">Actions</th>
+              <tr className="border-b border-card-border bg-background/50">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Organisation</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Type</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Contact</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Submitted</th>
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-muted">Status</th>
+                <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-card-border">
               {filtered.map((f) => {
                 const fp = f.facilitator_profiles;
                 return (
-                  <tr key={f.id} className="hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">{fp?.organisation_name ?? f.display_name ?? '—'}</div>
-                      <div className="text-xs text-muted">{f.email}</div>
+                  <tr key={f.id} className="group transition-colors hover:bg-primary/[0.02]">
+                    <td className="px-5 py-4">
+                      <div className="font-medium text-foreground">{fp?.organisation_name ?? f.display_name ?? '\u2014'}</div>
+                      <div className="mt-0.5 text-xs text-muted">{f.email}</div>
                     </td>
-                    <td className="px-4 py-3 capitalize text-muted">
-                      {fp?.organisation_type?.replace('_', ' ') ?? '—'}
+                    <td className="px-5 py-4 capitalize text-muted">
+                      {fp?.organisation_type?.replace('_', ' ') ?? '\u2014'}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="text-foreground">{fp?.poc_name ?? '—'}</div>
-                      <div className="text-xs text-muted">{fp?.contact_number ?? ''}</div>
+                    <td className="px-5 py-4">
+                      <div className="text-foreground">{fp?.poc_name ?? '\u2014'}</div>
+                      <div className="mt-0.5 text-xs text-muted">{fp?.contact_number ?? ''}</div>
                     </td>
-                    <td className="px-4 py-3 text-muted">
+                    <td className="px-5 py-4 text-muted">
                       {format(new Date(f.created_at), 'MMM d, yyyy')}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-4">
                       <StatusBadge status={f.verification_status} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
                         {f.verification_status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleApprove(f.id)}
                               disabled={actionLoading === f.id + '-approve'}
-                              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-emerald-700 hover:shadow disabled:opacity-50"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => setRejectModal({ id: f.id, name: fp?.organisation_name ?? f.display_name ?? '' })}
-                              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                              className="btn-danger !px-3 !py-1.5 !text-xs"
                             >
                               Reject
                             </button>
@@ -210,16 +213,16 @@ export default function FacilitatorsPage() {
                           <button
                             onClick={() => handleSuspend(f.id)}
                             disabled={actionLoading === f.id + '-suspend'}
-                            className="rounded-lg border border-orange-500 px-3 py-1.5 text-xs font-medium text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50"
+                            className="rounded-lg border border-orange-400 px-3 py-1.5 text-xs font-medium text-orange-600 transition-all hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50"
                           >
                             Suspend
                           </button>
                         )}
                         <button
                           onClick={() => router.push(`/dashboard/facilitators/${f.id}`)}
-                          className="rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground"
+                          className="btn-ghost !p-1.5 !rounded-lg"
                         >
-                          <ChevronRight size={14} />
+                          <ChevronRight size={16} />
                         </button>
                       </div>
                     </td>
@@ -233,30 +236,30 @@ export default function FacilitatorsPage() {
 
       {/* Reject Modal */}
       {rejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-xl border border-card-border bg-card-bg p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md animate-fade-in card-elevated rounded-2xl p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-foreground">Reject Facilitator</h3>
             <p className="mt-1 text-sm text-muted">
-              Rejecting: <strong>{rejectModal.name}</strong>
+              Rejecting: <strong className="text-foreground">{rejectModal.name}</strong>
             </p>
             <textarea
               value={rejectNotes}
               onChange={e => setRejectNotes(e.target.value)}
               placeholder="Reason for rejection (required)..."
               rows={3}
-              className="mt-4 w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              className="mt-4 w-full rounded-xl border border-card-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
             />
-            <div className="mt-4 flex gap-3">
+            <div className="mt-5 flex gap-3">
               <button
                 onClick={() => { setRejectModal(null); setRejectNotes(''); }}
-                className="flex-1 rounded-lg border border-card-border px-4 py-2 text-sm text-muted"
+                className="btn-secondary flex-1"
               >
                 Cancel
               </button>
               <button
                 onClick={handleReject}
                 disabled={!rejectNotes.trim() || !!actionLoading}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="btn-danger flex-1"
               >
                 Confirm Rejection
               </button>

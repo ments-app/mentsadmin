@@ -42,7 +42,7 @@ const columns: Column<FacilitatorGig>[] = [
           {item.skills_required.slice(0, 3).map((skill) => (
             <span
               key={skill}
-              className="inline-block rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+              className="inline-block rounded-full bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300"
             >
               {skill}
             </span>
@@ -125,22 +125,19 @@ export default function FacilitatorGigsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gigs</h1>
-          <p className="mt-1 text-muted">Manage freelance gigs</p>
+          <h1 className="text-2xl font-semibold text-foreground">Gigs</h1>
+          <p className="mt-1 text-sm text-muted">Manage freelance gigs</p>
         </div>
-        <Link
-          href="/facilitator/gigs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
+        <Link href="/facilitator/gigs/new" className="btn-primary">
           <Plus size={16} />
           Add Gig
         </Link>
       </div>
 
-      <div className="mt-6">
+      <div className="card-elevated overflow-hidden">
         <DataTable
           columns={columns}
           data={gigs}

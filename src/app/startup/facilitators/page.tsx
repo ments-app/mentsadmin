@@ -11,7 +11,7 @@ import { getApprovedFacilitators, applyToFacilitator } from '@/actions/startup-p
 type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'suspended' | null;
 
 const STATUS_CONFIG: Record<Exclude<ApplicationStatus, null>, { label: string; icon: React.ReactNode; className: string }> = {
-  pending:   { label: 'Applied – Pending',  icon: <Clock size={12} />,        className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
+  pending:   { label: 'Applied -- Pending',  icon: <Clock size={12} />,        className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' },
   approved:  { label: 'Verified',           icon: <CheckCircle2 size={12} />, className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
   rejected:  { label: 'Rejected',           icon: <XCircle size={12} />,      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
   suspended: { label: 'Suspended',          icon: <AlertCircle size={12} />,  className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400' },
@@ -78,10 +78,10 @@ export default function BrowseFacilitatorsPage() {
   });
 
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Browse Facilitators</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Browse Facilitators</h1>
         <p className="mt-1 text-sm text-muted">
           Connect with verified incubators, accelerators, and investors. Apply to get your startup verified and mentored.
         </p>
@@ -103,13 +103,13 @@ export default function BrowseFacilitatorsPage() {
 
       {/* Search */}
       <div className="mb-6 relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
         <input
           type="text"
           placeholder="Search by name, type, or email..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full rounded-xl border border-card-border bg-card-bg pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-primary"
+          className="w-full rounded-xl border border-card-border bg-card-bg pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
         />
       </div>
 
@@ -120,9 +120,9 @@ export default function BrowseFacilitatorsPage() {
           <p className="text-sm">Loading facilitators...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted">
-          <ShieldCheck size={44} className="opacity-30" />
-          <p className="text-sm">{search ? 'No facilitators match your search.' : 'No approved facilitators available yet.'}</p>
+        <div className="card-elevated flex flex-col items-center justify-center gap-3 rounded-xl py-20 text-muted">
+          <ShieldCheck size={48} className="opacity-20" />
+          <p className="text-sm font-medium">{search ? 'No facilitators match your search.' : 'No approved facilitators available yet.'}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -135,7 +135,7 @@ export default function BrowseFacilitatorsPage() {
             return (
               <div
                 key={f.id}
-                className="flex flex-col rounded-2xl border border-card-border bg-card-bg p-5 transition-shadow hover:shadow-md"
+                className="card-elevated flex flex-col rounded-xl p-5"
               >
                 {/* Card header */}
                 <div className="flex items-start gap-3">
@@ -153,7 +153,7 @@ export default function BrowseFacilitatorsPage() {
                       )}
                     </div>
                     {orgType && (
-                      <span className="mt-0.5 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      <span className="mt-1 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                         {ORG_TYPE_LABELS[orgType] ?? orgType}
                       </span>
                     )}
@@ -161,7 +161,7 @@ export default function BrowseFacilitatorsPage() {
                 </div>
 
                 {/* Contact details */}
-                <div className="mt-4 space-y-1.5 text-xs text-muted">
+                <div className="mt-4 space-y-2 text-xs text-muted">
                   {fp?.poc_name && (
                     <div className="flex items-center gap-2">
                       <Building2 size={12} className="shrink-0" />
@@ -203,34 +203,34 @@ export default function BrowseFacilitatorsPage() {
                 </div>
 
                 {/* Apply button */}
-                <div className="mt-4 pt-4 border-t border-card-border">
+                <div className="mt-auto pt-4 border-t border-card-border mt-4">
                   {status === null ? (
                     <button
                       onClick={() => handleApply(f.id, orgName)}
                       disabled={applying === f.id}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                      className="btn-primary flex w-full items-center justify-center gap-2"
                     >
                       {applying === f.id
                         ? <><Loader2 size={14} className="animate-spin" /> Applying...</>
                         : <><Send size={14} /> Apply to this Facilitator</>}
                     </button>
                   ) : status === 'pending' ? (
-                    <div className="flex items-center justify-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-2 text-sm font-medium text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-300 bg-yellow-50 px-4 py-2.5 text-sm font-medium text-yellow-700 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
                       <Clock size={14} />
                       Application Pending Review
                     </div>
                   ) : status === 'approved' ? (
-                    <div className="flex items-center justify-center gap-2 rounded-lg border border-green-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                    <div className="flex items-center justify-center gap-2 rounded-xl border border-green-300 bg-green-50 px-4 py-2.5 text-sm font-medium text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
                       <CheckCircle2 size={14} />
                       Verified by this Facilitator
                     </div>
                   ) : status === 'rejected' ? (
-                    <div className="flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                    <div className="flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                       <XCircle size={14} />
                       Application Rejected
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-2 rounded-lg border border-card-border px-4 py-2 text-sm text-muted">
+                    <div className="flex items-center justify-center gap-2 rounded-xl border border-card-border px-4 py-2.5 text-sm text-muted">
                       <AlertCircle size={14} />
                       {STATUS_CONFIG[status]?.label ?? status}
                     </div>
@@ -250,7 +250,7 @@ export default function BrowseFacilitatorsPage() {
             <div>
               <p className="text-sm font-medium text-blue-800 dark:text-blue-300">How verification works</p>
               <p className="mt-1 text-xs text-blue-700/80 dark:text-blue-400/80">
-                Apply to a facilitator — they will review your startup profile and verify you. Getting verified by a facilitator helps you build credibility on the Ments platform.
+                Apply to a facilitator -- they will review your startup profile and verify you. Getting verified by a facilitator helps you build credibility on the Ments platform.
               </p>
             </div>
           </div>

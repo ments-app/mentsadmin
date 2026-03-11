@@ -140,11 +140,11 @@ export default function StartupEditGigPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
+      <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
         <div className="mt-6 space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 animate-pulse rounded-xl bg-card-border/50" />
           ))}
         </div>
       </div>
@@ -152,25 +152,25 @@ export default function StartupEditGigPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in mx-auto max-w-2xl">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Gig</h1>
-          <p className="mt-1 text-muted">Update gig details</p>
+          <h1 className="text-2xl font-semibold text-foreground">Edit Gig</h1>
+          <p className="mt-1 text-sm text-muted">Update gig details</p>
         </div>
-        <button onClick={() => setShowDelete(true)} className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover">
+        <button onClick={() => setShowDelete(true)} className="btn-danger">
           Delete
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-danger dark:bg-red-950 dark:border-red-900">{error}</div>
         )}
 
         {/* Basic Info */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Information</h2>
           <FormField type="text" label="Title" name="title" value={form.title} onChange={(v) => update('title', v)} required placeholder="Gig title" />
           <FormField type="text" label="Client / Company" name="company" value={form.company} onChange={(v) => update('company', v)} placeholder="Client or company name" />
           <div className="grid grid-cols-2 gap-4">
@@ -186,14 +186,14 @@ export default function StartupEditGigPage() {
         </div>
 
         {/* Client Details */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Client Details</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Client Details</h2>
           <FormField type="url" label="Client Website" name="company_website" value={form.company_website} onChange={(v) => update('company_website', v)} placeholder="https://example.com" />
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Client Logo URL</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Client Logo URL</label>
             <div className="flex gap-2">
-              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-xl border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="btn-secondary whitespace-nowrap">
                 {fetchingLogo ? 'Fetching...' : 'Fetch from Website'}
               </button>
             </div>
@@ -201,13 +201,13 @@ export default function StartupEditGigPage() {
         </div>
 
         {/* Details */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
+        <div className="card-elevated rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Details</h2>
+            <h2 className="text-base font-semibold text-foreground">Details</h2>
             <span className="text-xs text-muted">AI can generate content based on the info above</span>
           </div>
           {(['description', 'deliverables', 'responsibilities'] as const).map((field) => (
-            <div key={field} className="space-y-1">
+            <div key={field} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-foreground">{field === 'responsibilities' ? 'Scope of Work' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                 <AiFieldButton field={field} type="gig" context={{ title: form.title, company: form.company, category: form.category, budget: form.budget, duration: form.duration, payment_type: form.payment_type, experience_level: form.experience_level }} onGenerated={(text) => update(field, text)} disabled={!form.title} />
@@ -218,20 +218,20 @@ export default function StartupEditGigPage() {
         </div>
 
         {/* --- Skills --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Skills Required</h2>
           <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
         {/* Contact */}
-        <div className="rounded-lg border border-card-border p-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Contact</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Contact</h2>
           <FormField type="email" label="Contact Email" name="contact_email" value={form.contact_email} onChange={(v) => update('contact_email', v)} placeholder="contact@example.com" />
         </div>
 
         {/* Visibility */}
-        <div className="rounded-lg border border-card-border p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Visibility</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Visibility</h2>
           <div className="grid grid-cols-2 gap-3">
             {(['public', 'facilitator_only'] as const).map((v) => (
               <button
@@ -239,9 +239,9 @@ export default function StartupEditGigPage() {
                 type="button"
                 onClick={() => update('visibility', v)}
                 className={cn(
-                  'rounded-lg border px-4 py-3 text-left text-sm transition-colors',
+                  'rounded-xl border px-4 py-3.5 text-left text-sm transition-all',
                   form.visibility === v
-                    ? 'border-primary bg-primary/10 text-primary'
+                    ? 'border-primary bg-primary/5 ring-2 ring-primary/20 text-primary'
                     : 'border-card-border text-foreground hover:bg-card-border/20'
                 )}
               >
@@ -256,11 +256,11 @@ export default function StartupEditGigPage() {
 
         <FormField type="checkbox" label="Active" name="is_active" checked={form.is_active} onChange={(v) => update('is_active', v)} />
 
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={saving} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        <div className="flex gap-3 pt-2 border-t border-card-border">
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

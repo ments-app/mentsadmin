@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ArrowLeft } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import { createCompetition, upsertCompetitionRounds, upsertCompetitionFaqs } from '@/actions/competitions';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
 const domainOptions = [
   { value: '', label: 'Select domain...' },
@@ -125,21 +126,33 @@ export default function NewCompetitionPage() {
   }
 
   const inputBase =
-    'w-full rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm';
+    'w-full rounded-xl border border-card-border bg-background px-3.5 py-2.5 text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 text-sm transition-all';
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold text-foreground">New Competition</h1>
-      <p className="mt-1 text-muted text-sm">Create a hub competition</p>
+    <div className="animate-fade-in mx-auto max-w-3xl">
+      {/* Breadcrumb */}
+      <Link href="/dashboard/competitions" className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-primary transition-colors mb-4">
+        <ArrowLeft size={15} />
+        Back to Competitions
+      </Link>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-8">
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-foreground">New Competition</h1>
+        <p className="mt-1 text-sm text-muted">Create a hub competition</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 p-4 text-sm text-danger flex items-center gap-2">
+            <span className="shrink-0 h-2 w-2 rounded-full bg-red-500" />
+            {error}
+          </div>
         )}
 
-        {/* ── Basic Info ── */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Basic Info</h2>
+        {/* Basic Info */}
+        <section className="card-elevated rounded-xl p-6 space-y-5">
+          <h2 className="text-base font-semibold text-foreground">Basic Info</h2>
 
           <FormField type="text" label="Title" name="title" value={form.title}
             onChange={(v) => update('title', v)} required placeholder="Competition title" />
@@ -155,12 +168,12 @@ export default function NewCompetitionPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Tags</label>
-            <div className="flex flex-wrap gap-2 rounded-lg border border-card-border bg-background p-2 min-h-[42px]">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Tags</label>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-card-border bg-background p-3 min-h-[46px] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all">
               {form.tags.map((tag) => (
-                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                <span key={tag} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                   {tag}
-                  <button type="button" onClick={() => removeTag(tag)}>
+                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-primary/70 transition-colors">
                     <X size={10} />
                   </button>
                 </span>
@@ -179,16 +192,16 @@ export default function NewCompetitionPage() {
             <DateTimePicker label="Deadline" name="deadline" value={form.deadline}
               onChange={(v) => update('deadline', v)} />
             <FormField type="text" label="Prize Pool" name="prize_pool" value={form.prize_pool}
-              onChange={(v) => update('prize_pool', v)} placeholder="e.g. ₹1,00,000" />
+              onChange={(v) => update('prize_pool', v)} placeholder="e.g. Rs.1,00,000" />
           </div>
 
           <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url}
             onChange={(v) => update('banner_image_url', v)} />
         </section>
 
-        {/* ── Participation ── */}
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Participation</h2>
+        {/* Participation */}
+        <section className="card-elevated rounded-xl p-6 space-y-5">
+          <h2 className="text-base font-semibold text-foreground">Participation</h2>
 
           <FormField
             type="select" label="Participation Type" name="participation_type"
@@ -203,13 +216,13 @@ export default function NewCompetitionPage() {
           {form.participation_type === 'team' && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Min Team Size</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Min Team Size</label>
                 <input type="number" min={1} max={20} value={form.team_size_min}
                   onChange={(e) => update('team_size_min', Number(e.target.value))}
                   className={inputBase} />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-foreground">Max Team Size</label>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Max Team Size</label>
                 <input type="number" min={1} max={20} value={form.team_size_max}
                   onChange={(e) => update('team_size_max', Number(e.target.value))}
                   className={inputBase} />
@@ -223,10 +236,10 @@ export default function NewCompetitionPage() {
             placeholder="Who can participate? (e.g. Open to all, College students only, Age 18+...)" rows={3} />
         </section>
 
-        {/* ── Settings ── */}
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Settings</h2>
-          <div className="flex flex-wrap gap-6">
+        {/* Settings */}
+        <section className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Settings</h2>
+          <div className="flex flex-wrap gap-x-8 gap-y-3">
             <FormField type="checkbox" label="Active (visible on hub)" name="is_active"
               checked={form.is_active} onChange={(v) => update('is_active', v)} />
             <FormField type="checkbox" label="Featured (shown in spotlight)" name="is_featured"
@@ -243,26 +256,28 @@ export default function NewCompetitionPage() {
           )}
         </section>
 
-        {/* ── Rounds ── */}
-        <section className="space-y-4">
+        {/* Rounds */}
+        <section className="card-elevated rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Rounds / Timeline</h2>
+            <h2 className="text-base font-semibold text-foreground">Rounds / Timeline</h2>
             <button type="button" onClick={addRound}
-              className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card-border/30 transition-colors">
+              className="btn-secondary flex items-center gap-1.5 !py-1.5 !px-3 !text-xs">
               <Plus size={13} /> Add Round
             </button>
           </div>
 
           {rounds.length === 0 && (
-            <p className="text-sm text-muted">No rounds added. Click "Add Round" to set a competition timeline.</p>
+            <div className="rounded-xl border border-dashed border-card-border py-8 text-center">
+              <p className="text-sm text-muted">No rounds added. Click &quot;Add Round&quot; to set a competition timeline.</p>
+            </div>
           )}
 
           {rounds.map((round, i) => (
-            <div key={i} className="rounded-lg border border-card-border p-4 space-y-3 relative">
+            <div key={i} className="rounded-xl border border-card-border bg-background p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted uppercase">Round {i + 1}</span>
+                <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">Round {i + 1}</span>
                 <button type="button" onClick={() => removeRound(i)}
-                  className="text-muted hover:text-danger transition-colors">
+                  className="btn-ghost !p-1.5 text-muted hover:text-danger">
                   <X size={15} />
                 </button>
               </div>
@@ -270,7 +285,7 @@ export default function NewCompetitionPage() {
                 onChange={(v) => updateRound(i, 'title', v)} placeholder="e.g. Idea Submission" required />
               <FormField type="textarea" label="Description" name={`round_desc_${i}`} value={round.description}
                 onChange={(v) => updateRound(i, 'description', v)} placeholder="What happens in this round?" rows={2} />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <DateTimePicker label="Start Date" name={`round_start_${i}`} value={round.start_date}
                   onChange={(v) => updateRound(i, 'start_date', v)} />
                 <DateTimePicker label="End Date" name={`round_end_${i}`} value={round.end_date}
@@ -280,26 +295,28 @@ export default function NewCompetitionPage() {
           ))}
         </section>
 
-        {/* ── FAQs ── */}
-        <section className="space-y-4">
+        {/* FAQs */}
+        <section className="card-elevated rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">FAQs</h2>
+            <h2 className="text-base font-semibold text-foreground">FAQs</h2>
             <button type="button" onClick={addFaq}
-              className="flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-card-border/30 transition-colors">
+              className="btn-secondary flex items-center gap-1.5 !py-1.5 !px-3 !text-xs">
               <Plus size={13} /> Add FAQ
             </button>
           </div>
 
           {faqs.length === 0 && (
-            <p className="text-sm text-muted">No FAQs added. Click "Add FAQ" to help participants.</p>
+            <div className="rounded-xl border border-dashed border-card-border py-8 text-center">
+              <p className="text-sm text-muted">No FAQs added. Click &quot;Add FAQ&quot; to help participants.</p>
+            </div>
           )}
 
           {faqs.map((faq, i) => (
-            <div key={i} className="rounded-lg border border-card-border p-4 space-y-3 relative">
+            <div key={i} className="rounded-xl border border-card-border bg-background p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted uppercase">FAQ {i + 1}</span>
+                <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">FAQ {i + 1}</span>
                 <button type="button" onClick={() => removeFaq(i)}
-                  className="text-muted hover:text-danger transition-colors">
+                  className="btn-ghost !p-1.5 text-muted hover:text-danger">
                   <X size={15} />
                 </button>
               </div>
@@ -311,13 +328,12 @@ export default function NewCompetitionPage() {
           ))}
         </section>
 
-        <div className="flex gap-3 pt-4 border-t border-card-border">
-          <button type="submit" disabled={loading}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        {/* Submit */}
+        <div className="flex gap-3 pt-2 pb-4">
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Creating...' : 'Create Competition'}
           </button>
-          <button type="button" onClick={() => router.back()}
-            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

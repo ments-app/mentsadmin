@@ -1,6 +1,7 @@
 'use client';
 
 import { Eye, MousePointer, Clock, Users, TrendingUp } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 interface StatsOverviewProps {
   stats: {
@@ -35,13 +36,26 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
         return (
           <div
             key={card.label}
-            className="rounded-xl border border-sidebar-border bg-sidebar-bg p-4"
+            className="card-elevated group p-5"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <Icon size={16} className={card.color} />
-              <span className="text-xs text-sidebar-text/60 font-medium">{card.label}</span>
+            <div className="flex items-start justify-between mb-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {card.label}
+              </p>
+              <div
+                className={cn(
+                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-full',
+                  'bg-gradient-to-br from-primary/10 to-primary/5',
+                  'ring-1 ring-primary/10',
+                  'transition-transform duration-200 group-hover:scale-110'
+                )}
+              >
+                <Icon size={16} className={card.color} />
+              </div>
             </div>
-            <p className="text-2xl font-bold text-sidebar-heading">{card.value}</p>
+            <p className="text-3xl font-bold tracking-tight text-foreground">
+              {card.value}
+            </p>
           </div>
         );
       })}

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, AlertCircle, CheckCircle, X, Sparkles, Loader2 } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle, X, Sparkles, Loader2, FileSpreadsheet } from 'lucide-react';
 import { bulkCreateResources } from '@/actions/resources';
 import { supabase } from '@/lib/supabase';
 import { CATEGORY_METADATA_FIELDS } from '@/lib/category-metadata';
@@ -303,47 +303,56 @@ export default function ImportResourcesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <h1 className="text-2xl font-bold text-foreground">Import Resources (CSV)</h1>
-      <p className="mt-1 text-muted">
-        Upload a CSV file to bulk-create resources. Expected columns: {EXPECTED_COLUMNS.slice(0, 10).join(', ')}, ...
-      </p>
+    <div className="mx-auto max-w-4xl animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-foreground">Import Resources (CSV)</h1>
+        <p className="mt-1 text-sm text-muted">
+          Upload a CSV file to bulk-create resources. Expected columns: {EXPECTED_COLUMNS.slice(0, 10).join(', ')}, ...
+        </p>
+      </div>
 
       {/* Result banner */}
       {result && (
-        <div className={`mt-4 flex items-center gap-2 rounded-lg p-3 text-sm ${
+        <div className={`mb-6 flex items-center gap-2.5 rounded-xl border p-4 text-sm ${
           result.success
-            ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300'
-            : 'bg-red-50 text-danger dark:bg-red-950'
+            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800'
+            : 'bg-red-50 text-danger border-red-200 dark:bg-red-950 dark:border-red-800'
         }`}>
-          {result.success ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+          {result.success ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
           {result.message}
         </div>
       )}
 
       {/* Drop zone */}
       <div
-        className={`mt-6 flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 transition-colors ${
+        className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all ${
           dragging
-            ? 'border-primary bg-primary/5'
-            : 'border-card-border hover:border-primary/40'
+            ? 'border-primary bg-primary/5 scale-[1.01]'
+            : 'border-card-border hover:border-primary/40 hover:bg-card-border/5'
         }`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
       >
-        <Upload size={32} className="text-muted" />
-        <p className="mt-3 text-sm text-muted">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 mb-4">
+          <Upload size={24} className="text-indigo-500" />
+        </div>
+        <p className="text-sm text-muted text-center">
           Drag & drop a CSV file here, or{' '}
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="text-primary underline hover:text-primary-hover"
+            className="text-primary font-medium underline hover:text-primary-hover transition-colors"
           >
             browse
           </button>
         </p>
-        {fileName && <p className="mt-2 text-xs text-foreground font-medium">{fileName}</p>}
+        {fileName && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-card-border/20 px-3 py-1.5">
+            <FileSpreadsheet size={14} className="text-muted" />
+            <span className="text-xs text-foreground font-medium">{fileName}</span>
+          </div>
+        )}
         <input
           ref={fileRef}
           type="file"
@@ -355,7 +364,7 @@ export default function ImportResourcesPage() {
 
       {/* Preview table */}
       {rows.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-foreground font-medium">
               {rows.length} rows parsed &middot; {validCount} valid
@@ -364,19 +373,19 @@ export default function ImportResourcesPage() {
             <button
               type="button"
               onClick={() => { setRows([]); setFileName(''); }}
-              className="flex items-center gap-1 text-sm text-muted hover:text-foreground"
+              className="btn-ghost text-sm flex items-center gap-1"
             >
               <X size={14} /> Clear
             </button>
           </div>
 
           {/* Enhance with AI */}
-          <div className="mt-3">
+          <div>
             <button
               type="button"
               disabled={enhancing || importing}
               onClick={handleEnhanceAll}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-4 py-2 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-all hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-5 py-2.5 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-all hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {enhancing ? (
                 <>
@@ -391,7 +400,7 @@ export default function ImportResourcesPage() {
               )}
             </button>
             {enhancing && (
-              <div className="mt-2 h-2 w-full rounded-full bg-card-border overflow-hidden">
+              <div className="mt-3 h-2.5 w-full rounded-full bg-card-border/30 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300"
                   style={{ width: `${enhanceProgress.total > 0 ? (enhanceProgress.current / enhanceProgress.total) * 100 : 0}%` }}
@@ -400,65 +409,67 @@ export default function ImportResourcesPage() {
             )}
           </div>
 
-          <div className="mt-3 overflow-x-auto rounded-lg border border-card-border">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-card-border/30">
-                  <th className="px-3 py-2 text-left font-medium text-muted">#</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Name</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Description</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Website</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Provider</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Category</th>
-                  <th className="px-3 py-2 text-left font-medium text-muted">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr
-                    key={i}
-                    className={`border-t border-card-border ${row.errors.length > 0 ? 'bg-red-50/50 dark:bg-red-950/20' : ''}`}
-                  >
-                    <td className="px-3 py-2 text-muted">{i + 1}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[200px] truncate">{row.title || '—'}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[200px] truncate">{row.description ? row.description.slice(0, 60) + '...' : '—'}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[160px] truncate">{row.url || '—'}</td>
-                    <td className="px-3 py-2 text-foreground max-w-[120px] truncate">{row.provider || '—'}</td>
-                    <td className="px-3 py-2">
-                      <span className="inline-block rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-medium capitalize text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                        {row.category}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      {row.errors.length > 0 ? (
-                        <span className="text-danger" title={row.errors.join(', ')}>
-                          <AlertCircle size={14} />
-                        </span>
-                      ) : (
-                        <span className="text-green-600 dark:text-green-400">
-                          <CheckCircle size={14} />
-                        </span>
-                      )}
-                    </td>
+          <div className="card-elevated rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-card-border/5 border-b border-card-border">
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">#</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Name</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Description</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Website</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Provider</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Category</th>
+                    <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-card-border">
+                  {rows.map((row, i) => (
+                    <tr
+                      key={i}
+                      className={`hover:bg-card-border/5 transition-colors ${row.errors.length > 0 ? 'bg-red-50/50 dark:bg-red-950/20' : ''}`}
+                    >
+                      <td className="px-4 py-3 text-muted">{i + 1}</td>
+                      <td className="px-4 py-3 text-foreground font-medium max-w-[200px] truncate">{row.title || '—'}</td>
+                      <td className="px-4 py-3 text-muted max-w-[200px] truncate">{row.description ? row.description.slice(0, 60) + '...' : '—'}</td>
+                      <td className="px-4 py-3 text-muted max-w-[160px] truncate">{row.url || '—'}</td>
+                      <td className="px-4 py-3 text-muted max-w-[120px] truncate">{row.provider || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-medium capitalize text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
+                          {row.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {row.errors.length > 0 ? (
+                          <span className="text-danger" title={row.errors.join(', ')}>
+                            <AlertCircle size={14} />
+                          </span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            <CheckCircle size={14} />
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="flex gap-3 pt-2 pb-8">
             <button
               type="button"
               disabled={importing || validCount === 0 || enhancing}
               onClick={handleImport}
-              className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="btn-primary"
             >
               {importing ? 'Importing...' : `Import ${validCount} Resources`}
             </button>
             <button
               type="button"
               onClick={() => router.push('/dashboard/resources')}
-              className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
+              className="btn-secondary"
             >
               Cancel
             </button>

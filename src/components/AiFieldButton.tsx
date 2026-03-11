@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Sparkles, Loader2, RotateCcw } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 type AiFieldButtonProps = {
   field: string;
@@ -49,12 +50,19 @@ export default function AiFieldButton({
   }
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2.5">
       <button
         type="button"
         onClick={generate}
         disabled={loading || disabled}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 border border-violet-500/30 px-3 py-1.5 text-xs font-semibold text-violet-700 dark:text-violet-300 transition-all hover:from-violet-500/20 hover:to-fuchsia-500/20 hover:border-violet-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold',
+          'border border-input-focus/25 bg-input-focus/8 text-input-focus',
+          'shadow-[var(--shadow-sm)] transition-all duration-200',
+          'hover:border-input-focus/40 hover:bg-input-focus/15 hover:shadow-input-focus/10',
+          'active:scale-[0.97]',
+          'disabled:cursor-not-allowed disabled:opacity-40'
+        )}
       >
         {loading ? (
           <>
@@ -69,7 +77,7 @@ export default function AiFieldButton({
         )}
       </button>
       {error && (
-        <span className="text-xs text-red-500">{error}</span>
+        <span className="text-xs font-medium text-danger">{error}</span>
       )}
     </div>
   );

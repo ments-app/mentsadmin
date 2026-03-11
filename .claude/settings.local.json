@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(curl:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find /c/Users/Lenovo/onedrive/desktop/mentsweb/ments_admin -name \"tailwind.config.*\" -o -name \"tsconfig.json\" -o -name \"postcss.config.*\" 2>/dev/null | head -10)"
     ]
   }
 }

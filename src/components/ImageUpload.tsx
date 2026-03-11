@@ -3,6 +3,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { Upload, X, Loader2, ImageIcon } from 'lucide-react';
 import { uploadBannerImage } from '@/actions/upload';
+import { cn } from '@/lib/cn';
 
 interface ImageUploadProps {
   label: string;
@@ -63,28 +64,28 @@ export default function ImageUpload({ label, name, value, onChange }: ImageUploa
   const displayUrl = preview || value;
 
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-medium text-foreground">
+    <div className="space-y-1.5">
+      <label className="block text-sm font-medium text-foreground">
         {label}
       </label>
 
       {displayUrl ? (
-        <div className="relative overflow-hidden rounded-lg border border-card-border">
+        <div className="group relative overflow-hidden rounded-lg border border-input-border shadow-[var(--shadow-sm)] transition-all duration-200 hover:border-input-focus/40">
           <img
             src={displayUrl}
             alt="Banner preview"
-            className="h-40 w-full object-cover"
+            className="h-44 w-full object-cover"
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/50">
             {uploading ? (
-              <Loader2 size={24} className="animate-spin text-white" />
+              <Loader2 size={28} className="animate-spin text-white drop-shadow-md" />
             ) : (
               <button
                 type="button"
                 onClick={handleRemove}
-                className="flex items-center gap-1.5 rounded-lg bg-white/90 px-3 py-1.5 text-sm font-medium text-gray-900 transition-colors hover:bg-white"
+                className="flex items-center gap-1.5 rounded-lg bg-white/90 px-4 py-2 text-sm font-medium text-gray-900 opacity-0 shadow-md backdrop-blur-sm transition-all duration-200 hover:bg-white group-hover:opacity-100"
               >
-                <X size={16} />
+                <X size={14} />
                 Remove
               </button>
             )}
@@ -97,19 +98,24 @@ export default function ImageUpload({ label, name, value, onChange }: ImageUploa
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          className={`flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed p-8 text-sm transition-colors ${
+          className={cn(
+            'flex w-full flex-col items-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 text-sm transition-all duration-200',
             dragOver
-              ? 'border-primary bg-primary/5'
-              : 'border-card-border text-muted hover:border-primary/50 hover:text-foreground'
-          }`}
+              ? 'border-input-focus bg-input-focus/5 shadow-[0_0_0_3px_rgba(99,102,241,0.1)]'
+              : 'border-input-border bg-input-bg text-muted hover:border-input-focus/50 hover:bg-input-focus/[0.03] hover:text-foreground'
+          )}
         >
           {uploading ? (
-            <Loader2 size={24} className="animate-spin" />
+            <Loader2 size={28} className="animate-spin text-input-focus" />
           ) : (
             <>
-              <ImageIcon size={24} />
-              <span>Click to browse or drag and drop</span>
-              <span className="text-xs">JPEG, PNG, WebP, GIF — max 5MB</span>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-input-focus/10 text-input-focus">
+                <ImageIcon size={22} />
+              </div>
+              <div className="text-center">
+                <span className="font-medium text-foreground">Click to browse or drag and drop</span>
+                <span className="mt-1 block text-xs text-muted">JPEG, PNG, WebP, GIF — max 5MB</span>
+              </div>
             </>
           )}
         </button>
@@ -125,7 +131,7 @@ export default function ImageUpload({ label, name, value, onChange }: ImageUploa
       />
 
       {error && (
-        <p className="mt-1.5 text-sm text-danger">{error}</p>
+        <p className="mt-1.5 text-sm font-medium text-danger">{error}</p>
       )}
     </div>
   );

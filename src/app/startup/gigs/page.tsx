@@ -12,8 +12,8 @@ import type { Gig } from '@/lib/types';
 
 const columns: Column<Gig & { _appCount?: number }>[] = [
   { key: 'title', label: 'Title' },
-  { key: 'budget', label: 'Budget', render: (item) => item.budget || '—' },
-  { key: 'duration', label: 'Duration', render: (item) => item.duration || '—' },
+  { key: 'budget', label: 'Budget', render: (item) => item.budget || '--' },
+  { key: 'duration', label: 'Duration', render: (item) => item.duration || '--' },
   {
     key: 'skills_required',
     label: 'Skills',
@@ -29,7 +29,7 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
             <span className="text-xs text-muted">+{item.skills_required.length - 3}</span>
           )}
         </div>
-      ) : '—',
+      ) : '--',
   },
   {
     key: '_appCount' as keyof Gig,
@@ -90,28 +90,26 @@ export default function StartupGigsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gigs</h1>
-          <p className="mt-1 text-muted">Manage freelance gig postings</p>
+          <h1 className="text-2xl font-semibold text-foreground">Gigs</h1>
+          <p className="mt-1 text-sm text-muted">Manage freelance gig postings</p>
         </div>
-        <Link href="/startup/gigs/new" className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover">
+        <Link href="/startup/gigs/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           Add Gig
         </Link>
       </div>
 
-      <div className="mt-6">
-        <DataTable
-          columns={columns}
-          data={gigs}
-          loading={loading}
-          editHref={(item) => `/startup/gigs/${item.id}`}
-          onDelete={setDeleteTarget}
-          emptyMessage="No gigs yet. Create your first one!"
-        />
-      </div>
+      <DataTable
+        columns={columns}
+        data={gigs}
+        loading={loading}
+        editHref={(item) => `/startup/gigs/${item.id}`}
+        onDelete={setDeleteTarget}
+        emptyMessage="No gigs yet. Create your first one!"
+      />
 
       <DeleteConfirmModal
         open={!!deleteTarget}

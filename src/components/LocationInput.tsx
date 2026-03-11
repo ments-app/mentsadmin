@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { MapPin, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 type Result = {
   place_id: number;
@@ -103,35 +104,40 @@ export default function LocationInput({ value, onChange, placeholder, label, nam
   }
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
         <label htmlFor={name} className="block text-sm font-medium text-foreground">
           {label}
         </label>
       )}
       <div ref={wrapperRef} className="relative">
-        <MapPin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none z-10" />
+        <MapPin size={14} className="pointer-events-none absolute left-3.5 top-1/2 z-10 -translate-y-1/2 text-muted" />
         <input
           id={name}
           type="text"
           value={input}
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
-          placeholder={placeholder ?? 'Search city or location…'}
-          className="w-full rounded-lg border border-card-border bg-background pl-8 pr-8 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted"
+          placeholder={placeholder ?? 'Search city or location...'}
+          className={cn(
+            'w-full rounded-lg border bg-input-bg pl-9 pr-9 py-2.5 text-sm text-foreground',
+            'shadow-[var(--shadow-sm)] transition-all duration-200 placeholder:text-muted/50',
+            'focus:outline-none focus:ring-2 focus:ring-input-focus/25 focus:border-input-focus',
+            'border-input-border'
+          )}
         />
         {loading && (
-          <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted animate-spin" />
+          <Loader2 size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-input-focus" />
         )}
 
         {open && results.length > 0 && (
-          <ul className="absolute z-50 mt-1 w-full rounded-lg border border-card-border bg-background shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+          <ul className="absolute z-50 mt-1.5 max-h-56 w-full overflow-hidden overflow-y-auto rounded-lg border border-input-border bg-card-bg py-1 shadow-lg">
             {results.map((r) => (
               <li key={r.place_id}>
                 <button
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); select(r); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                  className="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm text-foreground transition-all duration-150 hover:bg-input-focus/10 hover:text-input-focus"
                 >
                   <MapPin size={12} className="shrink-0 text-muted" />
                   <span className="truncate">{formatResult(r)}</span>

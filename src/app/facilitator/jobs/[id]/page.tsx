@@ -167,11 +167,11 @@ export default function FacilitatorEditJobPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
+      <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="h-8 w-48 skeleton-shimmer rounded-lg" />
         <div className="mt-6 space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 skeleton-shimmer rounded-xl" />
           ))}
         </div>
       </div>
@@ -179,46 +179,46 @@ export default function FacilitatorEditJobPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-2xl animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
+          <h1 className="text-2xl font-semibold text-foreground">
             {isStartupJob ? 'View Job' : 'Edit Job'}
           </h1>
-          <p className="mt-1 text-muted">
+          <p className="mt-1 text-sm text-muted">
             {isStartupJob ? 'Job posted by a startup in your network' : 'Update job posting details'}
           </p>
         </div>
         {!isStartupJob && (
-          <button onClick={() => setShowDelete(true)} className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover">
+          <button onClick={() => setShowDelete(true)} className="btn-danger">
             Delete
           </button>
         )}
       </div>
 
-      <form onSubmit={isStartupJob ? undefined : handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={isStartupJob ? undefined : handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-danger dark:bg-red-950">{error}</div>
         )}
 
         {isStartupJob && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
             This job was posted by a startup. You can view but not edit it.
           </div>
         )}
 
         {/* --- Visibility --- */}
         {!isStartupJob && (
-          <div className="rounded-lg border border-card-border p-4 space-y-3">
-            <h2 className="text-lg font-semibold text-foreground">Who can see this?</h2>
+          <div className="card-elevated p-5 space-y-4">
+            <h2 className="text-base font-semibold text-foreground">Who can see this?</h2>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => update('visibility', 'public')}
                 className={cn(
-                  'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors',
+                  'flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all duration-150',
                   form.visibility === 'public'
-                    ? 'border-primary bg-primary/5'
+                    ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-card-border hover:border-primary/50'
                 )}
               >
@@ -232,9 +232,9 @@ export default function FacilitatorEditJobPage() {
                 type="button"
                 onClick={() => update('visibility', 'email_restricted')}
                 className={cn(
-                  'flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors',
+                  'flex flex-col items-start gap-1 rounded-xl border p-3.5 text-left transition-all duration-150',
                   form.visibility === 'email_restricted'
-                    ? 'border-primary bg-primary/5'
+                    ? 'border-primary bg-primary/5 shadow-sm'
                     : 'border-card-border hover:border-primary/50'
                 )}
               >
@@ -246,7 +246,7 @@ export default function FacilitatorEditJobPage() {
               </button>
             </div>
             {form.visibility === 'email_restricted' && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-300">
                 Only students in your Access List will see this.{' '}
                 <Link href="/facilitator/students" className="font-medium underline">
                   Manage Access List →
@@ -257,8 +257,8 @@ export default function FacilitatorEditJobPage() {
         )}
 
         {/* --- Basic Info --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Information</h2>
           <FormField type="text" label="Title" name="title" value={form.title} onChange={(v) => update('title', v)} required placeholder="Job title" />
           <FormField type="text" label="Company" name="company" value={form.company} onChange={(v) => update('company', v)} required placeholder="Company name" />
           <div className="grid grid-cols-2 gap-4">
@@ -270,9 +270,9 @@ export default function FacilitatorEditJobPage() {
             <FormField type="select" label="Experience Level" name="experience_level" value={form.experience_level} onChange={(v) => update('experience_level', v)} options={experienceLevelOptions} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Salary Range</label>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Salary Range</label>
               <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
             </div>
           </div>
@@ -280,13 +280,13 @@ export default function FacilitatorEditJobPage() {
         </div>
 
         {/* --- Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
+        <div className="card-elevated p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Details</h2>
+            <h2 className="text-base font-semibold text-foreground">Details</h2>
             {!isStartupJob && <span className="text-xs text-muted">AI can generate content based on the info above</span>}
           </div>
           {(['description', 'responsibilities', 'requirements', 'benefits'] as const).map((field) => (
-            <div key={field} className="space-y-1">
+            <div key={field} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-foreground">{field === 'benefits' ? 'Benefits & Perks' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                 {!isStartupJob && <AiFieldButton field={field} type="job" context={{ title: form.title, company: form.company }} onGenerated={(text) => update(field, text)} disabled={!form.title} />}
@@ -297,8 +297,8 @@ export default function FacilitatorEditJobPage() {
         </div>
 
         {/* --- Skills --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
+        <div className="card-elevated p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Skills Required</h2>
           {isStartupJob ? (
             form.skills_required.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -319,11 +319,11 @@ export default function FacilitatorEditJobPage() {
         {!isStartupJob && (
           <>
             <FormField type="checkbox" label="Active" name="is_active" checked={form.is_active} onChange={(v) => update('is_active', v)} />
-            <div className="flex gap-3 pt-4">
-              <button type="submit" disabled={saving} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+            <div className="flex gap-3 pt-2">
+              <button type="submit" disabled={saving} className="btn-primary py-2.5 px-6">
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+              <button type="button" onClick={() => router.back()} className="btn-secondary py-2.5 px-6">
                 Cancel
               </button>
             </div>
@@ -331,8 +331,8 @@ export default function FacilitatorEditJobPage() {
         )}
 
         {isStartupJob && (
-          <div className="flex gap-3 pt-4">
-            <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => router.back()} className="btn-secondary py-2.5 px-6">
               Back
             </button>
           </div>

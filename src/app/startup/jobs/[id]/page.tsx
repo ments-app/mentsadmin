@@ -173,11 +173,11 @@ export default function StartupEditJobPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
+      <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
         <div className="mt-6 space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 animate-pulse rounded-xl bg-card-border/50" />
           ))}
         </div>
       </div>
@@ -185,35 +185,35 @@ export default function StartupEditJobPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in mx-auto max-w-2xl">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Edit Job</h1>
-          <p className="mt-1 text-muted">Update job posting details</p>
+          <h1 className="text-2xl font-semibold text-foreground">Edit Job</h1>
+          <p className="mt-1 text-sm text-muted">Update job posting details</p>
         </div>
         <button
           onClick={() => setShowDelete(true)}
-          className="rounded-lg bg-danger px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-danger-hover"
+          className="btn-danger"
         >
           Delete
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">{error}</div>
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-danger dark:bg-red-950 dark:border-red-900">{error}</div>
         )}
 
         {/* --- Posting Visibility --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Visibility</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Visibility</h2>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => update('visibility', 'public')}
-              className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+              className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all ${
                 form.visibility === 'public'
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                   : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
               }`}
             >
@@ -226,9 +226,9 @@ export default function StartupEditJobPage() {
             <button
               type="button"
               onClick={() => update('visibility', 'facilitator_only')}
-              className={`flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors ${
+              className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all ${
                 form.visibility === 'facilitator_only'
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                  ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                   : 'border-card-border hover:border-primary/40 hover:bg-card-border/20'
               }`}
             >
@@ -241,7 +241,7 @@ export default function StartupEditJobPage() {
           </div>
 
           {form.visibility === 'facilitator_only' && (
-            <div className="mt-1 space-y-2 border-t border-card-border pt-3">
+            <div className="mt-1 space-y-2 border-t border-card-border pt-4">
               <div>
                 <p className="text-sm font-medium text-foreground">Select Facilitators</p>
                 <p className="text-xs text-muted mt-0.5">Leave all unchecked to share with all your approved facilitators.</p>
@@ -249,9 +249,9 @@ export default function StartupEditJobPage() {
               {facilitators.length === 0 ? (
                 <p className="text-sm text-amber-600 dark:text-amber-400">No approved facilitators found.</p>
               ) : (
-                <div className="space-y-1.5 rounded-lg border border-card-border bg-background p-3">
+                <div className="space-y-1.5 rounded-xl border border-card-border bg-background p-3">
                   {facilitators.map((f) => (
-                    <label key={f.id} className="flex items-center gap-3 cursor-pointer hover:bg-card-border/20 rounded px-1 py-1">
+                    <label key={f.id} className="flex items-center gap-3 cursor-pointer hover:bg-card-border/20 rounded-lg px-2 py-1.5 transition-colors">
                       <input
                         type="checkbox"
                         checked={form.target_facilitator_ids.includes(f.id)}
@@ -275,8 +275,8 @@ export default function StartupEditJobPage() {
         </div>
 
         {/* --- Basic Info --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Information</h2>
           <FormField type="text" label="Title" name="title" value={form.title} onChange={(v) => update('title', v)} required placeholder="Job title" />
           <FormField type="text" label="Company" name="company" value={form.company} onChange={(v) => update('company', v)} required placeholder="Company name" />
           <div className="grid grid-cols-2 gap-4">
@@ -288,9 +288,9 @@ export default function StartupEditJobPage() {
             <FormField type="select" label="Experience Level" name="experience_level" value={form.experience_level} onChange={(v) => update('experience_level', v)} options={experienceLevelOptions} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online…" />
+            <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
             <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">Salary Range</label>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">Salary Range</label>
               <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
             </div>
           </div>
@@ -298,14 +298,14 @@ export default function StartupEditJobPage() {
         </div>
 
         {/* --- Company Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Company Details</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Company Details</h2>
           <FormField type="url" label="Company Website" name="company_website" value={form.company_website} onChange={(v) => update('company_website', v)} placeholder="https://example.com" />
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">Company Logo URL</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Company Logo URL</label>
             <div className="flex gap-2">
-              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary" />
-              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap">
+              <input type="url" value={form.company_logo_url} onChange={(e) => update('company_logo_url', e.target.value)} placeholder="https://example.com/logo.png" className="flex-1 rounded-xl border border-card-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" />
+              <button type="button" onClick={fetchLogoFromWebsite} disabled={fetchingLogo || !form.company_website.trim()} className="btn-secondary whitespace-nowrap">
                 {fetchingLogo ? 'Fetching...' : 'Fetch from Website'}
               </button>
             </div>
@@ -313,13 +313,13 @@ export default function StartupEditJobPage() {
         </div>
 
         {/* --- Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
+        <div className="card-elevated rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Details</h2>
+            <h2 className="text-base font-semibold text-foreground">Details</h2>
             <span className="text-xs text-muted">AI can generate content based on the info above</span>
           </div>
           {(['description', 'responsibilities', 'requirements', 'benefits'] as const).map((field) => (
-            <div key={field} className="space-y-1">
+            <div key={field} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-foreground">{field === 'benefits' ? 'Benefits & Perks' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                 <AiFieldButton field={field} type="job" context={{ title: form.title, company: form.company, category: form.category, job_type: form.job_type, experience_level: form.experience_level }} onGenerated={(text) => update(field, text)} disabled={!form.title} />
@@ -330,24 +330,24 @@ export default function StartupEditJobPage() {
         </div>
 
         {/* --- Skills --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Skills Required</h2>
           <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
         {/* --- Contact --- */}
-        <div className="rounded-lg border border-card-border p-4">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Contact</h2>
+        <div className="card-elevated rounded-xl p-5 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Contact</h2>
           <FormField type="email" label="Contact Email" name="contact_email" value={form.contact_email} onChange={(v) => update('contact_email', v)} placeholder="hr@example.com" />
         </div>
 
         <FormField type="checkbox" label="Active" name="is_active" checked={form.is_active} onChange={(v) => update('is_active', v)} />
 
-        <div className="flex gap-3 pt-4">
-          <button type="submit" disabled={saving} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50">
+        <div className="flex gap-3 pt-2 border-t border-card-border">
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
-          <button type="button" onClick={() => router.back()} className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30">
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

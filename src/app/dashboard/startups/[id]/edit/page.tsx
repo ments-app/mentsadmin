@@ -35,13 +35,13 @@ import {
 type Tab = 'identity' | 'content' | 'market' | 'financials' | 'team' | 'recognition' | 'publishing';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: 'identity', label: 'Identity', icon: <Building2 size={14} /> },
-  { id: 'content', label: 'Content', icon: <FileText size={14} /> },
-  { id: 'market', label: 'Market', icon: <Tag size={14} /> },
-  { id: 'financials', label: 'Financials', icon: <TrendingUp size={14} /> },
-  { id: 'team', label: 'Team', icon: <Users size={14} /> },
-  { id: 'recognition', label: 'Recognition', icon: <Award size={14} /> },
-  { id: 'publishing', label: 'Display', icon: <Settings2 size={14} /> },
+  { id: 'identity', label: 'Identity', icon: <Building2 size={15} /> },
+  { id: 'content', label: 'Content', icon: <FileText size={15} /> },
+  { id: 'market', label: 'Market', icon: <Tag size={15} /> },
+  { id: 'financials', label: 'Financials', icon: <TrendingUp size={15} /> },
+  { id: 'team', label: 'Team', icon: <Users size={15} /> },
+  { id: 'recognition', label: 'Recognition', icon: <Award size={15} /> },
+  { id: 'publishing', label: 'Display', icon: <Settings2 size={15} /> },
 ];
 
 const LEGAL_STATUSES = [
@@ -94,11 +94,11 @@ export default function StartupEditPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl">
-        <div className="h-8 w-48 animate-pulse rounded bg-card-border" />
+      <div className="mx-auto max-w-3xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
         <div className="mt-6 space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded bg-card-border" />
+            <div key={i} className="h-12 animate-pulse rounded-lg bg-card-border/50" />
           ))}
         </div>
       </div>
@@ -107,9 +107,10 @@ export default function StartupEditPage() {
 
   if (!profile) {
     return (
-      <div className="mx-auto max-w-3xl py-12 text-center text-muted">
-        Startup not found.{' '}
-        <Link href="/dashboard/startups" className="text-primary hover:underline">
+      <div className="mx-auto max-w-3xl py-24 text-center">
+        <Building2 size={48} className="mx-auto mb-4 text-muted/30" />
+        <p className="text-base font-medium text-foreground">Startup not found</p>
+        <Link href="/dashboard/startups" className="btn-primary mt-4 inline-flex">
           Go back
         </Link>
       </div>
@@ -117,22 +118,22 @@ export default function StartupEditPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="mb-8 flex items-center gap-3">
         <Link
           href={`/dashboard/startups/${id}`}
-          className="rounded-lg border border-card-border p-1.5 text-muted transition-colors hover:bg-card-border/30 hover:text-foreground"
+          className="btn-ghost !p-2 !rounded-xl"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft size={18} />
         </Link>
-        <div>
-          <h1 className="text-xl font-bold text-foreground">{profile.brand_name}</h1>
-          <p className="text-xs text-muted">Edit startup profile</p>
+        <div className="flex-1">
+          <h1 className="text-2xl font-semibold text-foreground">{profile.brand_name}</h1>
+          <p className="mt-0.5 text-sm text-muted">Edit startup profile</p>
         </div>
         {profile.owner && (
-          <div className="ml-auto text-right">
-            <p className="text-xs text-muted">Owner</p>
+          <div className="text-right">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted">Owner</p>
             <p className="text-sm font-medium text-foreground">{profile.owner.full_name}</p>
             <p className="text-xs text-muted">{profile.owner.email}</p>
           </div>
@@ -140,25 +141,29 @@ export default function StartupEditPage() {
       </div>
 
       {/* Tabs */}
-      <div className="mt-5 flex flex-wrap gap-1 border-b border-card-border pb-0">
+      <div className="mb-6 flex flex-wrap gap-1 border-b border-card-border">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-1.5 rounded-t px-3 py-2 text-xs font-medium transition-colors ${
+            className={`relative flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === tab.id
-                ? 'border-b-2 border-primary text-primary'
+                ? 'text-primary'
                 : 'text-muted hover:text-foreground'
             }`}
           >
             {tab.icon}
             {tab.label}
-            {saved === tab.id && <CheckCircle2 size={11} className="text-green-500" />}
+            {saved === tab.id && <CheckCircle2 size={12} className="text-emerald-500 animate-fade-in" />}
+            {activeTab === tab.id && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t bg-primary" />
+            )}
           </button>
         ))}
       </div>
 
-      <div className="mt-5">
+      {/* Tab Content */}
+      <div className="card-elevated rounded-xl p-6">
         {activeTab === 'identity' && (
           <IdentityTab profile={profile} onSave={(data) => {
             updateStartupCoreProfile(id, data).then(() => {
@@ -280,7 +285,7 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <Field label="Brand Name *" value={form.brand_name} onChange={(v) => setForm({ ...form, brand_name: v })} />
         <Field label="Registered Name" value={form.registered_name} onChange={(v) => setForm({ ...form, registered_name: v })} />
@@ -315,8 +320,10 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
         <Field label="Team Size" value={form.team_size} onChange={(v) => setForm({ ...form, team_size: v })} placeholder="e.g. 5-10" />
         <Field label="Website" type="url" value={form.website} onChange={(v) => setForm({ ...form, website: v })} placeholder="https://" />
       </div>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveButton saving={saving} onClick={handleSave} />
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/50 p-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      <div className="border-t border-card-border pt-5">
+        <SaveButton saving={saving} onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -357,7 +364,7 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <TextareaField
         label="Description"
         value={form.description}
@@ -410,8 +417,10 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
         placeholder="Users, revenue, growth numbers, partnerships, etc."
         rows={3}
       />
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <SaveButton saving={saving} onClick={handleSave} />
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/50 p-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
+      <div className="border-t border-card-border pt-5">
+        <SaveButton saving={saving} onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -444,16 +453,17 @@ function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (
   return (
     <div className="space-y-6">
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Categories</label>
-        <div className="mb-2 flex flex-wrap gap-1.5">
+        <label className="mb-2 block text-sm font-medium text-foreground">Categories</label>
+        <div className="mb-3 flex flex-wrap gap-2">
           {categories.map((c) => (
-            <span key={c} className="flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+            <span key={c} className="flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/10 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20">
               {c}
-              <button onClick={() => removeTag(categories, setCategories, c)} className="hover:text-danger ml-0.5">
-                <Trash2 size={10} />
+              <button onClick={() => removeTag(categories, setCategories, c)} className="hover:text-red-500 transition-colors ml-0.5">
+                <Trash2 size={11} />
               </button>
             </span>
           ))}
+          {categories.length === 0 && <span className="text-xs text-muted">No categories added yet</span>}
         </div>
         <TagInput
           value={catInput}
@@ -462,17 +472,18 @@ function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (
           placeholder="Add category (press Enter)"
         />
       </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Keywords / Tags</label>
-        <div className="mb-2 flex flex-wrap gap-1.5">
+      <div className="border-t border-card-border pt-6">
+        <label className="mb-2 block text-sm font-medium text-foreground">Keywords / Tags</label>
+        <div className="mb-3 flex flex-wrap gap-2">
           {keywords.map((k) => (
-            <span key={k} className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            <span key={k} className="flex items-center gap-1.5 rounded-full bg-primary/5 px-3 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/10">
               #{k}
-              <button onClick={() => removeTag(keywords, setKeywords, k)} className="hover:text-danger ml-0.5">
-                <Trash2 size={10} />
+              <button onClick={() => removeTag(keywords, setKeywords, k)} className="hover:text-red-500 transition-colors ml-0.5">
+                <Trash2 size={11} />
               </button>
             </span>
           ))}
+          {keywords.length === 0 && <span className="text-xs text-muted">No keywords added yet</span>}
         </div>
         <TagInput
           value={kwInput}
@@ -481,7 +492,9 @@ function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (
           placeholder="Add keyword (press Enter)"
         />
       </div>
-      <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5">
+        <SaveButton saving={saving} onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -531,7 +544,7 @@ function FinancialsTab({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Revenue & Traction</h3>
+        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">Revenue & Traction</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex gap-2">
             <div className="w-24">
@@ -545,7 +558,7 @@ function FinancialsTab({
           <Field label="MoM Growth %" value={meta.revenue_growth} onChange={(v) => setMeta({ ...meta, revenue_growth: v })} placeholder="e.g. 15%" />
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4">
-          <Field label="Total Raised" value={meta.total_raised} onChange={(v) => setMeta({ ...meta, total_raised: v })} placeholder="e.g. ₹50,00,000" />
+          <Field label="Total Raised" value={meta.total_raised} onChange={(v) => setMeta({ ...meta, total_raised: v })} placeholder="e.g. 50,00,000" />
           <Field label="Investor Count" type="number" value={meta.investor_count} onChange={(v) => setMeta({ ...meta, investor_count: v })} />
         </div>
         <div className="mt-4 flex items-center gap-3">
@@ -555,7 +568,7 @@ function FinancialsTab({
             label="Actively Raising"
           />
         </div>
-        <div className="mt-4">
+        <div className="mt-5">
           <SaveButton
             saving={savingMeta}
             label="Save Revenue Info"
@@ -575,39 +588,42 @@ function FinancialsTab({
         </div>
       </div>
 
-      <div className="border-t border-card-border pt-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Funding Rounds</h3>
-          <button onClick={addRound} className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-primary">
-            <Plus size={13} /> Add Round
+      <div className="border-t border-card-border pt-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted">Funding Rounds</h3>
+          <button onClick={addRound} className="btn-ghost gap-1.5 text-xs">
+            <Plus size={14} /> Add Round
           </button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {rounds.map((r, i) => (
-            <div key={i} className="rounded-lg border border-card-border p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted">Round {i + 1}</span>
-                <button onClick={() => setRounds(rounds.filter((_, idx) => idx !== i))} className="text-muted hover:text-danger">
-                  <Trash2 size={13} />
+            <div key={i} className="rounded-xl border border-card-border p-4 transition-colors hover:bg-background/30">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted uppercase tracking-wide">Round {i + 1}</span>
+                <button onClick={() => setRounds(rounds.filter((_, idx) => idx !== i))} className="btn-ghost !p-1 text-muted hover:text-red-500">
+                  <Trash2 size={14} />
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Investor" value={r.investor} onChange={(v) => updateRound(i, 'investor', v)} placeholder="Investor name" />
-                <Field label="Amount" value={r.amount} onChange={(v) => updateRound(i, 'amount', v)} placeholder="e.g. ₹1Cr" />
+                <Field label="Amount" value={r.amount} onChange={(v) => updateRound(i, 'amount', v)} placeholder="e.g. 1Cr" />
                 <SelectField label="Round Type" value={r.round_type} onChange={(v) => updateRound(i, 'round_type', v)}
                   options={ROUND_TYPES} placeholder="Select..." />
                 <Field label="Date" type="date" value={r.round_date} onChange={(v) => updateRound(i, 'round_date', v)} />
               </div>
-              <div className="mt-2">
+              <div className="mt-3">
                 <Toggle checked={r.is_public} onChange={(v) => updateRound(i, 'is_public', v)} label="Publicly visible" />
               </div>
             </div>
           ))}
           {rounds.length === 0 && (
-            <p className="text-xs text-muted">No funding rounds added yet.</p>
+            <div className="rounded-xl border border-dashed border-card-border py-8 text-center">
+              <TrendingUp size={32} className="mx-auto mb-2 text-muted/30" />
+              <p className="text-sm text-muted">No funding rounds added yet</p>
+            </div>
           )}
         </div>
-        <div className="mt-3">
+        <div className="mt-5">
           <SaveButton
             saving={savingRounds}
             label="Save Funding Rounds"
@@ -659,19 +675,19 @@ function TeamTab({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted">Founders & co-founders</p>
-        <button onClick={add} className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-primary">
-          <Plus size={13} /> Add Member
+        <button onClick={add} className="btn-ghost gap-1.5 text-xs">
+          <Plus size={14} /> Add Member
         </button>
       </div>
       {list.map((f, i) => (
-        <div key={i} className="rounded-lg border border-card-border p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-muted">Member {i + 1}</span>
-            <button onClick={() => setList(list.filter((_, idx) => idx !== i))} className="text-muted hover:text-danger">
-              <Trash2 size={13} />
+        <div key={i} className="rounded-xl border border-card-border p-4 transition-colors hover:bg-background/30">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted uppercase tracking-wide">Member {i + 1}</span>
+            <button onClick={() => setList(list.filter((_, idx) => idx !== i))} className="btn-ghost !p-1 text-muted hover:text-red-500">
+              <Trash2 size={14} />
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -682,8 +698,15 @@ function TeamTab({
           </div>
         </div>
       ))}
-      {list.length === 0 && <p className="text-xs text-muted">No team members added yet.</p>}
-      <SaveButton saving={saving} onClick={handleSave} />
+      {list.length === 0 && (
+        <div className="rounded-xl border border-dashed border-card-border py-8 text-center">
+          <Users size={32} className="mx-auto mb-2 text-muted/30" />
+          <p className="text-sm text-muted">No team members added yet</p>
+        </div>
+      )}
+      <div className="border-t border-card-border pt-5">
+        <SaveButton saving={saving} onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -716,73 +739,83 @@ function RecognitionTab({
   return (
     <div className="space-y-6">
       <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Incubators & Programs</h3>
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted">Incubators & Programs</h3>
           <button onClick={() => setIncList([...incList, { program_name: '', year: '' }])}
-            className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-primary">
-            <Plus size={13} /> Add
+            className="btn-ghost gap-1.5 text-xs">
+            <Plus size={14} /> Add
           </button>
         </div>
-        {incList.map((inc, i) => (
-          <div key={i} className="mb-2 flex gap-3">
-            <div className="flex-1">
-              <Field label="" value={inc.program_name} onChange={(v) => setIncList(incList.map((x, idx) => idx === i ? { ...x, program_name: v } : x))} placeholder="Program / Incubator name" />
+        <div className="space-y-3">
+          {incList.map((inc, i) => (
+            <div key={i} className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Field label="" value={inc.program_name} onChange={(v) => setIncList(incList.map((x, idx) => idx === i ? { ...x, program_name: v } : x))} placeholder="Program / Incubator name" />
+              </div>
+              <div className="w-24">
+                <Field label="" type="number" value={inc.year} onChange={(v) => setIncList(incList.map((x, idx) => idx === i ? { ...x, year: v } : x))} placeholder="Year" />
+              </div>
+              <button onClick={() => setIncList(incList.filter((_, idx) => idx !== i))} className="btn-ghost !p-2 mb-0.5 text-muted hover:text-red-500">
+                <Trash2 size={14} />
+              </button>
             </div>
-            <div className="w-24">
-              <Field label="" type="number" value={inc.year} onChange={(v) => setIncList(incList.map((x, idx) => idx === i ? { ...x, year: v } : x))} placeholder="Year" />
-            </div>
-            <button onClick={() => setIncList(incList.filter((_, idx) => idx !== i))} className="mt-1 self-center text-muted hover:text-danger">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        ))}
-        <SaveButton
-          saving={savingInc}
-          label="Save Incubators"
-          onClick={() => {
-            setSavingInc(true);
-            onSaveIncubators(incList.filter((i) => i.program_name.trim()).map((i) => ({
-              program_name: i.program_name,
-              year: i.year ? parseInt(i.year) : null,
-            })));
-            setSavingInc(false);
-          }}
-        />
+          ))}
+          {incList.length === 0 && <p className="text-sm text-muted py-2">No incubators added yet.</p>}
+        </div>
+        <div className="mt-4">
+          <SaveButton
+            saving={savingInc}
+            label="Save Incubators"
+            onClick={() => {
+              setSavingInc(true);
+              onSaveIncubators(incList.filter((i) => i.program_name.trim()).map((i) => ({
+                program_name: i.program_name,
+                year: i.year ? parseInt(i.year) : null,
+              })));
+              setSavingInc(false);
+            }}
+          />
+        </div>
       </div>
 
-      <div className="border-t border-card-border pt-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-muted">Awards & Recognition</h3>
+      <div className="border-t border-card-border pt-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted">Awards & Recognition</h3>
           <button onClick={() => setAwardList([...awardList, { award_name: '', year: '' }])}
-            className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-primary">
-            <Plus size={13} /> Add
+            className="btn-ghost gap-1.5 text-xs">
+            <Plus size={14} /> Add
           </button>
         </div>
-        {awardList.map((a, i) => (
-          <div key={i} className="mb-2 flex gap-3">
-            <div className="flex-1">
-              <Field label="" value={a.award_name} onChange={(v) => setAwardList(awardList.map((x, idx) => idx === i ? { ...x, award_name: v } : x))} placeholder="Award name" />
+        <div className="space-y-3">
+          {awardList.map((a, i) => (
+            <div key={i} className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Field label="" value={a.award_name} onChange={(v) => setAwardList(awardList.map((x, idx) => idx === i ? { ...x, award_name: v } : x))} placeholder="Award name" />
+              </div>
+              <div className="w-24">
+                <Field label="" type="number" value={a.year} onChange={(v) => setAwardList(awardList.map((x, idx) => idx === i ? { ...x, year: v } : x))} placeholder="Year" />
+              </div>
+              <button onClick={() => setAwardList(awardList.filter((_, idx) => idx !== i))} className="btn-ghost !p-2 mb-0.5 text-muted hover:text-red-500">
+                <Trash2 size={14} />
+              </button>
             </div>
-            <div className="w-24">
-              <Field label="" type="number" value={a.year} onChange={(v) => setAwardList(awardList.map((x, idx) => idx === i ? { ...x, year: v } : x))} placeholder="Year" />
-            </div>
-            <button onClick={() => setAwardList(awardList.filter((_, idx) => idx !== i))} className="mt-1 self-center text-muted hover:text-danger">
-              <Trash2 size={13} />
-            </button>
-          </div>
-        ))}
-        <SaveButton
-          saving={savingAward}
-          label="Save Awards"
-          onClick={() => {
-            setSavingAward(true);
-            onSaveAwards(awardList.filter((a) => a.award_name.trim()).map((a) => ({
-              award_name: a.award_name,
-              year: a.year ? parseInt(a.year) : null,
-            })));
-            setSavingAward(false);
-          }}
-        />
+          ))}
+          {awardList.length === 0 && <p className="text-sm text-muted py-2">No awards added yet.</p>}
+        </div>
+        <div className="mt-4">
+          <SaveButton
+            saving={savingAward}
+            label="Save Awards"
+            onClick={() => {
+              setSavingAward(true);
+              onSaveAwards(awardList.filter((a) => a.award_name.trim()).map((a) => ({
+                award_name: a.award_name,
+                year: a.year ? parseInt(a.year) : null,
+              })));
+              setSavingAward(false);
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -806,14 +839,14 @@ function PublishingTab({ profile, onSave }: { profile: FullStartupProfile; onSav
   return (
     <div className="space-y-6">
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground">Visibility</label>
-        <div className="space-y-2">
+        <label className="mb-2 block text-sm font-medium text-foreground">Visibility</label>
+        <div className="space-y-2.5">
           {[
             { value: 'public', label: 'Public', desc: 'Visible to all users on the platform' },
             { value: 'investors_only', label: 'Investors Only', desc: 'Only visible to verified investors' },
             { value: 'private', label: 'Private', desc: 'Only visible to the owner' },
           ].map((opt) => (
-            <label key={opt.value} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${form.visibility === opt.value ? 'border-primary bg-primary/5' : 'border-card-border hover:bg-primary-light/30'}`}>
+            <label key={opt.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-all ${form.visibility === opt.value ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-card-border hover:bg-background/50 hover:border-muted/30'}`}>
               <input type="radio" name="visibility" value={opt.value} checked={form.visibility === opt.value}
                 onChange={() => setForm({ ...form, visibility: opt.value })} className="accent-primary" />
               <div>
@@ -828,7 +861,9 @@ function PublishingTab({ profile, onSave }: { profile: FullStartupProfile; onSav
         <Toggle checked={form.is_featured} onChange={(v) => setForm({ ...form, is_featured: v })}
           label="Featured" desc="Highlights the startup with a featured badge on the listing page" />
       </div>
-      <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5">
+        <SaveButton saving={saving} onClick={handleSave} />
+      </div>
     </div>
   );
 }
@@ -852,14 +887,14 @@ function Field({
 }) {
   return (
     <div>
-      {label && <label className="mb-1 block text-xs font-medium text-muted">{label}</label>}
+      {label && <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wide">{label}</label>}
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
-        className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm text-foreground placeholder-muted/50 outline-none transition-colors focus:border-primary"
+        className="w-full rounded-xl border border-card-border bg-card-bg px-3.5 py-2.5 text-sm text-foreground placeholder-muted/50 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
       />
     </div>
   );
@@ -882,10 +917,10 @@ function TextareaField({
 }) {
   return (
     <div>
-      <div className="mb-1 flex items-center justify-between">
-        <label className="text-xs font-medium text-muted">{label}</label>
+      <div className="mb-1.5 flex items-center justify-between">
+        <label className="text-xs font-medium text-muted uppercase tracking-wide">{label}</label>
         {maxLength && (
-          <span className="text-xs text-muted">{value.length}/{maxLength}</span>
+          <span className={`text-xs ${value.length > maxLength * 0.9 ? 'text-amber-600' : 'text-muted'}`}>{value.length}/{maxLength}</span>
         )}
       </div>
       <textarea
@@ -894,7 +929,7 @@ function TextareaField({
         placeholder={placeholder}
         rows={rows}
         maxLength={maxLength}
-        className="w-full resize-none rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm text-foreground placeholder-muted/50 outline-none transition-colors focus:border-primary"
+        className="w-full resize-none rounded-xl border border-card-border bg-card-bg px-3.5 py-2.5 text-sm text-foreground placeholder-muted/50 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
       />
     </div>
   );
@@ -915,11 +950,11 @@ function SelectField({
 }) {
   return (
     <div>
-      {label && <label className="mb-1 block text-xs font-medium text-muted">{label}</label>}
+      {label && <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wide">{label}</label>}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        className="w-full rounded-xl border border-card-border bg-card-bg px-3.5 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => (
@@ -949,12 +984,12 @@ function TagInput({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAdd(); } }}
         placeholder={placeholder}
-        className="flex-1 rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm text-foreground placeholder-muted/50 outline-none transition-colors focus:border-primary"
+        className="flex-1 rounded-xl border border-card-border bg-card-bg px-3.5 py-2.5 text-sm text-foreground placeholder-muted/50 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
       />
       <button
         type="button"
         onClick={onAdd}
-        className="rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-muted transition-colors hover:border-primary hover:text-primary"
+        className="btn-secondary !text-xs"
       >
         Add
       </button>
@@ -1002,9 +1037,9 @@ function SaveButton({
     <button
       onClick={onClick}
       disabled={saving}
-      className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+      className="btn-primary gap-2"
     >
-      {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+      {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
       {label}
     </button>
   );

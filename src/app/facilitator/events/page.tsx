@@ -111,22 +111,19 @@ export default function FacilitatorEventsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Events</h1>
-          <p className="mt-1 text-muted">Manage events</p>
+          <h1 className="text-2xl font-semibold text-foreground">Events</h1>
+          <p className="mt-1 text-sm text-muted">Manage events</p>
         </div>
-        <Link
-          href="/facilitator/events/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
+        <Link href="/facilitator/events/new" className="btn-primary">
           <Plus size={16} />
           Add Event
         </Link>
       </div>
 
-      <div className="mt-6">
+      <div className="card-elevated overflow-hidden">
         <DataTable
           columns={columns}
           data={events}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { cn } from '@/lib/cn';
 
 const CURRENCIES = [
   { symbol: '₹', label: '₹  INR' },
@@ -54,11 +55,22 @@ export default function SalaryInput({ value, onChange }: Props) {
   }
 
   return (
-    <div className="flex rounded-lg border border-card-border bg-background overflow-hidden focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+    <div
+      className={cn(
+        'flex overflow-hidden rounded-lg border bg-input-bg',
+        'shadow-[var(--shadow-sm)] transition-all duration-200',
+        'border-input-border',
+        'focus-within:border-input-focus focus-within:ring-2 focus-within:ring-input-focus/25'
+      )}
+    >
       <select
         value={symbol}
         onChange={(e) => handleSymbol(e.target.value)}
-        className="shrink-0 bg-card-border/40 px-2 py-2 text-sm text-foreground outline-none border-r border-card-border cursor-pointer"
+        className={cn(
+          'shrink-0 cursor-pointer border-r border-input-border bg-card-bg px-3 py-2.5 text-sm font-medium text-foreground',
+          'outline-none transition-colors duration-150',
+          'hover:bg-input-focus/5'
+        )}
       >
         {CURRENCIES.map((c) => (
           <option key={c.symbol} value={c.symbol}>{c.label}</option>
@@ -69,7 +81,7 @@ export default function SalaryInput({ value, onChange }: Props) {
         value={amount}
         onChange={(e) => handleAmount(e.target.value)}
         placeholder="e.g. 5L – 10L or 50,000 – 80,000"
-        className="flex-1 px-3 py-2 text-sm text-foreground bg-transparent outline-none placeholder:text-muted"
+        className="flex-1 bg-transparent px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted/50"
       />
     </div>
   );

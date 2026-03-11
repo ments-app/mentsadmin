@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { Plus, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -23,7 +23,7 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
           {item.skills_required.slice(0, 3).map((skill) => (
             <span
               key={skill}
-              className="inline-block rounded bg-purple-100 px-1.5 py-0.5 text-xs text-purple-700 dark:bg-purple-900 dark:text-purple-300"
+              className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
             >
               {skill}
             </span>
@@ -42,7 +42,7 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
     render: (item) => {
       const count = (item as Gig & { _appCount?: number })._appCount ?? 0;
       return count > 0 ? (
-        <Link href={`/dashboard/gigs/${item.id}/applications`} className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-semibold text-purple-700 dark:bg-purple-900 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors">
+        <Link href={`/dashboard/gigs/${item.id}/applications`} className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
           {count}
         </Link>
       ) : (
@@ -55,10 +55,10 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
     label: 'Status',
     render: (item) => (
       <span
-        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
           item.is_active
-            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-            : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
         }`}
       >
         {item.is_active ? 'Active' : 'Inactive'}
@@ -68,7 +68,9 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
   {
     key: 'created_at',
     label: 'Created',
-    render: (item) => format(new Date(item.created_at), 'MMM d, yyyy'),
+    render: (item) => (
+      <span className="text-muted">{format(new Date(item.created_at), 'MMM d, yyyy')}</span>
+    ),
   },
 ];
 
@@ -101,22 +103,19 @@ export default function GigsPage() {
   }
 
   return (
-    <div>
+    <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Gigs</h1>
-          <p className="mt-1 text-muted">Manage freelance gigs</p>
+          <h1 className="text-2xl font-semibold text-foreground">Gigs</h1>
+          <p className="mt-1 text-sm text-muted">Manage freelance gigs</p>
         </div>
-        <Link
-          href="/dashboard/gigs/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-        >
+        <Link href="/dashboard/gigs/new" className="btn-primary flex items-center gap-2">
           <Plus size={16} />
           Add Gig
         </Link>
       </div>
 
-      <div className="mt-6">
+      <div className="card-elevated rounded-xl">
         <DataTable
           columns={columns}
           data={gigs}
@@ -126,6 +125,20 @@ export default function GigsPage() {
           emptyMessage="No gigs yet. Create your first one!"
         />
       </div>
+
+      {!loading && gigs.length === 0 && (
+        <div className="card-elevated rounded-xl flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20 mb-4">
+            <Briefcase size={24} className="text-indigo-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">No gigs yet</h3>
+          <p className="mt-1 text-sm text-muted max-w-sm">Create your first freelance gig to get started.</p>
+          <Link href="/dashboard/gigs/new" className="btn-primary mt-4 flex items-center gap-2">
+            <Plus size={16} />
+            Add Gig
+          </Link>
+        </div>
+      )}
 
       <DeleteConfirmModal
         open={!!deleteTarget}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Zap, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/cn';
 
 type AiAutoFillButtonProps = {
   url: string;
@@ -38,12 +39,19 @@ export default function AiAutoFillButton({ url, category, onAutoFilled }: AiAuto
   }
 
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2.5">
       <button
         type="button"
         onClick={handleAutoFill}
         disabled={loading || !url}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300 transition-all hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+        className={cn(
+          'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold',
+          'border border-amber-500/25 bg-amber-500/8 text-amber-600 dark:text-amber-400',
+          'shadow-[var(--shadow-sm)] transition-all duration-200',
+          'hover:border-amber-500/40 hover:bg-amber-500/15 hover:shadow-amber-500/10',
+          'active:scale-[0.97]',
+          'disabled:cursor-not-allowed disabled:opacity-40'
+        )}
       >
         {loading ? (
           <>
@@ -58,7 +66,7 @@ export default function AiAutoFillButton({ url, category, onAutoFilled }: AiAuto
         )}
       </button>
       {error && (
-        <span className="text-xs text-red-500">{error}</span>
+        <span className="text-xs font-medium text-danger">{error}</span>
       )}
     </div>
   );

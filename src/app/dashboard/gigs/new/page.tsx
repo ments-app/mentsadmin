@@ -105,20 +105,22 @@ export default function NewGigPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold text-foreground">New Gig</h1>
-      <p className="mt-1 text-muted">Create a new freelance gig</p>
+    <div className="mx-auto max-w-2xl animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-foreground">New Gig</h1>
+        <p className="mt-1 text-sm text-muted">Create a new freelance gig</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-danger dark:bg-red-950">
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-danger dark:border-red-800 dark:bg-red-950">
             {error}
           </div>
         )}
 
         {/* --- Basic Info --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Basic Information</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Basic Information</h2>
           <FormField
             type="text"
             label="Title"
@@ -189,8 +191,8 @@ export default function NewGigPage() {
         </div>
 
         {/* --- Client Details --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Client Details</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Client Details</h2>
           <FormField
             type="url"
             label="Client Website"
@@ -200,7 +202,7 @@ export default function NewGigPage() {
             placeholder="https://example.com"
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-foreground">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Client Logo URL
             </label>
             <div className="flex gap-2">
@@ -209,20 +211,20 @@ export default function NewGigPage() {
                 value={form.company_logo_url}
                 onChange={(e) => update('company_logo_url', e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
               />
               <button
                 type="button"
                 onClick={fetchLogoFromWebsite}
                 disabled={fetchingLogo || !form.company_website.trim()}
-                className="rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                className="btn-secondary whitespace-nowrap"
               >
                 {fetchingLogo ? 'Fetching...' : 'Fetch from Website'}
               </button>
             </div>
             {form.company_logo_url && (
               <div className="mt-3 flex items-center gap-3">
-                <div className="h-12 w-12 rounded-lg border border-card-border bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden">
+                <div className="h-12 w-12 rounded-xl border border-card-border bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={form.company_logo_url}
@@ -238,12 +240,12 @@ export default function NewGigPage() {
         </div>
 
         {/* --- Description & Scope --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
+        <div className="card-elevated rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Details</h2>
+            <h2 className="text-base font-semibold text-foreground">Details</h2>
             <span className="text-xs text-muted">AI can generate content based on the info above</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Description</label>
               <AiFieldButton
@@ -264,7 +266,7 @@ export default function NewGigPage() {
               rows={5}
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Deliverables</label>
               <AiFieldButton
@@ -285,7 +287,7 @@ export default function NewGigPage() {
               rows={4}
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground">Scope of Work</label>
               <AiFieldButton
@@ -309,14 +311,14 @@ export default function NewGigPage() {
         </div>
 
         {/* --- Skills --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Skills Required</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Skills Required</h2>
           <SkillsInput value={form.skills_required} onChange={(skills) => update('skills_required', skills)} />
         </div>
 
         {/* --- Application --- */}
-        <div className="rounded-lg border border-card-border p-4 space-y-4">
-          <h2 className="text-lg font-semibold text-foreground">Contact</h2>
+        <div className="card-elevated rounded-xl p-6 space-y-4">
+          <h2 className="text-base font-semibold text-foreground">Contact</h2>
           <FormField
             type="email"
             label="Contact Email"
@@ -328,27 +330,21 @@ export default function NewGigPage() {
         </div>
 
         {/* --- Status --- */}
-        <FormField
-          type="checkbox"
-          label="Active"
-          name="is_active"
-          checked={form.is_active}
-          onChange={(v) => update('is_active', v)}
-        />
+        <div className="card-elevated rounded-xl p-6">
+          <FormField
+            type="checkbox"
+            label="Active"
+            name="is_active"
+            checked={form.is_active}
+            onChange={(v) => update('is_active', v)}
+          />
+        </div>
 
-        <div className="flex gap-3 pt-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-          >
+        <div className="flex gap-3 pt-2 pb-8">
+          <button type="submit" disabled={loading} className="btn-primary">
             {loading ? 'Creating...' : 'Create Gig'}
           </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="rounded-lg border border-card-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-card-border/30"
-          >
+          <button type="button" onClick={() => router.back()} className="btn-secondary">
             Cancel
           </button>
         </div>

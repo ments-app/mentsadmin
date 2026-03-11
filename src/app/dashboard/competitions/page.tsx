@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Star, Users } from 'lucide-react';
+import { Plus, Star, Users, Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import DataTable, { type Column } from '@/components/DataTable';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
@@ -30,7 +30,7 @@ const columns: Column<CompetitionWithCount>[] = [
     render: (item) => (
       <div className="flex items-center gap-2">
         {item.is_featured && <Star size={13} className="text-amber-500 fill-amber-500 shrink-0" />}
-        <span className="font-medium">{item.title}</span>
+        <span className="font-medium text-foreground">{item.title}</span>
       </div>
     ),
   },
@@ -38,22 +38,22 @@ const columns: Column<CompetitionWithCount>[] = [
     key: 'domain',
     label: 'Domain',
     render: (item) => item.domain ? (
-      <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-300">
+      <span className="rounded-full bg-violet-100 dark:bg-violet-900/40 px-2.5 py-1 text-xs font-medium text-violet-700 dark:text-violet-300">
         {domainLabels[item.domain] ?? item.domain}
       </span>
-    ) : '—',
+    ) : <span className="text-muted">--</span>,
   },
   {
     key: 'participation_type',
     label: 'Type',
     render: (item) => (
-      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+      <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
         item.participation_type === 'team'
           ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
           : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
       }`}>
         {item.participation_type === 'team'
-          ? `Team (${item.team_size_min}–${item.team_size_max})`
+          ? `Team (${item.team_size_min}--${item.team_size_max})`
           : 'Individual'}
       </span>
     ),
@@ -62,9 +62,9 @@ const columns: Column<CompetitionWithCount>[] = [
     key: 'is_active',
     label: 'Status',
     render: (item) => (
-      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+      <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
         item.is_active
-          ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
           : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
       }`}>
         {item.is_active ? 'Active' : 'Inactive'}
@@ -75,21 +75,25 @@ const columns: Column<CompetitionWithCount>[] = [
     key: 'participant_count',
     label: 'Registrations',
     render: (item) => (
-      <div className="flex items-center gap-1 text-sm">
-        <Users size={13} className="text-muted" />
-        {item.participant_count}
+      <div className="flex items-center gap-1.5 text-sm text-muted">
+        <Users size={13} />
+        <span className="font-medium text-foreground">{item.participant_count}</span>
       </div>
     ),
   },
   {
     key: 'deadline',
     label: 'Deadline',
-    render: (item) => item.deadline ? format(new Date(item.deadline), 'dd MMM yyyy') : '—',
+    render: (item) => item.deadline ? (
+      <span className="text-sm text-muted">{format(new Date(item.deadline), 'dd MMM yyyy')}</span>
+    ) : <span className="text-muted">--</span>,
   },
   {
     key: 'prize_pool',
     label: 'Prize',
-    render: (item) => item.prize_pool || '—',
+    render: (item) => item.prize_pool ? (
+      <span className="text-sm font-medium text-foreground">{item.prize_pool}</span>
+    ) : <span className="text-muted">--</span>,
   },
 ];
 
@@ -121,22 +125,24 @@ export default function CompetitionsPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Competitions</h1>
-          <p className="mt-1 text-muted text-sm">Manage hub competitions</p>
+          <h1 className="text-2xl font-semibold text-foreground">Competitions</h1>
+          <p className="mt-1 text-sm text-muted">Manage hub competitions and registrations</p>
         </div>
         <Link
           href="/dashboard/competitions/new"
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
+          className="btn-primary flex items-center gap-2"
         >
           <Plus size={16} />
           Add Competition
         </Link>
       </div>
 
-      <div className="mt-6">
+      {/* Table Card */}
+      <div className="card-elevated rounded-xl overflow-hidden">
         <DataTable
           columns={columns}
           data={competitions}
