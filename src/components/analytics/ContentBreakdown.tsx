@@ -112,7 +112,7 @@ export function ContentBreakdown({ topPosts, trendingTopics }: ContentBreakdownP
                 <Legend
                   wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
                 />
-                <Bar dataKey="engagement" fill="#6366f1" name="Engagement %" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="engagement" fill="#00ffa2" name="Engagement %" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="ctr" fill="#10b981" name="CTR %" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>

@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getFacilitatorById, approveFacilitator, rejectFacilitator, suspendFacilitator } from '@/actions/facilitators';
 import { getAuditLogs } from '@/actions/facilitators';
+import { getOrganizationByUserId, Organization, OrgStartupRelation } from '@/actions/facilitator-org';
 import { format } from 'date-fns';
 import {
   ArrowLeft, Building2, Mail, Phone, Globe, MapPin,
-  FileText, CheckCircle2, XCircle, ShieldAlert, RefreshCw
+  FileText, CheckCircle2, XCircle, ShieldAlert, RefreshCw,
+  Tag, Target, Handshake, Rocket, Eye, EyeOff, BadgeCheck, GraduationCap,
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 
@@ -15,6 +17,7 @@ export default function FacilitatorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
+  const [orgData, setOrgData] = useState<{ org: Organization | null; startupRelations: OrgStartupRelation[] }>({ org: null, startupRelations: [] });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
   const [rejectNotes, setRejectNotes] = useState('');
@@ -23,8 +26,12 @@ export default function FacilitatorDetailPage() {
   async function load() {
     setLoading(true);
     try {
-      const result = await getFacilitatorById(id);
+      const [result, orgResult] = await Promise.all([
+        getFacilitatorById(id),
+        getOrganizationByUserId(id),
+      ]);
       setData(result);
+      setOrgData(orgResult);
     } catch (e) {
       console.error(e);
     }
@@ -224,6 +231,126 @@ export default function FacilitatorDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Rich Organization Profile (from organizations table) */}
+          {orgData.org && (
+            <div className="card-elevated rounded-xl overflow-hidden" style={{ animationDelay: '75ms' }}>
+              {/* Org Banner */}
+              {orgData.org.banner_url && (
+                <div className="h-32 w-full">
+                  <img src={orgData.org.banner_url} alt="" className="h-full w-full object-cover" />
+                </div>
+              )}
+              <div className="p-6">
+                <div className="flex items-start gap-4 mb-5">
+                  {orgData.org.logo_url ? (
+                    <img src={orgData.org.logo_url} alt="" className="h-14 w-14 rounded-xl object-cover shrink-0 ring-2 ring-card-border" />
+                  ) : (
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 text-xl font-bold">
+                      {orgData.org.name?.charAt(0) ?? 'O'}
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground">{orgData.org.name}</h2>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 capitalize">
+                        {orgData.org.org_type?.replace('_', ' ')}
+                      </span>
+                      {orgData.org.is_verified && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-600">
+                          <BadgeCheck size={11} /> Verified
+                        </span>
+                      )}
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${orgData.org.is_published ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                        {orgData.org.is_published ? <><Eye size={11} /> Published</> : <><EyeOff size={11} /> Draft</>}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {orgData.org.short_bio && (
+                  <p className="text-sm text-muted italic mb-3">{orgData.org.short_bio}</p>
+                )}
+                {orgData.org.description && (
+                  <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed mb-4">{orgData.org.description}</p>
+                )}
+
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm border-t border-card-border pt-4">
+                  {orgData.org.website && (
+                    <div>
+                      <dt className="text-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide"><Globe size={12} /> Website</dt>
+                      <dd className="mt-1"><a href={orgData.org.website} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs break-all">{orgData.org.website}</a></dd>
+                    </div>
+                  )}
+                  {orgData.org.contact_email && (
+                    <div>
+                      <dt className="text-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide"><Mail size={12} /> Email</dt>
+                      <dd className="mt-1 text-foreground text-xs">{orgData.org.contact_email}</dd>
+                    </div>
+                  )}
+                  {(orgData.org.city || orgData.org.state || orgData.org.country) && (
+                    <div>
+                      <dt className="text-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide"><MapPin size={12} /> Location</dt>
+                      <dd className="mt-1 text-foreground text-xs">{[orgData.org.city, orgData.org.state, orgData.org.country].filter(Boolean).join(', ')}</dd>
+                    </div>
+                  )}
+                  {orgData.org.university_name && (
+                    <div>
+                      <dt className="text-muted flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide"><GraduationCap size={12} /> University</dt>
+                      <dd className="mt-1 text-foreground text-xs">{orgData.org.university_name}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                {/* Tags: Support Types, Sectors, Stage Focus */}
+                {orgData.org.support_types.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-card-border">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5"><Handshake size={12} /> Support Types</dt>
+                    <div className="flex flex-wrap gap-1.5">
+                      {orgData.org.support_types.map((t) => (
+                        <span key={t} className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {orgData.org.sectors.length > 0 && (
+                  <div className="mt-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5"><Tag size={12} /> Sectors</dt>
+                    <div className="flex flex-wrap gap-1.5">
+                      {orgData.org.sectors.map((s) => (
+                        <span key={s} className="rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {orgData.org.stage_focus.length > 0 && (
+                  <div className="mt-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5"><Target size={12} /> Stage Focus</dt>
+                    <div className="flex flex-wrap gap-1.5">
+                      {orgData.org.stage_focus.map((s) => (
+                        <span key={s} className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-medium text-orange-600">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Org Startup Relations */}
+                {orgData.startupRelations.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-card-border">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-muted mb-2 flex items-center gap-1.5"><Rocket size={12} /> Associated Startups ({orgData.startupRelations.length})</dt>
+                    <div className="space-y-2">
+                      {orgData.startupRelations.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between rounded-lg border border-card-border p-3">
+                          <div className="text-xs font-medium text-foreground">{r.startup_profiles?.brand_name ?? 'Unknown'}</div>
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary capitalize">{r.relation_type?.replace('_', ' ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Their Startups */}
           {assignments.length > 0 && (

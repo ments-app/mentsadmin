@@ -97,7 +97,7 @@ export function RetentionCohort({ dau, wau, mau, depthDistribution }: RetentionC
                   label={{ value: 'Sessions', angle: -90, position: 'left' }}
                 />
                 <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="count" fill="#6366f1" name="Sessions" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" fill="#00ffa2" name="Sessions" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

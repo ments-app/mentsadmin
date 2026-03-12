@@ -104,7 +104,7 @@ export function ExperimentResults({ variants, isSignificant, winner }: Experimen
               <Legend
                 wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }}
               />
-              <Bar dataKey="Engagement Rate" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Engagement Rate" fill="#00ffa2" radius={[4, 4, 0, 0]} />
               <Bar dataKey="CTR" fill="#10b981" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>

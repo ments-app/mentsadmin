@@ -385,7 +385,7 @@ export default function ImportResourcesPage() {
               type="button"
               disabled={enhancing || importing}
               onClick={handleEnhanceAll}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-5 py-2.5 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-all hover:from-amber-500/20 hover:to-orange-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/30 px-5 py-2.5 text-sm font-semibold text-amber-700 dark:text-amber-300 transition-all hover:bg-amber-500/20 hover:border-amber-500/50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {enhancing ? (
                 <>
@@ -402,7 +402,7 @@ export default function ImportResourcesPage() {
             {enhancing && (
               <div className="mt-3 h-2.5 w-full rounded-full bg-card-border/30 overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-300"
+                  className="h-full rounded-full bg-amber-500 transition-all duration-300"
                   style={{ width: `${enhanceProgress.total > 0 ? (enhanceProgress.current / enhanceProgress.total) * 100 : 0}%` }}
                 />
               </div>

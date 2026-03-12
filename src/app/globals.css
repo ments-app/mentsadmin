@@ -7,13 +7,13 @@
   --foreground: #111827;
   --sidebar-bg: #ffffff;
   --sidebar-text: #4b5563;
-  --sidebar-active: #6366f1;
+  --sidebar-active: #00ffa2;
   --sidebar-border: #e5e7eb;
   --sidebar-heading: #111827;
   --sidebar-hover: #f3f4f6;
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-light: #eef2ff;
+  --primary: #00ffa2;
+  --primary-hover: #00e692;
+  --primary-light: #e6fff5;
   --card-bg: #ffffff;
   --card-border: #e5e7eb;
   --muted: #6b7280;
@@ -29,7 +29,7 @@
   --surface-hover: #f9fafb;
   --input-bg: #ffffff;
   --input-border: #d1d5db;
-  --input-focus: #6366f1;
+  --input-focus: #00ffa2;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
@@ -83,7 +83,7 @@
   --card-bg: #0a0a0a;
   --card-border: #1a1a1a;
   --muted: #a1a1aa;
-  --primary-light: #1a1625;
+  --primary-light: #002e1d;
   --success-light: #052e1f;
   --warning-light: #2a1500;
   --info-light: #0f1d2e;
@@ -201,7 +201,7 @@ body {
   padding: 0.5rem 1.25rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #ffffff;
+  color: #0a0a0a;
   background: var(--primary);
   border-radius: var(--radius-md);
   transition: all 0.15s ease;
@@ -210,7 +210,7 @@ body {
 
 .btn-primary:hover {
   background: var(--primary-hover);
-  box-shadow: 0 2px 8px rgb(99 102 241 / 0.3);
+  box-shadow: 0 2px 8px rgb(0 255 162 / 0.3);
   transform: translateY(-1px);
 }
 

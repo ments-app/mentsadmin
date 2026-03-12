@@ -94,6 +94,7 @@ const FACILITATOR_SECTIONS: NavSection[] = [
   {
     title: 'MANAGE',
     items: [
+      { href: '/facilitator/profile', label: 'Organization', icon: Building2 },
       { href: '/facilitator/startups', label: 'My Startups', icon: Rocket },
       { href: '/facilitator/students', label: 'Student Access', icon: GraduationCap },
     ],
@@ -237,14 +238,14 @@ export default function Sidebar({
 
   const roleColor =
     role === 'superadmin'
-      ? 'from-indigo-500 to-violet-500'
+      ? 'bg-primary'
       : role === 'facilitator'
-        ? 'from-emerald-500 to-teal-500'
-        : 'from-orange-500 to-amber-500';
+        ? 'bg-emerald-500'
+        : 'bg-orange-500';
 
   const roleBadgeColor =
     role === 'superadmin'
-      ? 'bg-indigo-500/10 text-indigo-500 dark:bg-indigo-400/10 dark:text-indigo-400'
+      ? 'bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary'
       : role === 'facilitator'
         ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400'
         : 'bg-orange-500/10 text-orange-600 dark:bg-orange-400/10 dark:text-orange-400';
@@ -282,7 +283,7 @@ export default function Sidebar({
       )}
     >
       {/* ── Gradient accent line at top ────────────────────────── */}
-      <div className={cn('h-[2px] w-full bg-gradient-to-r shrink-0', roleColor)} />
+      <div className={cn('h-[2px] w-full shrink-0', roleColor)} />
 
       {/* ── Header: Brand + Collapse Toggle ──────────────────── */}
       <div
@@ -295,7 +296,7 @@ export default function Sidebar({
           <div className="flex items-center gap-3 overflow-hidden">
             <div className={cn(
               'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-              'bg-gradient-to-br shadow-lg shadow-primary/20',
+              'shadow-lg shadow-primary/20',
               roleColor
             )}>
               <Sparkles size={18} className="text-white" />
@@ -310,7 +311,7 @@ export default function Sidebar({
         ) : (
           <div className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl',
-            'bg-gradient-to-br shadow-lg shadow-primary/20',
+            'shadow-lg shadow-primary/20',
             roleColor
           )}>
             <Sparkles size={18} className="text-white" />
@@ -344,7 +345,7 @@ export default function Sidebar({
           {/* Subtle gradient bg on the card */}
           {!collapsed && (
             <div className={cn(
-              'absolute inset-0 opacity-[0.03] bg-gradient-to-br',
+              'absolute inset-0 opacity-[0.03]',
               roleColor
             )} />
           )}
@@ -367,7 +368,7 @@ export default function Sidebar({
               <div
                 className={cn(
                   'flex shrink-0 items-center justify-center rounded-xl font-bold',
-                  'bg-gradient-to-br text-white shadow-md',
+                  'text-white shadow-md',
                   roleColor,
                   collapsed ? 'h-9 w-9 text-xs' : 'h-10 w-10 text-sm'
                 )}
@@ -475,9 +476,8 @@ export default function Sidebar({
                           : 'gap-3 px-3 py-[9px]',
                         active
                           ? cn(
-                              'bg-gradient-to-r from-primary/[0.12] to-primary/[0.04]',
-                              'text-primary shadow-sm shadow-primary/5',
-                              'dark:from-primary/[0.15] dark:to-primary/[0.05]'
+                              'bg-primary/10',
+                              'text-primary shadow-sm shadow-primary/5'
                             )
                           : cn(
                               'text-sidebar-text/60',
@@ -492,7 +492,7 @@ export default function Sidebar({
                           className={cn(
                             'absolute left-0 top-1/2 -translate-y-1/2',
                             'h-6 w-[3px] rounded-r-full',
-                            'bg-gradient-to-b from-primary to-primary/70',
+                            'bg-primary',
                             'shadow-sm shadow-primary/30'
                           )}
                         />

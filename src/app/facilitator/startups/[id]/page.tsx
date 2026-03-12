@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getFacilitatorStartupDetail, approveStartup, rejectStartup, suspendStartup } from '@/actions/facilitators';
+import { searchUserForTransfer, transferStartupOwnership } from '@/actions/facilitator-startups';
 import { format } from 'date-fns';
 import {
   ArrowLeft, Building2, Mail, Phone, Globe, MapPin, Calendar,
   Users, DollarSign, Award, Rocket, CheckCircle2, XCircle,
   ShieldAlert, RefreshCw, ExternalLink, Briefcase, Target,
-  TrendingUp, Lightbulb, Layers,
+  TrendingUp, Lightbulb, Layers, ArrowRightLeft, Search,
+  UserCircle2, Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
@@ -27,6 +29,14 @@ export default function FacilitatorStartupDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectModal, setRejectModal] = useState(false);
   const [rejectNotes, setRejectNotes] = useState('');
+  // Transfer ownership
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [transferEmail, setTransferEmail] = useState('');
+  const [transferSearching, setTransferSearching] = useState(false);
+  const [transferUser, setTransferUser] = useState<any>(null);
+  const [transferError, setTransferError] = useState('');
+  const [transferring, setTransferring] = useState(false);
+  const [transferSuccess, setTransferSuccess] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -72,6 +82,42 @@ export default function FacilitatorStartupDetailPage() {
       await load();
     } catch (e: any) { alert(e.message); }
     setActionLoading(null);
+  }
+
+  async function handleTransferSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!transferEmail.trim()) return;
+    setTransferSearching(true);
+    setTransferError('');
+    setTransferUser(null);
+    setTransferSuccess(false);
+    try {
+      const user = await searchUserForTransfer(transferEmail.trim());
+      if (!user) {
+        setTransferError('No user found with this email. They must register on Ments first.');
+      } else {
+        setTransferUser(user);
+      }
+    } catch (err) {
+      setTransferError(err instanceof Error ? err.message : 'Search failed');
+    }
+    setTransferSearching(false);
+  }
+
+  async function handleTransfer() {
+    if (!transferUser) return;
+    setTransferring(true);
+    setTransferError('');
+    try {
+      await transferStartupOwnership(id, transferUser.email);
+      setTransferSuccess(true);
+      setTransferUser(null);
+      setTransferEmail('');
+      await load();
+    } catch (err) {
+      setTransferError(err instanceof Error ? err.message : 'Transfer failed');
+    }
+    setTransferring(false);
   }
 
   if (loading) {
@@ -156,7 +202,7 @@ export default function FacilitatorStartupDetailPage() {
         {sp.banner_url ? (
           <img src={sp.banner_url} alt="Banner" className="h-40 w-full object-cover" />
         ) : (
-          <div className="h-40 w-full bg-gradient-to-r from-primary/20 to-primary/5" />
+          <div className="h-40 w-full bg-primary/15" />
         )}
         <div className="px-6 pb-5">
           <div className="flex items-end gap-4 -mt-8">
@@ -440,6 +486,94 @@ export default function FacilitatorStartupDetailPage() {
             {assignment.notes && (
               <div className="mt-2 rounded-lg bg-background px-3 py-2 text-xs text-muted">
                 <span className="font-medium">Notes:</span> {assignment.notes}
+              </div>
+            )}
+          </Section>
+
+          {/* Transfer Ownership */}
+          <Section icon={<ArrowRightLeft size={16} />} title="Transfer Ownership">
+            {transferSuccess ? (
+              <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 p-3">
+                <p className="text-xs font-medium text-green-700 dark:text-green-400">
+                  Ownership transferred successfully!
+                </p>
+              </div>
+            ) : !showTransfer ? (
+              <div>
+                <p className="text-xs text-muted mb-3">
+                  Transfer this startup to another user. They&apos;ll become the owner on the platform.
+                </p>
+                <button
+                  onClick={() => setShowTransfer(true)}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border border-card-border px-3 py-2 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                >
+                  <ArrowRightLeft size={13} /> Transfer to User
+                </button>
+              </div>
+            ) : (
+              <div>
+                <form onSubmit={handleTransferSearch} className="flex gap-2 mb-3">
+                  <input
+                    type="email"
+                    value={transferEmail}
+                    onChange={(e) => setTransferEmail(e.target.value)}
+                    placeholder="user@email.com"
+                    className="flex-1 min-w-0 rounded-lg border border-card-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={transferSearching || !transferEmail.trim()}
+                    className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    {transferSearching ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
+                  </button>
+                </form>
+
+                {transferError && (
+                  <p className="mb-3 rounded-lg bg-red-50 dark:bg-red-950/50 p-2 text-[11px] text-red-600 dark:text-red-400">{transferError}</p>
+                )}
+
+                {transferUser && (
+                  <div className="rounded-lg border border-card-border p-3">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      {transferUser.avatar_url ? (
+                        <img src={transferUser.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover border border-card-border" />
+                      ) : (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                          <UserCircle2 size={16} className="text-primary" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-foreground truncate">{transferUser.full_name}</p>
+                        <p className="text-[11px] text-muted truncate">@{transferUser.username}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setTransferUser(null); setTransferEmail(''); }}
+                        className="flex-1 rounded-lg border border-card-border px-3 py-1.5 text-[11px] font-medium text-muted hover:text-foreground transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleTransfer}
+                        disabled={transferring}
+                        className="flex-1 rounded-lg bg-orange-500 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                      >
+                        {transferring ? 'Transferring...' : 'Confirm Transfer'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {!transferUser && (
+                  <button
+                    onClick={() => { setShowTransfer(false); setTransferEmail(''); setTransferError(''); }}
+                    className="text-[11px] text-muted hover:text-foreground transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             )}
           </Section>

@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getFacilitators, approveFacilitator, rejectFacilitator, suspendFacilitator } from '@/actions/facilitators';
+import { getFacilitatorOrgsForList } from '@/actions/facilitator-org';
 import { format } from 'date-fns';
 import {
   CheckCircle2, XCircle, ShieldAlert, Clock, Building2,
-  ChevronRight, Search, Filter, RefreshCw
+  ChevronRight, Search, Filter, RefreshCw, MapPin
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 
@@ -15,6 +16,7 @@ type FilterType = 'all' | 'pending' | 'approved' | 'rejected' | 'suspended';
 export default function FacilitatorsPage() {
   const router = useRouter();
   const [facilitators, setFacilitators] = useState<any[]>([]);
+  const [orgMap, setOrgMap] = useState<Record<string, { logo_url: string | null; city: string | null; country: string | null }>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
@@ -27,6 +29,14 @@ export default function FacilitatorsPage() {
     try {
       const data = await getFacilitators(f);
       setFacilitators(data);
+      // Fetch org data for all facilitator IDs
+      const ids = data.map((d: any) => d.id);
+      if (ids.length > 0) {
+        try {
+          const orgs = await getFacilitatorOrgsForList(ids);
+          setOrgMap(orgs);
+        } catch { /* org data is supplementary */ }
+      }
     } catch (e) {
       console.error(e);
     }
@@ -174,8 +184,24 @@ export default function FacilitatorsPage() {
                 return (
                   <tr key={f.id} className="group transition-colors hover:bg-primary/[0.02]">
                     <td className="px-5 py-4">
-                      <div className="font-medium text-foreground">{fp?.organisation_name ?? f.display_name ?? '\u2014'}</div>
-                      <div className="mt-0.5 text-xs text-muted">{f.email}</div>
+                      <div className="flex items-center gap-3">
+                        {orgMap[f.id]?.logo_url ? (
+                          <img src={orgMap[f.id].logo_url!} alt="" className="h-8 w-8 rounded-lg object-cover shrink-0 ring-1 ring-card-border" />
+                        ) : (
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 text-xs font-bold">
+                            {(fp?.organisation_name ?? f.display_name ?? '?').charAt(0)}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="font-medium text-foreground truncate">{fp?.organisation_name ?? f.display_name ?? '\u2014'}</div>
+                          <div className="mt-0.5 text-xs text-muted truncate">
+                            {f.email}
+                            {orgMap[f.id]?.city && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5"><MapPin size={10} className="inline" />{[orgMap[f.id].city, orgMap[f.id].country].filter(Boolean).join(', ')}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-5 py-4 capitalize text-muted">
                       {fp?.organisation_type?.replace('_', ' ') ?? '\u2014'}

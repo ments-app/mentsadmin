@@ -41,14 +41,14 @@ function LoginContent() {
       <div
         className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:justify-between"
         style={{
-          background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #7c3aed 100%)',
+          background: '#00ffa2',
         }}
       >
         {/* Dot grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.07]"
           style={{
-            backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
+            backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px)',
             backgroundSize: '24px 24px',
           }}
         />
@@ -56,11 +56,11 @@ function LoginContent() {
         {/* Gradient orbs */}
         <div
           className="absolute -left-24 -top-24 h-96 w-96 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #a78bfa, transparent 70%)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
         />
         <div
           className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full opacity-15"
-          style={{ background: 'radial-gradient(circle, #818cf8, transparent 70%)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
         />
 
         {/* Top — Logo and tagline */}

@@ -8,7 +8,7 @@ import {
 import { format } from 'date-fns';
 import {
   CheckCircle2, XCircle, ShieldAlert, Clock, Rocket,
-  RefreshCw, UserPlus, ChevronDown, ChevronUp, Eye
+  RefreshCw, UserPlus, ChevronDown, ChevronUp, Eye, Plus
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
@@ -91,9 +91,17 @@ export default function FacilitatorStartupsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Startups</h1>
-        <p className="mt-1 text-sm text-muted">Verify and manage startups in your ecosystem</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Startups</h1>
+          <p className="mt-1 text-sm text-muted">Verify and manage startups in your ecosystem</p>
+        </div>
+        <Link
+          href="/facilitator/startups/create"
+          className="btn-primary gap-2"
+        >
+          <Plus size={15} /> Create Startup
+        </Link>
       </div>
 
       {/* Tabs */}

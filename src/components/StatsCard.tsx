@@ -53,7 +53,7 @@ export default function StatsCard({
         <div
           className={cn(
             'flex h-11 w-11 shrink-0 items-center justify-center rounded-full',
-            'bg-gradient-to-br from-primary/10 to-primary/5',
+            'bg-primary/10',
             'ring-1 ring-primary/10',
             'transition-transform duration-200 group-hover:scale-110'
           )}

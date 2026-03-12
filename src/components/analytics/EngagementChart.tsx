@@ -87,10 +87,10 @@ export function EngagementChart({ data }: EngagementChartProps) {
             <Line
               type="monotone"
               dataKey="Impressions"
-              stroke="#6366f1"
+              stroke="#00ffa2"
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 2, fill: '#6366f1' }}
+              activeDot={{ r: 4, strokeWidth: 2, fill: '#00ffa2' }}
               yAxisId={0}
             />
           </LineChart>
