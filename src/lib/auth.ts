@@ -24,11 +24,26 @@ export interface FacilitatorProfile {
   contact_number: string;
   website: string | null;
   document_url: string | null;
+  slug: string | null;
+  short_bio: string | null;
+  public_description: string | null;
+  logo_url: string | null;
+  banner_url: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  university_name: string | null;
+  sectors: string[] | null;
+  stage_focus: string[] | null;
+  support_types: string[] | null;
+  is_published: boolean | null;
+  public_updated_at: string | null;
   verification_notes: string | null;
   approved_by: string | null;
   approved_at: string | null;
   rejected_at: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface SessionUser {

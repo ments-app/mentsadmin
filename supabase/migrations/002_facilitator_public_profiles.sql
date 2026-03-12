@@ -1,0 +1,19 @@
+ALTER TABLE public.facilitator_profiles
+  ADD COLUMN IF NOT EXISTS slug TEXT,
+  ADD COLUMN IF NOT EXISTS short_bio TEXT,
+  ADD COLUMN IF NOT EXISTS public_description TEXT,
+  ADD COLUMN IF NOT EXISTS logo_url TEXT,
+  ADD COLUMN IF NOT EXISTS banner_url TEXT,
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS state TEXT,
+  ADD COLUMN IF NOT EXISTS country TEXT,
+  ADD COLUMN IF NOT EXISTS university_name TEXT,
+  ADD COLUMN IF NOT EXISTS sectors TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS stage_focus TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS support_types TEXT[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS public_updated_at TIMESTAMPTZ;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_facilitator_profiles_slug
+  ON public.facilitator_profiles (slug)
+  WHERE slug IS NOT NULL;

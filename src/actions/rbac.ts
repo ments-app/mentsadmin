@@ -89,6 +89,20 @@ export async function registerAsFacilitator(formData: {
     contact_number: formData.contactNumber,
     website: formData.website || null,
     document_url: formData.documentUrl || null,
+    slug: null,
+    short_bio: null,
+    public_description: null,
+    logo_url: null,
+    banner_url: null,
+    city: null,
+    state: null,
+    country: null,
+    university_name: null,
+    sectors: [],
+    stage_focus: [],
+    support_types: [],
+    is_published: false,
+    public_updated_at: null,
   });
 
   if (fpError) {

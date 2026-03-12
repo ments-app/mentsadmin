@@ -95,7 +95,7 @@ const FACILITATOR_SECTIONS: NavSection[] = [
   {
     title: 'MANAGE',
     items: [
-      { href: '/facilitator/profile', label: 'Organization', icon: Building2 },
+      { href: '/facilitator/profile', label: 'Profile', icon: Building2 },
       { href: '/facilitator/startups', label: 'My Startups', icon: Rocket },
       { href: '/facilitator/students', label: 'Student Access', icon: GraduationCap },
       { href: '/facilitator/team', label: 'Team', icon: UserCog },
