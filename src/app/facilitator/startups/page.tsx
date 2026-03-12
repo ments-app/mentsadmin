@@ -7,8 +7,8 @@ import {
 } from '@/actions/facilitators';
 import { format } from 'date-fns';
 import {
-  CheckCircle2, XCircle, ShieldAlert, Clock, Rocket,
-  RefreshCw, UserPlus, ChevronDown, ChevronUp, Eye, Plus
+  CheckCircle2, XCircle, ShieldAlert, Rocket,
+  RefreshCw, UserPlus, Eye, Plus, Pencil
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
@@ -182,6 +182,14 @@ export default function FacilitatorStartupsPage() {
                       >
                         <Eye size={12} /> View Profile
                       </Link>
+                      {sp?.id && (
+                        <Link
+                          href={`/facilitator/startups/${sp.id}/edit`}
+                          className="flex items-center gap-1 rounded-lg border border-card-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary hover:text-primary transition-colors"
+                        >
+                          <Pencil size={12} /> Edit
+                        </Link>
+                      )}
                       {a.status === 'pending' && (
                         <>
                           <button

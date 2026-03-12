@@ -65,9 +65,15 @@ export async function updateMyStartupProfile(updates: Record<string, unknown>) {
 
   if (!existing) throw new Error('No startup profile found');
 
+  const payload = {
+    ...updates,
+    founded_date: updates.founded_date === '' ? null : updates.founded_date,
+    updated_at: new Date().toISOString(),
+  };
+
   const { error } = await admin
     .from('startup_profiles')
-    .update({ ...updates, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', existing.id);
 
   if (error) throw new Error(error.message);
@@ -78,7 +84,7 @@ export async function updateMyStartupProfile(updates: Record<string, unknown>) {
 // ─── Upsert founders ──────────────────────────────────────────
 
 export async function updateMyFounders(
-  founders: Array<{ name: string; role?: string; email?: string; linkedin_url?: string; display_order?: number }>
+  founders: Array<{ name: string; role?: string; email?: string; ments_username?: string; display_order?: number }>
 ) {
   const session = await requireStartup();
   const admin = createAdminClient();
@@ -100,7 +106,7 @@ export async function updateMyFounders(
       name: f.name,
       role: f.role || null,
       email: f.email || null,
-      linkedin_url: f.linkedin_url || null,
+      ments_username: f.ments_username || null,
       status: 'pending' as const,
       display_order: f.display_order ?? i,
     }))

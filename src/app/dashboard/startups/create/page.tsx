@@ -19,6 +19,13 @@ const STAGES = [
   { value: 'maturity', label: 'Maturity' },
 ];
 
+const LEGAL_STATUSES = [
+  { value: 'llp', label: 'LLP' },
+  { value: 'pvt_ltd', label: 'Pvt Ltd' },
+  { value: 'sole_proprietorship', label: 'Sole Proprietorship' },
+  { value: 'not_registered', label: 'Not Registered' },
+];
+
 export default function CreateStartupPage() {
   const router = useRouter();
 
@@ -32,6 +39,7 @@ export default function CreateStartupPage() {
   // Step 2: create form (only if no existing startup)
   const [form, setForm] = useState({
     brand_name: '',
+    legal_status: 'not_registered',
     stage: 'ideation',
     startup_email: '',
     startup_phone: '',
@@ -74,6 +82,7 @@ export default function CreateStartupPage() {
     try {
       const { id } = await createAdminStartupProfile(user.id, {
         brand_name: form.brand_name,
+        legal_status: form.legal_status as 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered',
         stage: form.stage,
         startup_email: form.startup_email || undefined,
         startup_phone: form.startup_phone || undefined,
@@ -194,17 +203,31 @@ export default function CreateStartupPage() {
                     className="w-full rounded-xl border border-card-border bg-card-bg px-4 py-2.5 text-sm text-foreground placeholder-muted/50 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wide">Stage</label>
-                  <select
-                    value={form.stage}
-                    onChange={(e) => setForm({ ...form, stage: e.target.value })}
-                    className="w-full rounded-xl border border-card-border bg-card-bg px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  >
-                    {STAGES.map((s) => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
-                    ))}
-                  </select>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wide">Legal Status</label>
+                    <select
+                      value={form.legal_status}
+                      onChange={(e) => setForm({ ...form, legal_status: e.target.value })}
+                      className="w-full rounded-xl border border-card-border bg-card-bg px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      {LEGAL_STATUSES.map((status) => (
+                        <option key={status.value} value={status.value}>{status.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-muted uppercase tracking-wide">Stage</label>
+                    <select
+                      value={form.stage}
+                      onChange={(e) => setForm({ ...form, stage: e.target.value })}
+                      className="w-full rounded-xl border border-card-border bg-card-bg px-4 py-2.5 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    >
+                      {STAGES.map((s) => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

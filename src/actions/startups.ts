@@ -1,6 +1,7 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase-server';
+import { requireSuperAdmin } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export type StartupProfile = {
@@ -28,13 +29,10 @@ export type StartupProfile = {
   city: string | null;
   country: string | null;
   categories: string[];
-  team_size: number | null;
-  tagline: string | null;
+  team_size: string | null;
   logo_url: string | null;
   banner_url: string | null;
-  problem_statement: string | null;
-  solution_statement: string | null;
-  total_raised: number | null;
+  total_raised: string | null;
   investor_count: number | null;
   elevator_pitch: string | null;
   target_audience: string | null;
@@ -48,6 +46,7 @@ export type StartupProfile = {
 };
 
 export async function getStartupProfiles(filter: 'all' | 'published' | 'unpublished' | 'featured' = 'all', page = 1, limit = 50): Promise<{ startups: StartupProfile[]; total: number }> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const offset = (page - 1) * limit;
 
@@ -87,6 +86,7 @@ export async function getStartupProfiles(filter: 'all' | 'published' | 'unpublis
 }
 
 export async function getStartupProfile(id: string): Promise<StartupProfile | null> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase.from('startup_profiles').select('*').eq('id', id).single();
   if (!data) return null;
@@ -101,6 +101,7 @@ export async function getStartupProfile(id: string): Promise<StartupProfile | nu
 }
 
 export async function toggleStartupFeatured(id: string, featured: boolean) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('startup_profiles')
@@ -111,6 +112,7 @@ export async function toggleStartupFeatured(id: string, featured: boolean) {
 }
 
 export async function toggleStartupPublished(id: string, published: boolean) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('startup_profiles')
@@ -120,7 +122,8 @@ export async function toggleStartupPublished(id: string, published: boolean) {
   revalidatePath('/dashboard/startups');
 }
 
-export async function toggleStartupVisibility(id: string, visibility: 'public' | 'private') {
+export async function toggleStartupVisibility(id: string, visibility: 'public' | 'investors_only' | 'private') {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('startup_profiles')
@@ -131,6 +134,7 @@ export async function toggleStartupVisibility(id: string, visibility: 'public' |
 }
 
 export async function deleteStartupProfile(id: string) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase.from('startup_profiles').delete().eq('id', id);
   if (error) throw new Error(error.message);
@@ -206,6 +210,7 @@ export type SimpleUser = {
 // ─── Extended actions ──────────────────────────────────────────
 
 export async function getFullStartupProfile(id: string): Promise<FullStartupProfile | null> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase.from('startup_profiles').select('*').eq('id', id).single();
   if (!data) return null;
@@ -231,6 +236,7 @@ export async function getFullStartupProfile(id: string): Promise<FullStartupProf
 }
 
 export async function findUserByEmail(email: string): Promise<SimpleUser | null> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase
     .from('users')
@@ -241,12 +247,14 @@ export async function findUserByEmail(email: string): Promise<SimpleUser | null>
 }
 
 export async function getStartupByOwnerId(ownerId: string): Promise<string | null> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data } = await supabase.from('startup_profiles').select('id').eq('owner_id', ownerId).single();
   return data?.id ?? null;
 }
 
 export async function updateStartupCoreProfile(id: string, updates: Record<string, unknown>) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { error } = await supabase
     .from('startup_profiles')
@@ -260,14 +268,16 @@ export async function updateStartupCoreProfile(id: string, updates: Record<strin
 
 export async function createAdminStartupProfile(
   ownerId: string,
-  data: { brand_name: string; stage?: string; startup_email?: string; startup_phone?: string }
+  data: { brand_name: string; legal_status: 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered'; stage?: string; startup_email?: string; startup_phone?: string }
 ): Promise<{ id: string }> {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data: result, error } = await supabase
     .from('startup_profiles')
     .insert({
       owner_id: ownerId,
       brand_name: data.brand_name,
+      legal_status: data.legal_status,
       stage: data.stage || 'ideation',
       startup_email: data.startup_email || null,
       startup_phone: data.startup_phone || null,
@@ -289,8 +299,9 @@ export async function createAdminStartupProfile(
 
 export async function upsertStartupFounders(
   startupId: string,
-  founders: Array<{ name: string; role?: string; email?: string; linkedin_url?: string; display_order?: number }>
+  founders: Array<{ name: string; role?: string; email?: string; ments_username?: string; display_order?: number }>
 ) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   await supabase.from('startup_founders').delete().eq('startup_id', startupId);
   if (founders.length === 0) return;
@@ -300,7 +311,7 @@ export async function upsertStartupFounders(
       name: f.name,
       role: f.role || null,
       email: f.email || null,
-      linkedin_url: f.linkedin_url || null,
+      ments_username: f.ments_username || null,
       status: 'pending' as const,
       display_order: f.display_order ?? i,
     }))
@@ -312,6 +323,7 @@ export async function upsertFundingRounds(
   startupId: string,
   rounds: Array<{ investor?: string; amount?: string; round_type?: string; round_date?: string; is_public?: boolean }>
 ) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   await supabase.from('startup_funding_rounds').delete().eq('startup_id', startupId);
   if (rounds.length === 0) return;
@@ -332,6 +344,7 @@ export async function upsertStartupIncubators(
   startupId: string,
   incubators: Array<{ program_name: string; year?: number | null }>
 ) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   await supabase.from('startup_incubators').delete().eq('startup_id', startupId);
   if (incubators.length === 0) return;
@@ -345,6 +358,7 @@ export async function upsertStartupAwards(
   startupId: string,
   awards: Array<{ award_name: string; year?: number | null }>
 ) {
+  await requireSuperAdmin();
   const supabase = createAdminClient();
   await supabase.from('startup_awards').delete().eq('startup_id', startupId);
   if (awards.length === 0) return;
