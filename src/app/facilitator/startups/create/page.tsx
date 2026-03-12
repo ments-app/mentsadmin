@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Rocket, Upload } from 'lucide-react';
+import { ArrowLeft, FileUp, Loader2, Rocket, Sparkles, Upload } from 'lucide-react';
 import { createFacilitatorStartupProfile } from '@/actions/facilitator-startups';
 import ImageUpload from '@/components/ImageUpload';
 import { supabase } from '@/lib/supabase';
@@ -83,7 +83,11 @@ export default function FacilitatorCreateStartupPage() {
   const [error, setError] = useState('');
   const [customCountry, setCustomCountry] = useState('');
   const [uploadingDeck, setUploadingDeck] = useState(false);
+  const [intakeLoading, setIntakeLoading] = useState(false);
+  const [intakeError, setIntakeError] = useState('');
+  const [intakeSummary, setIntakeSummary] = useState('');
   const deckInputRef = useRef<HTMLInputElement>(null);
+  const intakeInputRef = useRef<HTMLInputElement>(null);
   const [founders, setFounders] = useState([
     { name: '', role: '', email: '', ments_username: '' },
   ]);
@@ -131,6 +135,77 @@ export default function FacilitatorCreateStartupPage() {
 
   function update<K extends keyof typeof form>(field: K, value: (typeof form)[K]) {
     setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function mergeExtractedData(data: Record<string, unknown>) {
+    setForm((current) => {
+      const nextCountry = typeof data.country === 'string' && data.country.trim() ? data.country.trim() : current.country;
+      const knownCountry = COUNTRY_OPTIONS.includes(nextCountry) ? nextCountry : 'Other';
+      const knownState =
+        nextCountry === 'India' &&
+        typeof data.state === 'string' &&
+        Object.prototype.hasOwnProperty.call(INDIA_STATE_CITY_OPTIONS, data.state.trim())
+          ? data.state.trim()
+          : nextCountry === 'India'
+            ? current.state
+            : typeof data.state === 'string'
+              ? data.state.trim()
+              : current.state;
+
+      return {
+        ...current,
+        brand_name: pickString(data.brand_name, current.brand_name),
+        registered_name: pickString(data.registered_name, current.registered_name),
+        legal_status: pickEnum(data.legal_status, LEGAL_STATUSES.map((item) => item.value), current.legal_status),
+        cin: pickString(data.cin, current.cin),
+        stage: pickEnum(data.stage, STAGES.map((item) => item.value), current.stage),
+        description: pickString(data.description, current.description),
+        startup_email: pickString(data.startup_email, current.startup_email),
+        startup_phone: pickString(data.startup_phone, current.startup_phone),
+        website: pickString(data.website, current.website),
+        founded_date: pickDate(data.founded_date, current.founded_date),
+        city: pickString(data.city, current.city),
+        state: knownState,
+        country: knownCountry,
+        address_line1: pickString(data.address_line1, current.address_line1),
+        address_line2: pickString(data.address_line2, current.address_line2),
+        business_model: pickString(data.business_model, current.business_model),
+        key_strengths: pickString(data.key_strengths, current.key_strengths),
+        target_audience: pickString(data.target_audience, current.target_audience),
+        elevator_pitch: pickString(data.elevator_pitch, current.elevator_pitch),
+        revenue_amount: pickString(data.revenue_amount, current.revenue_amount),
+        revenue_currency: pickEnum(data.revenue_currency, REVENUE_CURRENCIES, current.revenue_currency),
+        revenue_growth: pickString(data.revenue_growth, current.revenue_growth),
+        traction_metrics: pickString(data.traction_metrics, current.traction_metrics),
+        total_raised: pickString(data.total_raised, current.total_raised),
+        investor_count: pickDigits(data.investor_count, current.investor_count),
+        raise_target: pickString(data.raise_target, current.raise_target),
+        equity_offered: pickString(data.equity_offered, current.equity_offered),
+        min_ticket_size: pickString(data.min_ticket_size, current.min_ticket_size),
+        funding_stage: pickEnum(data.funding_stage, FUNDING_STAGES.map((item) => item.value), current.funding_stage),
+        team_size: pickString(data.team_size, current.team_size),
+        sector: pickString(data.sector, current.sector),
+        pitch_video_url: pickString(data.pitch_video_url, current.pitch_video_url),
+        is_actively_raising: typeof data.is_actively_raising === 'boolean' ? data.is_actively_raising : current.is_actively_raising,
+        categories: pickStringArray(data.categories, current.categories),
+        keywords: pickStringArray(data.keywords, current.keywords.split(',').map((item) => item.trim()).filter(Boolean)).join(', '),
+      };
+    });
+
+    const nextFounders = normalizeFounders(data.founders);
+    if (nextFounders.length > 0) {
+      setFounders(nextFounders);
+    }
+
+    if (typeof data.country === 'string' && data.country.trim() && !COUNTRY_OPTIONS.includes(data.country.trim())) {
+      setCustomCountry(data.country.trim());
+    }
+
+    if (typeof data.extraction_notes === 'string' && data.extraction_notes.trim()) {
+      setIntakeSummary(data.extraction_notes.trim());
+    } else {
+      setIntakeSummary('AI extracted startup information from the uploaded file. Please review every field before creating the profile.');
+    }
   }
 
   function toggleCategory(category: string) {
@@ -185,6 +260,37 @@ export default function FacilitatorCreateStartupPage() {
       setError(err instanceof Error ? err.message : 'Pitch deck upload failed');
     } finally {
       setUploadingDeck(false);
+    }
+  }
+
+  async function handleStartupIntake(file: File) {
+    setIntakeLoading(true);
+    setIntakeError('');
+    setIntakeSummary('');
+    setError('');
+
+    try {
+      const payload = new FormData();
+      payload.append('file', file);
+
+      const res = await fetch('/api/ai/startup-intake', {
+        method: 'POST',
+        body: payload,
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setIntakeError(json.error || 'AI extraction failed');
+        return;
+      }
+
+      if (json.data) {
+        mergeExtractedData(json.data as Record<string, unknown>);
+      }
+    } catch (err) {
+      setIntakeError(err instanceof Error ? err.message : 'AI extraction failed');
+    } finally {
+      setIntakeLoading(false);
     }
   }
 
@@ -282,6 +388,57 @@ export default function FacilitatorCreateStartupPage() {
       </div>
 
       <form onSubmit={handleCreate}>
+        <div className="card-elevated mb-6 rounded-xl p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/8 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+                <Sparkles size={12} />
+                AI Intake
+              </div>
+              <h2 className="mt-4 text-base font-semibold text-foreground">Upload a startup PDF or poster to auto-fill the form</h2>
+              <p className="mt-1 text-sm text-muted">
+                Upload a pitch deck, one-pager, brochure, or poster. The system will extract startup details and prefill the onboarding fields for review.
+              </p>
+            </div>
+
+            <div className="flex shrink-0 flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => intakeInputRef.current?.click()}
+                disabled={intakeLoading}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-card-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                {intakeLoading ? <Loader2 size={15} className="animate-spin" /> : <FileUp size={15} />}
+                {intakeLoading ? 'Extracting...' : 'Upload PDF or Poster'}
+              </button>
+              <input
+                ref={intakeInputRef}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleStartupIntake(file);
+                  e.target.value = '';
+                }}
+              />
+              <p className="text-xs text-muted">Supported formats: PDF, PNG, JPG, WebP. Review all extracted values before submitting.</p>
+            </div>
+          </div>
+
+          {intakeError && (
+            <p className="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-600 dark:bg-red-950/50 dark:text-red-400">
+              {intakeError}
+            </p>
+          )}
+
+          {intakeSummary && (
+            <p className="mt-4 rounded-lg bg-primary/8 p-3 text-xs text-foreground">
+              {intakeSummary}
+            </p>
+          )}
+        </div>
+
         <div className="card-elevated mb-6 rounded-xl p-6">
           <h2 className="mb-5 text-base font-semibold text-foreground">Identity</h2>
           <div className="grid gap-6 lg:grid-cols-2">
@@ -605,6 +762,49 @@ export default function FacilitatorCreateStartupPage() {
       </form>
     </div>
   );
+}
+
+function pickString(value: unknown, fallback: string) {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+function pickDigits(value: unknown, fallback: string) {
+  if (typeof value !== 'string') return fallback;
+  const digits = value.replace(/[^\d]/g, '');
+  return digits || fallback;
+}
+
+function pickEnum(value: unknown, options: readonly string[], fallback: string) {
+  return typeof value === 'string' && options.includes(value) && value ? value : fallback;
+}
+
+function pickDate(value: unknown, fallback: string) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim()) ? value.trim() : fallback;
+}
+
+function pickStringArray(value: unknown, fallback: string[]) {
+  if (!Array.isArray(value)) return fallback;
+  const items = value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+  return items.length > 0 ? items : fallback;
+}
+
+function normalizeFounders(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const founder = item as Record<string, unknown>;
+      return {
+        name: typeof founder.name === 'string' ? founder.name.trim() : '',
+        role: typeof founder.role === 'string' ? founder.role.trim() : '',
+        email: typeof founder.email === 'string' ? founder.email.trim() : '',
+        ments_username: typeof founder.ments_username === 'string' ? founder.ments_username.trim() : '',
+      };
+    })
+    .filter((founder): founder is { name: string; role: string; email: string; ments_username: string } => Boolean(founder?.name));
 }
 
 function Field({
