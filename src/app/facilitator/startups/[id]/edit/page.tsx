@@ -27,7 +27,6 @@ type FounderRecord = {
 
 type FormState = {
   brand_name: string;
-  tagline: string;
   legal_status: string;
   stage: string;
   description: string;
@@ -39,8 +38,6 @@ type FormState = {
   country: string;
   business_model: string;
   target_audience: string;
-  problem_statement: string;
-  solution_statement: string;
   traction_metrics: string;
   elevator_pitch: string;
   categories: string;
@@ -83,7 +80,6 @@ export default function FacilitatorStartupEditPage() {
         const profile = await getFacilitatorOwnedStartupProfile(id);
         setForm({
           brand_name: profile.brand_name ?? '',
-          tagline: profile.tagline ?? '',
           legal_status: profile.legal_status ?? 'not_registered',
           stage: profile.stage ?? 'ideation',
           description: profile.description ?? '',
@@ -95,8 +91,6 @@ export default function FacilitatorStartupEditPage() {
           country: profile.country ?? '',
           business_model: profile.business_model ?? '',
           target_audience: profile.target_audience ?? '',
-          problem_statement: profile.problem_statement ?? '',
-          solution_statement: profile.solution_statement ?? '',
           traction_metrics: profile.traction_metrics ?? '',
           elevator_pitch: profile.elevator_pitch ?? '',
           categories: (profile.categories ?? []).join(', '),
@@ -140,7 +134,6 @@ export default function FacilitatorStartupEditPage() {
     try {
       await updateFacilitatorOwnedStartupProfile(id, {
         brand_name: form.brand_name.trim(),
-        tagline: form.tagline.trim() || null,
         legal_status: form.legal_status,
         stage: form.stage,
         description: form.description.trim() || null,
@@ -152,8 +145,6 @@ export default function FacilitatorStartupEditPage() {
         country: form.country.trim() || null,
         business_model: form.business_model.trim() || null,
         target_audience: form.target_audience.trim() || null,
-        problem_statement: form.problem_statement.trim() || null,
-        solution_statement: form.solution_statement.trim() || null,
         traction_metrics: form.traction_metrics.trim() || null,
         elevator_pitch: form.elevator_pitch.trim() || null,
         categories: form.categories.split(',').map((item) => item.trim()).filter(Boolean),
@@ -221,9 +212,6 @@ export default function FacilitatorStartupEditPage() {
           <Field label="Brand Name">
             <input className={inputCls} value={form.brand_name} onChange={(e) => update('brand_name', e.target.value)} />
           </Field>
-          <Field label="Tagline">
-            <input className={inputCls} value={form.tagline} onChange={(e) => update('tagline', e.target.value)} />
-          </Field>
           <Field label="Stage">
             <select className={inputCls} value={form.stage} onChange={(e) => update('stage', e.target.value)}>
               {STAGES.map((stage) => (
@@ -285,12 +273,6 @@ export default function FacilitatorStartupEditPage() {
         <div className="grid gap-4">
           <Field label="Elevator Pitch">
             <textarea className={inputCls} rows={3} value={form.elevator_pitch} onChange={(e) => update('elevator_pitch', e.target.value)} />
-          </Field>
-          <Field label="Problem Statement">
-            <textarea className={inputCls} rows={4} value={form.problem_statement} onChange={(e) => update('problem_statement', e.target.value)} />
-          </Field>
-          <Field label="Solution Statement">
-            <textarea className={inputCls} rows={4} value={form.solution_statement} onChange={(e) => update('solution_statement', e.target.value)} />
           </Field>
           <Field label="Traction Metrics">
             <textarea className={inputCls} rows={4} value={form.traction_metrics} onChange={(e) => update('traction_metrics', e.target.value)} />

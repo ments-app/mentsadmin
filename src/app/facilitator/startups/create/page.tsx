@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Rocket } from 'lucide-react';
+import { ArrowLeft, Loader2, Rocket, Upload } from 'lucide-react';
 import { createFacilitatorStartupProfile } from '@/actions/facilitator-startups';
 import ImageUpload from '@/components/ImageUpload';
+import { supabase } from '@/lib/supabase';
 
 const STAGES = [
   { value: 'ideation', label: 'Ideation' },
@@ -81,13 +82,14 @@ export default function FacilitatorCreateStartupPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [customCountry, setCustomCountry] = useState('');
+  const [uploadingDeck, setUploadingDeck] = useState(false);
+  const deckInputRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState({
     brand_name: '',
     registered_name: '',
     legal_status: 'not_registered',
     cin: '',
     stage: 'ideation',
-    tagline: '',
     description: '',
     startup_email: '',
     startup_phone: '',
@@ -142,6 +144,35 @@ export default function FacilitatorCreateStartupPage() {
   const stateOptions = Object.keys(INDIA_STATE_CITY_OPTIONS);
   const cityOptions = isIndia && form.state ? (INDIA_STATE_CITY_OPTIONS[form.state] ?? []) : [];
 
+  async function uploadMedia(file: File, path: string) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = `${path}/${user.id}/${fileName}`;
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(filePath, file, { contentType: file.type, upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+    return data.publicUrl;
+  }
+
+  async function handlePitchDeckUpload(file: File) {
+    setUploadingDeck(true);
+    setError('');
+    try {
+      const url = await uploadMedia(file, 'pitch-decks');
+      update('pitch_deck_url', url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Pitch deck upload failed');
+    } finally {
+      setUploadingDeck(false);
+    }
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
 
@@ -170,7 +201,6 @@ export default function FacilitatorCreateStartupPage() {
         legal_status: form.legal_status as 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered',
         cin: form.cin || undefined,
         stage: form.stage,
-        tagline: form.tagline || undefined,
         description: form.description || undefined,
         startup_email: form.startup_email || undefined,
         startup_phone: form.startup_phone || undefined,
@@ -242,9 +272,6 @@ export default function FacilitatorCreateStartupPage() {
             </Field>
             <Field label="Registered Name">
               <input className={inputCls} value={form.registered_name} onChange={(e) => update('registered_name', e.target.value)} />
-            </Field>
-            <Field label="Tagline">
-              <input className={inputCls} value={form.tagline} onChange={(e) => update('tagline', e.target.value)} />
             </Field>
             <Field label="CIN">
               <input className={inputCls} value={form.cin} onChange={(e) => update('cin', e.target.value)} />
@@ -432,7 +459,29 @@ export default function FacilitatorCreateStartupPage() {
           <h2 className="mb-5 text-base font-semibold text-foreground">Links and Discovery</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Pitch Deck URL">
-              <input className={inputCls} type="url" value={form.pitch_deck_url} onChange={(e) => update('pitch_deck_url', e.target.value)} />
+              <div className="space-y-3">
+                <input className={inputCls} type="url" value={form.pitch_deck_url} onChange={(e) => update('pitch_deck_url', e.target.value)} />
+                <button
+                  type="button"
+                  onClick={() => deckInputRef.current?.click()}
+                  disabled={uploadingDeck}
+                  className="inline-flex items-center gap-2 rounded-lg border border-card-border px-3 py-2 text-sm font-medium text-foreground hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  {uploadingDeck ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                  {uploadingDeck ? 'Uploading...' : 'Upload Pitch Deck'}
+                </button>
+                <input
+                  ref={deckInputRef}
+                  type="file"
+                  accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePitchDeckUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+              </div>
             </Field>
             <Field label="Pitch Video URL">
               <input className={inputCls} type="url" value={form.pitch_video_url} onChange={(e) => update('pitch_video_url', e.target.value)} />

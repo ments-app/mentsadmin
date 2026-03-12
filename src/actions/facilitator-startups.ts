@@ -26,7 +26,6 @@ export async function createFacilitatorStartupProfile(data: {
   legal_status: 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered';
   cin?: string;
   stage?: string;
-  tagline?: string;
   description?: string;
   startup_email?: string;
   startup_phone?: string;
@@ -79,7 +78,6 @@ export async function createFacilitatorStartupProfile(data: {
       legal_status: data.legal_status,
       cin: data.cin?.trim() || null,
       stage: data.stage || 'ideation',
-      tagline: data.tagline?.trim() || null,
       description: data.description?.trim() || null,
       startup_email: data.startup_email?.trim() || null,
       startup_phone: data.startup_phone?.trim() || null,
