@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
-import { Loader2, Pencil, ArrowLeft, Rocket, ExternalLink } from 'lucide-react';
+import { Pencil, ArrowLeft, Rocket, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
 import {
@@ -14,12 +14,11 @@ import {
 } from '@/actions/startups';
 
 const STAGE_LABELS: Record<string, string> = {
-  idea: 'Idea',
+  ideation: 'Ideation',
   mvp: 'MVP',
-  early_traction: 'Early Traction',
   scaling: 'Scaling',
-  growth: 'Growth',
-  mature: 'Mature',
+  expansion: 'Expansion',
+  maturity: 'Maturity',
 };
 
 export default function StartupDetailPage() {
@@ -159,7 +158,6 @@ export default function StartupDetailPage() {
           <div className="space-y-3">
             <Row label="Brand Name" value={startup.brand_name} />
             <Row label="Registered Name" value={startup.registered_name} />
-            <Row label="Tagline" value={startup.tagline} />
             <Row label="Website" value={startup.website} />
             <Row label="Email" value={startup.startup_email} />
             <Row label="Phone" value={startup.startup_phone} />
@@ -188,14 +186,12 @@ export default function StartupDetailPage() {
         </div>
 
         {/* Content */}
-        {(startup.description || startup.elevator_pitch || startup.problem_statement || startup.solution_statement) && (
+        {(startup.description || startup.elevator_pitch || startup.target_audience || startup.traction_metrics) && (
           <div className="card-elevated rounded-xl p-6" style={{ animationDelay: '150ms' }}>
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Content</h2>
             <div className="space-y-4">
               {startup.description && <TextBlock label="Description" value={startup.description} />}
               {startup.elevator_pitch && <TextBlock label="Elevator Pitch" value={startup.elevator_pitch} />}
-              {startup.problem_statement && <TextBlock label="Problem" value={startup.problem_statement} />}
-              {startup.solution_statement && <TextBlock label="Solution" value={startup.solution_statement} />}
               {startup.target_audience && <TextBlock label="Target Audience" value={startup.target_audience} />}
               {startup.traction_metrics && <TextBlock label="Traction Metrics" value={startup.traction_metrics} />}
             </div>
@@ -208,7 +204,7 @@ export default function StartupDetailPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted mb-4">Fundraising</h2>
             <div className="space-y-3">
               <Row label="Actively Raising" value={startup.is_actively_raising ? 'Yes' : 'No'} />
-              <Row label="Total Raised" value={startup.total_raised != null ? `\u20B9${startup.total_raised.toLocaleString()}` : null} />
+              <Row label="Total Raised" value={startup.total_raised} />
               <Row label="Investor Count" value={startup.investor_count?.toString()} />
               {startup.pitch_deck_url && (
                 <div className="flex items-start justify-between gap-4">

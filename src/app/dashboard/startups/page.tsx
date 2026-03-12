@@ -15,21 +15,19 @@ import {
 type Filter = 'all' | 'featured';
 
 const STAGE_LABELS: Record<string, string> = {
-  idea: 'Idea',
+  ideation: 'Ideation',
   mvp: 'MVP',
-  early_traction: 'Early Traction',
   scaling: 'Scaling',
-  growth: 'Growth',
-  mature: 'Mature',
+  expansion: 'Expansion',
+  maturity: 'Maturity',
 };
 
 const STAGE_COLORS: Record<string, string> = {
-  idea: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  ideation: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
   mvp: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-  early_traction: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900 dark:text-cyan-300',
   scaling: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-  growth: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-  mature: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
+  expansion: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+  maturity: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
 };
 
 const LIMIT = 30;
@@ -163,9 +161,7 @@ export default function StartupsPage() {
                       )}
                       <div>
                         <p className="font-medium text-foreground">{startup.brand_name}</p>
-                        {startup.tagline && (
-                          <p className="text-xs text-muted truncate max-w-[180px]">{startup.tagline}</p>
-                        )}
+                        <p className="text-xs text-muted truncate max-w-[180px]">{startup.startup_email || startup.website || '\u2014'}</p>
                       </div>
                     </div>
                   </td>

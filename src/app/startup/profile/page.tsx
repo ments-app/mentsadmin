@@ -471,11 +471,10 @@ function ProfileView({ profile, onEdit }: { profile: any; onEdit: () => void }) 
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
                     {f.role && <p className="text-xs text-muted truncate">{f.role}</p>}
-                    {f.linkedin_url && (
-                      <a href={f.linkedin_url} target="_blank" rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline flex items-center gap-0.5 mt-0.5">
-                        <Link2 size={10} /> LinkedIn
-                      </a>
+                    {f.ments_username && (
+                      <p className="mt-0.5 flex items-center gap-0.5 text-xs text-primary">
+                        <Link2 size={10} /> @{f.ments_username.replace(/^@/, '')}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -655,7 +654,7 @@ function IdentityTab({ profile, onSave }: { profile: any; onSave: (d: Record<str
   async function handleSave() {
     if (!form.brand_name.trim()) { setError('Brand name is required'); return; }
     setSaving(true); setError('');
-    try { onSave({ ...form, team_size: form.team_size || null }); }
+    try { onSave({ ...form, founded_date: form.founded_date || null, team_size: form.team_size || null }); }
     catch (e) { setError(e instanceof Error ? e.message : 'Save failed'); }
     finally { setSaving(false); }
   }
@@ -886,14 +885,14 @@ function FinancialsTab({ profile, onSaveMeta, onSaveRounds }: {
 // ─── Team Tab ──────────────────────────────────────────────────
 
 function TeamTab({ founders, onSave }: { founders: any[]; onSave: (f: any[]) => void }) {
-  const [list, setList] = useState(founders.map(f => ({ name: f.name || '', role: f.role || '', email: f.email || '', linkedin_url: f.linkedin_url || '' })));
+  const [list, setList] = useState(founders.map(f => ({ name: f.name || '', role: f.role || '', email: f.email || '', ments_username: f.ments_username || '' })));
   const [saving, setSaving] = useState(false);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted">Founders & co-founders</p>
-        <button onClick={() => setList([...list, { name: '', role: '', email: '', linkedin_url: '' }])}
+        <button onClick={() => setList([...list, { name: '', role: '', email: '', ments_username: '' }])}
           className="flex items-center gap-1 rounded-lg border border-card-border px-2.5 py-1 text-xs font-medium text-muted hover:border-primary hover:text-primary">
           <Plus size={13} /> Add Member
         </button>
@@ -908,7 +907,7 @@ function TeamTab({ founders, onSave }: { founders: any[]; onSave: (f: any[]) => 
             <Field label="Name *" value={f.name} onChange={v => setList(list.map((x, idx) => idx === i ? { ...x, name: v } : x))} />
             <Field label="Role / Title" value={f.role} onChange={v => setList(list.map((x, idx) => idx === i ? { ...x, role: v } : x))} placeholder="e.g. Co-founder & CEO" />
             <Field label="Email" type="email" value={f.email} onChange={v => setList(list.map((x, idx) => idx === i ? { ...x, email: v } : x))} />
-            <Field label="LinkedIn URL" type="url" value={f.linkedin_url} onChange={v => setList(list.map((x, idx) => idx === i ? { ...x, linkedin_url: v } : x))} placeholder="https://linkedin.com/in/..." />
+            <Field label="Ments Username" value={f.ments_username} onChange={v => setList(list.map((x, idx) => idx === i ? { ...x, ments_username: v } : x))} placeholder="@username" />
           </div>
         </div>
       ))}

@@ -15,14 +15,14 @@ type FounderDraft = {
   name: string;
   role: string;
   email: string;
-  linkedin_url: string;
+  ments_username: string;
 };
 
 type FounderRecord = {
   name: string | null;
   role: string | null;
   email: string | null;
-  linkedin_url: string | null;
+  ments_username: string | null;
 };
 
 type FormState = {
@@ -104,7 +104,7 @@ export default function FacilitatorStartupEditPage() {
             name: founder.name ?? '',
             role: founder.role ?? '',
             email: founder.email ?? '',
-            linkedin_url: founder.linkedin_url ?? '',
+            ments_username: founder.ments_username ?? '',
           }))
         );
       } catch (err) {
@@ -295,7 +295,7 @@ export default function FacilitatorStartupEditPage() {
           </div>
           <button
             type="button"
-            onClick={() => setFounders((current) => [...current, { name: '', role: '', email: '', linkedin_url: '' }])}
+            onClick={() => setFounders((current) => [...current, { name: '', role: '', email: '', ments_username: '' }])}
             className="rounded-lg border border-card-border px-3 py-2 text-sm font-medium text-foreground hover:border-primary hover:text-primary"
           >
             Add Founder
@@ -317,8 +317,8 @@ export default function FacilitatorStartupEditPage() {
               <Field label="Email">
                 <input className={inputCls} type="email" value={founder.email} onChange={(e) => updateFounder(index, 'email', e.target.value)} />
               </Field>
-              <Field label="LinkedIn URL">
-                <input className={inputCls} value={founder.linkedin_url} onChange={(e) => updateFounder(index, 'linkedin_url', e.target.value)} />
+              <Field label="Ments Username">
+                <input className={inputCls} value={founder.ments_username} onChange={(e) => updateFounder(index, 'ments_username', e.target.value)} placeholder="@username" />
               </Field>
               <button
                 type="button"

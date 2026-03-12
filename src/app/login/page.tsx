@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { AlertCircle, Shield, Users, TrendingUp, Zap } from 'lucide-react';
+import { AlertCircle, Shield, Users, TrendingUp, Zap, Command, ArrowRight } from 'lucide-react';
 
 function LoginContent() {
   const searchParams = useSearchParams();
@@ -36,220 +36,135 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left branding panel — hidden on mobile */}
-      <div
-        className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:justify-between"
-        style={{
-          background: '#00ffa2',
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12 selection:bg-primary/20 selection:text-foreground transition-colors duration-500">
+      {/* Background Mesh Gradient Effects */}
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div 
+          className="absolute -top-[25%] -left-[10%] h-[70%] w-[70%] rounded-full bg-primary/10 blur-[120px] transition-all duration-1000 ease-in-out dark:bg-primary/5" 
+          style={{ opacity: mounted ? 0.6 : 0 }}
+        />
+        <div 
+          className="absolute -bottom-[20%] -right-[10%] h-[60%] w-[60%] rounded-full bg-indigo-500/10 blur-[120px] transition-all duration-1000 ease-in-out dark:bg-indigo-500/5" 
+          style={{ opacity: mounted ? 0.4 : 0 }}
+        />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay" />
+      </div>
+
+      {/* Main Content Container */}
+      <div 
+        className="relative z-10 w-full max-w-[440px] transition-all duration-1000 ease-out"
+        style={{ 
+          opacity: mounted ? 1 : 0, 
+          transform: mounted ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.98)' 
         }}
       >
-        {/* Dot grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-
-        {/* Gradient orbs */}
-        <div
-          className="absolute -left-24 -top-24 h-96 w-96 rounded-full opacity-20"
-          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full opacity-15"
-          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
-        />
-
-        {/* Top — Logo and tagline */}
-        <div
-          className="relative z-10 px-12 pt-12"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-            transition: 'opacity 0.6s ease, transform 0.6s ease',
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <span className="text-lg font-bold text-white">M</span>
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Ments</span>
+        {/* Logo Section */}
+        <div className="mb-10 flex flex-col items-center">
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-[0_0_40px_rgba(0,255,162,0.3)] transition-transform duration-500 hover:scale-105 active:scale-95">
+            <Command className="h-9 w-9 text-slate-950" strokeWidth={2.5} />
+            <div className="absolute -inset-1 animate-pulse rounded-2xl bg-primary/20 blur-sm" />
           </div>
-          <p className="mt-4 text-lg font-medium text-indigo-100">
-            Admin Console
-          </p>
-          <p className="mt-1 max-w-sm text-sm leading-relaxed text-indigo-200/80">
-            Manage your platform, moderate content, and empower entrepreneurs from a single dashboard.
+          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl">
+            Ments<span className="text-primary">.</span>
+          </h1>
+          <p className="mt-3 text-center text-[15px] font-medium text-muted/80">
+            Administrative Console
           </p>
         </div>
 
-        {/* Middle — Feature cards */}
-        <div className="relative z-10 flex-1 px-12 py-10">
-          <div className="flex flex-col gap-4">
-            {[
-              {
-                icon: Users,
-                title: 'User Management',
-                desc: 'Manage accounts, roles, and permissions',
-                delay: 200,
-              },
-              {
-                icon: Shield,
-                title: 'Content Moderation',
-                desc: 'Review reports and maintain community standards',
-                delay: 350,
-              },
-              {
-                icon: TrendingUp,
-                title: 'Platform Analytics',
-                desc: 'Track growth, engagement, and key metrics',
-                delay: 500,
-              },
-              {
-                icon: Zap,
-                title: 'Startup Ecosystem',
-                desc: 'Oversee profiles, facilitators, and funding',
-                delay: 650,
-              },
-            ].map(({ icon: Icon, title, desc, delay }) => (
-              <div
-                key={title}
-                className="group flex items-start gap-4 rounded-xl bg-white/[0.08] px-5 py-4 backdrop-blur-sm transition-colors duration-200 hover:bg-white/[0.13]"
-                style={{
-                  opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateX(0)' : 'translateX(-16px)',
-                  transition: `opacity 0.5s ease ${delay}ms, transform 0.5s ease ${delay}ms, background-color 0.2s ease`,
-                }}
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
-                  <Icon className="h-[18px] w-[18px] text-indigo-100" strokeWidth={1.8} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="mt-0.5 text-xs text-indigo-200/70">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom — Footer */}
-        <div
-          className="relative z-10 px-12 pb-8"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transition: 'opacity 0.6s ease 0.7s',
-          }}
-        >
-          <div className="flex items-center gap-2 text-xs text-indigo-300/60">
-            <div className="h-px flex-1 bg-white/10" />
-            <span>Empowering Entrepreneurs</span>
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
-        </div>
-      </div>
-
-      {/* Right login panel */}
-      <div className="relative flex w-full flex-col items-center justify-center bg-background px-6 lg:w-1/2">
-        {/* Mobile logo — shown only on small screens */}
-        <div
-          className="mb-10 flex items-center gap-2.5 lg:hidden"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(8px)',
-            transition: 'opacity 0.4s ease, transform 0.4s ease',
-          }}
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-base font-bold text-white">M</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">Ments</span>
-        </div>
-
-        {/* Login card */}
-        <div
-          className="w-full max-w-[380px]"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.98)',
-            transition: 'opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s',
-          }}
-        >
-          {/* Heading */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Welcome back
-            </h1>
-            <p className="mt-2 text-sm text-muted">
-              Sign in to access the admin console
-            </p>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="animate-scale-in mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5 dark:border-red-900/50 dark:bg-red-950/50">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" strokeWidth={2} />
-              <p className="text-sm leading-snug text-danger">{error}</p>
+        {/* Card Section */}
+        <div className="glass overflow-hidden rounded-[24px] border border-card-border bg-card-bg/40 p-1 shadow-2xl transition-all duration-300 hover:border-primary/20 hover:shadow-primary/5">
+          <div className="bg-card-bg/60 px-8 py-10 sm:px-10">
+            {/* Header */}
+            <div className="mb-10 text-center">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                Welcome back
+              </h2>
+              <p className="mt-2 text-[14px] text-muted leading-relaxed">
+                Log in to manage your platform ecosystem.
+              </p>
             </div>
-          )}
 
-          {/* Google button */}
-          <button
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="group relative flex w-full items-center justify-center gap-3 rounded-xl border border-card-border bg-card-bg px-5 py-3.5 text-[15px] font-medium text-foreground shadow-sm transition-all duration-200 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-          >
-            {loading ? (
-              <div className="relative h-5 w-5">
-                <div className="absolute inset-0 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+            {/* Error Message */}
+            {error && (
+              <div className="animate-scale-in mb-8 flex items-start gap-3 rounded-xl border border-danger/20 bg-danger/5 p-4 transition-all">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+                <p className="text-[13px] font-medium leading-relaxed text-danger">
+                  {error}
+                </p>
               </div>
-            ) : (
-              <svg viewBox="0 0 24 24" className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" aria-hidden="true">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
             )}
-            <span>{loading ? 'Redirecting...' : 'Continue with Google'}</span>
-          </button>
 
-          {/* Divider */}
-          <div className="mt-8 flex items-center gap-3">
-            <div className="h-px flex-1 bg-card-border" />
-            <span className="text-xs text-muted/60">ADMIN ACCESS ONLY</span>
-            <div className="h-px flex-1 bg-card-border" />
+            {/* Google Sign In Button */}
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading}
+              className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-card-border bg-white px-6 py-4 text-[15px] font-bold text-[#1F1F1F] shadow-sm transition-all hover:bg-neutral-50 hover:shadow-md active:scale-[0.98] disabled:opacity-60 disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 dark:bg-[#1A1A1A] dark:text-white dark:hover:bg-[#222]"
+            >
+              {loading ? (
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 transition-transform group-hover:scale-110" aria-hidden="true">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  <span>{loading ? 'Authenticating...' : 'Sign in with Google'}</span>
+                </>
+              )}
+            </button>
+
+            {/* Features Row - Subtle Icons */}
+            <div className="mt-10 grid grid-cols-4 gap-4 border-t border-card-border/50 pt-10">
+              {[
+                { icon: Users, label: 'Users' },
+                { icon: Shield, label: 'Trust' },
+                { icon: TrendingUp, label: 'Growth' },
+                { icon: Zap, label: 'Fast' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-2 group cursor-default">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/5 border border-primary/10 transition-colors group-hover:bg-primary/10 group-hover:border-primary/20">
+                    <item.icon className="h-5 w-5 text-primary/60 transition-colors group-hover:text-primary" />
+                  </div>
+                  <span className="text-[10px] font-bold tracking-wider text-muted/60 uppercase group-hover:text-muted transition-colors">{item.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-
-          {/* Info text */}
-          <p className="mt-6 text-center text-xs leading-relaxed text-muted/70">
-            Access is restricted to authorized administrators.
-            <br />
-            Contact your team lead if you need access.
-          </p>
         </div>
 
-        {/* Footer */}
-        <div
-          className="absolute bottom-6 text-xs text-muted/40"
-          style={{
-            opacity: mounted ? 1 : 0,
-            transition: 'opacity 0.6s ease 0.8s',
-          }}
-        >
-          Powered by <span className="font-medium text-muted/60">Ments</span>
+        {/* Footer Links */}
+        <div className="mt-10 flex items-center justify-between px-2 text-xs font-medium text-muted/50 transition-all duration-700 delay-700">
+          <p>&copy; 2024 Ments Hub</p>
+          <div className="flex items-center gap-6">
+            <a href="#" className="hover:text-primary transition-colors hover:underline underline-offset-4">Security Policy</a>
+            <a href="#" className="hover:text-primary transition-colors hover:underline underline-offset-4 flex items-center gap-1">
+              Need Help? <ArrowRight className="h-3 w-3" />
+            </a>
+          </div>
         </div>
       </div>
+
+      {/* Static Background Pattern */}
+      <div className="absolute inset-0 z-[-1] opacity-[0.03] dark:opacity-[0.05]" 
+        style={{ 
+          backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)',
+          backgroundSize: '40px 40px'
+        }}
+      />
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense>
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );

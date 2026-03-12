@@ -358,11 +358,10 @@ export default function FacilitatorStartupDetailPage() {
                       {f.role && <p className="text-xs text-muted">{f.role}</p>}
                       <div className="mt-1 flex gap-3 text-xs text-muted">
                         {f.email && <span className="flex items-center gap-1"><Mail size={10} />{f.email}</span>}
-                        {f.linkedin_url && (
-                          <a href={f.linkedin_url} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-primary hover:underline">
-                            <ExternalLink size={10} /> LinkedIn
-                          </a>
+                        {f.ments_username && (
+                          <span className="flex items-center gap-1 text-primary">
+                            <ExternalLink size={10} /> @{String(f.ments_username).replace(/^@/, '')}
+                          </span>
                         )}
                       </div>
                     </div>

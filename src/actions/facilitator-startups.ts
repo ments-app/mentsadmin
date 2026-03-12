@@ -351,7 +351,7 @@ export async function updateFacilitatorOwnedStartupProfile(startupId: string, up
 
 export async function updateFacilitatorOwnedStartupFounders(
   startupId: string,
-  founders: Array<{ name: string; role?: string; email?: string; linkedin_url?: string; display_order?: number }>
+  founders: Array<{ name: string; role?: string; email?: string; ments_username?: string; display_order?: number }>
 ) {
   const session = await requireFacilitator();
   const admin = createAdminClient();
@@ -371,7 +371,7 @@ export async function updateFacilitatorOwnedStartupFounders(
       name: founder.name.trim(),
       role: founder.role?.trim() || null,
       email: founder.email?.trim() || null,
-      linkedin_url: founder.linkedin_url?.trim() || null,
+      ments_username: founder.ments_username?.trim() || null,
       status: 'pending' as const,
       display_order: founder.display_order ?? index,
     }))

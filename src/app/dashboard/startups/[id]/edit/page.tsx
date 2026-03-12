@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Loader2,
@@ -74,7 +74,6 @@ const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AED'];
 
 export default function StartupEditPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [profile, setProfile] = useState<FullStartupProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('identity');
@@ -253,7 +252,6 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
   const [form, setForm] = useState({
     brand_name: profile.brand_name || '',
     registered_name: profile.registered_name || '',
-    tagline: profile.tagline || '',
     legal_status: profile.legal_status || '',
     cin: profile.cin || '',
     stage: profile.stage || '',
@@ -276,7 +274,11 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
     if (!form.brand_name.trim()) { setError('Brand name is required'); return; }
     setSaving(true); setError('');
     try {
-      onSave({ ...form, team_size: form.team_size || null });
+      onSave({
+        ...form,
+        founded_date: form.founded_date || null,
+        team_size: form.team_size || null,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
@@ -290,7 +292,6 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
         <Field label="Brand Name *" value={form.brand_name} onChange={(v) => setForm({ ...form, brand_name: v })} />
         <Field label="Registered Name" value={form.registered_name} onChange={(v) => setForm({ ...form, registered_name: v })} />
       </div>
-      <Field label="Tagline" value={form.tagline} onChange={(v) => setForm({ ...form, tagline: v })} placeholder="Short catchy tagline" />
       <div className="grid grid-cols-2 gap-4">
         <SelectField label="Legal Status" value={form.legal_status} onChange={(v) => setForm({ ...form, legal_status: v })}
           options={LEGAL_STATUSES} placeholder="Select..." />
@@ -334,8 +335,6 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
   const [form, setForm] = useState({
     description: profile.description || '',
     elevator_pitch: profile.elevator_pitch || '',
-    problem_statement: profile.problem_statement || '',
-    solution_statement: profile.solution_statement || '',
     target_audience: profile.target_audience || '',
     traction_metrics: profile.traction_metrics || '',
     key_strengths: (profile as FullStartupProfile).key_strengths || '',
@@ -350,8 +349,6 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
         ...form,
         description: form.description || null,
         elevator_pitch: form.elevator_pitch || null,
-        problem_statement: form.problem_statement || null,
-        solution_statement: form.solution_statement || null,
         target_audience: form.target_audience || null,
         traction_metrics: form.traction_metrics || null,
         key_strengths: form.key_strengths || null,
@@ -380,22 +377,6 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
         placeholder="Short pitch for investors (~100 words)"
         rows={4}
       />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <TextareaField
-          label="Problem Statement"
-          value={form.problem_statement}
-          onChange={(v) => setForm({ ...form, problem_statement: v })}
-          placeholder="What problem are you solving?"
-          rows={4}
-        />
-        <TextareaField
-          label="Solution Statement"
-          value={form.solution_statement}
-          onChange={(v) => setForm({ ...form, solution_statement: v })}
-          placeholder="How are you solving it?"
-          rows={4}
-        />
-      </div>
       <TextareaField
         label="Target Audience"
         value={form.target_audience}
@@ -641,7 +622,7 @@ function FinancialsTab({
 
 // ─── Team Tab ──────────────────────────────────────────────────
 
-type FounderDraft = { name: string; role: string; email: string; linkedin_url: string };
+type FounderDraft = { name: string; role: string; email: string; ments_username: string };
 
 function TeamTab({
   founders,
@@ -655,13 +636,13 @@ function TeamTab({
       name: f.name || '',
       role: f.role || '',
       email: f.email || '',
-      linkedin_url: f.linkedin_url || '',
+      ments_username: f.ments_username || '',
     }))
   );
   const [saving, setSaving] = useState(false);
 
   function add() {
-    setList([...list, { name: '', role: '', email: '', linkedin_url: '' }]);
+    setList([...list, { name: '', role: '', email: '', ments_username: '' }]);
   }
 
   function update(i: number, field: keyof FounderDraft, value: string) {
@@ -694,7 +675,7 @@ function TeamTab({
             <Field label="Name *" value={f.name} onChange={(v) => update(i, 'name', v)} />
             <Field label="Role / Title" value={f.role} onChange={(v) => update(i, 'role', v)} placeholder="e.g. Co-founder & CEO" />
             <Field label="Email" type="email" value={f.email} onChange={(v) => update(i, 'email', v)} />
-            <Field label="LinkedIn URL" type="url" value={f.linkedin_url} onChange={(v) => update(i, 'linkedin_url', v)} placeholder="https://linkedin.com/in/..." />
+            <Field label="Ments Username" value={f.ments_username} onChange={(v) => update(i, 'ments_username', v)} placeholder="@username" />
           </div>
         </div>
       ))}
