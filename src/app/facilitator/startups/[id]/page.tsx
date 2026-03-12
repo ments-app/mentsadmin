@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { getFacilitatorStartupDetail, approveStartup, rejectStartup, suspendStartup } from '@/actions/facilitators';
 import { searchUserForTransfer, transferStartupOwnership } from '@/actions/facilitator-startups';
 import { format } from 'date-fns';
@@ -10,7 +10,7 @@ import {
   Users, DollarSign, Award, Rocket, CheckCircle2, XCircle,
   ShieldAlert, RefreshCw, ExternalLink, Briefcase, Target,
   TrendingUp, Lightbulb, Layers, ArrowRightLeft, Search,
-  UserCircle2, Loader2,
+  UserCircle2, Loader2, Pencil,
 } from 'lucide-react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
@@ -21,7 +21,6 @@ function formatStartupId(uuid: string) {
 
 export default function FacilitatorStartupDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -165,6 +164,13 @@ export default function FacilitatorStartupDetailPage() {
       {(assignment.status === 'pending' || assignment.status === 'approved') && (
         <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-card-border bg-card-bg p-4">
           <span className="mr-2 self-center text-sm font-medium text-foreground">Actions:</span>
+          <Link
+            href={`/facilitator/startups/${sp.id}/edit`}
+            className="flex items-center gap-1.5 rounded-lg border border-card-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:border-primary hover:text-primary"
+          >
+            <Pencil size={14} />
+            Edit Profile
+          </Link>
           {assignment.status === 'pending' && (
             <>
               <button

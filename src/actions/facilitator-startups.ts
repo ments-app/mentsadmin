@@ -4,16 +4,28 @@ import { createAdminClient } from '@/lib/supabase-server';
 import { requireFacilitator } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
-async function getOwnedFacilitatorStartup(admin: ReturnType<typeof createAdminClient>, facilitatorId: string, startupId: string) {
-  const { data: startup, error } = await admin
+async function getEditableFacilitatorStartup(admin: ReturnType<typeof createAdminClient>, facilitatorId: string, startupId: string) {
+  const { data: assignment, error: assignmentError } = await admin
+    .from('startup_facilitator_assignments')
+    .select('id')
+    .eq('startup_id', startupId)
+    .eq('facilitator_id', facilitatorId)
+    .maybeSingle();
+
+  if (assignmentError) throw new Error(assignmentError.message);
+
+  const { data: startup, error: startupError } = await admin
     .from('startup_profiles')
     .select('id, owner_id')
     .eq('id', startupId)
-    .eq('owner_id', facilitatorId)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
-  if (!startup) throw new Error('Startup not found or not owned by your facilitator account');
+  if (startupError) throw new Error(startupError.message);
+  if (!startup) throw new Error('Startup not found');
+
+  if (!assignment && startup.owner_id !== facilitatorId) {
+    throw new Error('Startup not found or not editable by your facilitator account');
+  }
 
   return startup;
 }
@@ -288,7 +300,7 @@ export async function getFacilitatorOwnedStartupProfile(startupId: string) {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  await getOwnedFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
 
   const { data: profile, error } = await admin
     .from('startup_profiles')
@@ -318,7 +330,7 @@ export async function updateFacilitatorOwnedStartupProfile(startupId: string, up
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  await getOwnedFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
 
   const payload = {
     ...updates,
@@ -344,7 +356,7 @@ export async function updateFacilitatorOwnedStartupFounders(
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  await getOwnedFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
 
   await admin.from('startup_founders').delete().eq('startup_id', startupId);
   if (founders.length === 0) {
