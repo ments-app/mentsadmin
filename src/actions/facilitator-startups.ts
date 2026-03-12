@@ -29,7 +29,7 @@ export async function createFacilitatorStartupProfile(data: {
   const { data: sp, error: insertError } = await admin
     .from('startup_profiles')
     .insert({
-      owner_id: session.authId,
+      owner_id: session.effectiveFacilitatorId,
       brand_name: brandName,
       stage: data.stage || 'ideation',
       description: data.description?.trim() || null,
@@ -56,7 +56,7 @@ export async function createFacilitatorStartupProfile(data: {
   // Auto-create assignment so it shows in facilitator's "My Startups"
   await admin.from('startup_facilitator_assignments').insert({
     startup_id: sp.id,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     status: 'approved',
     assigned_by: session.authId,
     reviewed_at: new Date().toISOString(),
@@ -76,7 +76,7 @@ export async function getFacilitatorCreatedStartups() {
   const { data, error } = await admin
     .from('startup_profiles')
     .select('id, brand_name, logo_url, stage, city, country, is_published, owner_id, created_at')
-    .eq('owner_id', session.authId)
+    .eq('owner_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -110,7 +110,7 @@ export async function transferStartupOwnership(startupId: string, newOwnerEmail:
     .from('startup_facilitator_assignments')
     .select('id')
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .maybeSingle();
 
   if (!assignment) throw new Error('Forbidden: startup not assigned to you');

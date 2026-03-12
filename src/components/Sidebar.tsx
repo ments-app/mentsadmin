@@ -29,6 +29,7 @@ import {
   ChevronsLeft,
   Monitor,
   Sparkles,
+  UserCog,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -97,6 +98,7 @@ const FACILITATOR_SECTIONS: NavSection[] = [
       { href: '/facilitator/profile', label: 'Organization', icon: Building2 },
       { href: '/facilitator/startups', label: 'My Startups', icon: Rocket },
       { href: '/facilitator/students', label: 'Student Access', icon: GraduationCap },
+      { href: '/facilitator/team', label: 'Team', icon: UserCog },
     ],
   },
   {

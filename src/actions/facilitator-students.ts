@@ -21,7 +21,7 @@ export async function getMyStudentEmails(): Promise<StudentEmailEntry[]> {
   const { data, error } = await admin
     .from('facilitator_student_emails')
     .select('email, added_at')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('added_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -60,7 +60,7 @@ export async function addStudentEmail(email: string): Promise<{ invited: boolean
   }
 
   const { error } = await admin.from('facilitator_student_emails').insert({
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     email: trimmed,
   });
 
@@ -83,7 +83,7 @@ export async function addStudentEmail(email: string): Promise<{ invited: boolean
     const { data: fp } = await admin
       .from('facilitator_profiles')
       .select('organisation_name')
-      .eq('id', session.authId)
+      .eq('id', session.effectiveFacilitatorId)
       .maybeSingle();
 
     const facilitatorName = fp?.organisation_name ?? 'A facilitator';
@@ -107,7 +107,7 @@ export async function removeStudentEmail(email: string): Promise<void> {
   const { error } = await admin
     .from('facilitator_student_emails')
     .delete()
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .eq('email', email.trim().toLowerCase());
 
   if (error) throw new Error(error.message);
@@ -147,7 +147,7 @@ export async function bulkAddStudentEmails(emails: string[]): Promise<BulkAddRes
   const { data: existing } = await admin
     .from('facilitator_student_emails')
     .select('email')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .in('email', valid);
 
   const existingSet = new Set((existing ?? []).map((r: { email: string }) => r.email));
@@ -159,7 +159,7 @@ export async function bulkAddStudentEmails(emails: string[]): Promise<BulkAddRes
   // Bulk insert
   const { error } = await admin
     .from('facilitator_student_emails')
-    .insert(newEmails.map((email) => ({ facilitator_id: session.authId, email })));
+    .insert(newEmails.map((email) => ({ facilitator_id: session.effectiveFacilitatorId, email })));
 
   if (error) throw new Error(error.message);
 
@@ -179,7 +179,7 @@ export async function bulkAddStudentEmails(emails: string[]): Promise<BulkAddRes
     const { data: fp } = await admin
       .from('facilitator_profiles')
       .select('organisation_name')
-      .eq('id', session.authId)
+      .eq('id', session.effectiveFacilitatorId)
       .maybeSingle();
 
     const facilitatorName = fp?.organisation_name ?? 'A facilitator';

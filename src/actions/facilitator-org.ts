@@ -109,11 +109,11 @@ export async function getMyOrganization(): Promise<{
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  // Find org membership for this user
+  // Find org membership for this user (co-admins use the parent facilitator's ID)
   const { data: membership } = await admin
     .from('organization_members')
     .select('organization_id, role, status')
-    .eq('user_id', session.authId)
+    .eq('user_id', session.effectiveFacilitatorId)
     .maybeSingle();
 
   if (!membership) {
@@ -183,11 +183,11 @@ export async function updateMyOrganization(data: {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
-  // Find the org this user belongs to
+  // Find the org this user belongs to (co-admins use the parent facilitator's ID)
   const { data: membership } = await admin
     .from('organization_members')
     .select('organization_id')
-    .eq('user_id', session.authId)
+    .eq('user_id', session.effectiveFacilitatorId)
     .maybeSingle();
 
   if (!membership) throw new Error('No organization found for this user');
@@ -227,6 +227,11 @@ export async function createMyOrganization(data: {
 }): Promise<Organization> {
   const session = await requireFacilitator();
   const admin = createAdminClient();
+
+  // Co-admins cannot create orgs — only the primary facilitator can
+  if (session.authId !== session.effectiveFacilitatorId) {
+    throw new Error('Only the primary facilitator account can create an organization');
+  }
 
   // Check if user already has an org
   const { data: existing } = await admin

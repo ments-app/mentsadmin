@@ -11,6 +11,7 @@ export interface AdminProfile {
   email: string;
   created_at: string;
   updated_at: string;
+  parent_facilitator_id: string | null;
 }
 
 export interface FacilitatorProfile {
@@ -35,6 +36,8 @@ export interface SessionUser {
   email: string;
   profile: AdminProfile | null;
   facilitatorProfile: FacilitatorProfile | null;
+  /** For co-admins: the parent facilitator's ID. For primary facilitators: their own ID. */
+  effectiveFacilitatorId: string;
 }
 
 /**
@@ -58,10 +61,12 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   let facilitatorProfile: FacilitatorProfile | null = null;
 
   if (profile?.role === 'facilitator') {
+    // Co-admins load the parent facilitator's profile
+    const facilitatorId = profile.parent_facilitator_id ?? user.id;
     const { data: fp } = await admin
       .from('facilitator_profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', facilitatorId)
       .single();
     facilitatorProfile = fp ?? null;
   }
@@ -71,6 +76,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
     email: user.email ?? '',
     profile: profile ?? null,
     facilitatorProfile,
+    effectiveFacilitatorId: profile?.parent_facilitator_id ?? user.id,
   };
 }
 

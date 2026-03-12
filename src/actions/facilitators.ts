@@ -179,7 +179,7 @@ export async function getFacilitatorStartups(statusFilter?: 'all' | 'pending' | 
   let query = admin
     .from('startup_facilitator_assignments')
     .select('id, status, created_at, reviewed_at, notes, startup_id')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (statusFilter && statusFilter !== 'all') {
@@ -265,7 +265,7 @@ export async function claimStartupForVerification(startupUserId: string) {
 
   const { error } = await admin.from('startup_facilitator_assignments').insert({
     startup_id: sp.id,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     status: 'pending',
     assigned_by: session.authId,
   });
@@ -292,7 +292,7 @@ export async function approveStartup(startupId: string, notes?: string) {
     .from('startup_facilitator_assignments')
     .select('id')
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .single();
 
   if (ae || !assignment) throw new Error('Forbidden: assignment not found');
@@ -305,7 +305,7 @@ export async function approveStartup(startupId: string, notes?: string) {
       notes: notes ?? null,
     })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId);
+    .eq('facilitator_id', session.effectiveFacilitatorId);
 
   if (error) throw new Error(error.message);
 
@@ -343,7 +343,7 @@ export async function rejectStartup(startupId: string, notes: string) {
     .from('startup_facilitator_assignments')
     .select('id')
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .single();
 
   if (!assignment) throw new Error('Forbidden: assignment not found');
@@ -356,7 +356,7 @@ export async function rejectStartup(startupId: string, notes: string) {
       notes,
     })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId);
+    .eq('facilitator_id', session.effectiveFacilitatorId);
 
   const { data: sp } = await admin
     .from('startup_profiles')
@@ -391,7 +391,7 @@ export async function suspendStartup(startupId: string, reason: string) {
     .from('startup_facilitator_assignments')
     .select('id')
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .single();
 
   if (!assignment) throw new Error('Forbidden: assignment not found');
@@ -400,7 +400,7 @@ export async function suspendStartup(startupId: string, reason: string) {
     .from('startup_facilitator_assignments')
     .update({ status: 'suspended', notes: reason })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.authId);
+    .eq('facilitator_id', session.effectiveFacilitatorId);
 
   const { data: sp } = await admin
     .from('startup_profiles')
@@ -456,7 +456,7 @@ export async function createFacilitatorJob(jobData: {
   const { data, error } = await admin.from('jobs').insert({
     ...jobData,
     created_by: session.authId,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     is_active: jobData.is_active ?? true,
     visibility: jobData.visibility ?? 'public',
   }).select().single();
@@ -501,7 +501,7 @@ export async function createFacilitatorGig(gigData: {
   const { data, error } = await admin.from('gigs').insert({
     ...gigData,
     created_by: session.authId,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     is_active: gigData.is_active ?? true,
     visibility: gigData.visibility ?? 'public',
   }).select().single();
@@ -542,7 +542,7 @@ export async function createFacilitatorEvent(eventData: {
   const { data, error } = await admin.from('events').insert({
     ...eventData,
     created_by: session.authId,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     is_active: eventData.is_active ?? true,
     tags: eventData.tags ?? [],
     is_featured: eventData.is_featured ?? false,
@@ -590,7 +590,7 @@ export async function createFacilitatorCompetition(compData: {
   const { data, error } = await admin.from('competitions').insert({
     ...compData,
     created_by: session.authId,
-    facilitator_id: session.authId,
+    facilitator_id: session.effectiveFacilitatorId,
     is_active: compData.is_active ?? true,
     tags: compData.tags ?? [],
     is_featured: compData.is_featured ?? false,
@@ -627,7 +627,7 @@ export async function getFacilitatorJobs() {
   const { data: ownJobs, error: ownError } = await admin
     .from('jobs')
     .select('*')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (ownError) throw new Error(ownError.message);
@@ -636,7 +636,7 @@ export async function getFacilitatorJobs() {
   const { data: assignments } = await admin
     .from('startup_facilitator_assignments')
     .select('startup_id')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .eq('status', 'approved');
 
   const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
@@ -685,7 +685,7 @@ export async function getFacilitatorGigs() {
   const { data: ownGigs, error: ownError } = await admin
     .from('gigs')
     .select('*')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (ownError) throw new Error(ownError.message);
@@ -694,7 +694,7 @@ export async function getFacilitatorGigs() {
   const { data: assignments } = await admin
     .from('startup_facilitator_assignments')
     .select('startup_id')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .eq('status', 'approved');
 
   const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
@@ -739,7 +739,7 @@ export async function getFacilitatorEvents() {
   const { data: ownEvents, error: ownError } = await admin
     .from('events')
     .select('*')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (ownError) throw new Error(ownError.message);
@@ -748,7 +748,7 @@ export async function getFacilitatorEvents() {
   const { data: assignments } = await admin
     .from('startup_facilitator_assignments')
     .select('startup_id')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .eq('status', 'approved');
 
   const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
@@ -795,7 +795,7 @@ export async function getFacilitatorCompetitions() {
   const { data: ownComps, error: ownError } = await admin
     .from('competitions')
     .select('*, participant_count:competition_entries(count)')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (ownError) throw new Error(ownError.message);
@@ -812,7 +812,7 @@ export async function getFacilitatorCompetitions() {
   const { data: assignments } = await admin
     .from('startup_facilitator_assignments')
     .select('startup_id')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .eq('status', 'approved');
 
   const approvedStartupIds = (assignments ?? []).map((a: any) => a.startup_id as string);
@@ -858,7 +858,7 @@ export async function getFacilitatorApplications() {
   const { data, error } = await admin
     .from('applications')
     .select('*')
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -869,14 +869,15 @@ export async function getFacilitatorDashboardStats() {
   const session = await requireFacilitator();
   const admin = createAdminClient();
 
+  const eid = session.effectiveFacilitatorId;
   const [jobs, gigs, events, competitions, applications, startups] = await Promise.all([
-    admin.from('jobs').select('id', { count: 'exact', head: true }).eq('facilitator_id', session.authId),
-    admin.from('gigs').select('id', { count: 'exact', head: true }).eq('facilitator_id', session.authId),
-    admin.from('events').select('id', { count: 'exact', head: true }).eq('facilitator_id', session.authId),
-    admin.from('competitions').select('id', { count: 'exact', head: true }).eq('facilitator_id', session.authId),
-    admin.from('applications').select('id', { count: 'exact', head: true }).eq('facilitator_id', session.authId),
+    admin.from('jobs').select('id', { count: 'exact', head: true }).eq('facilitator_id', eid),
+    admin.from('gigs').select('id', { count: 'exact', head: true }).eq('facilitator_id', eid),
+    admin.from('events').select('id', { count: 'exact', head: true }).eq('facilitator_id', eid),
+    admin.from('competitions').select('id', { count: 'exact', head: true }).eq('facilitator_id', eid),
+    admin.from('applications').select('id', { count: 'exact', head: true }).eq('facilitator_id', eid),
     admin.from('startup_facilitator_assignments').select('id', { count: 'exact', head: true })
-      .eq('facilitator_id', session.authId).eq('status', 'approved'),
+      .eq('facilitator_id', eid).eq('status', 'approved'),
   ]);
 
   return {
@@ -899,7 +900,7 @@ export async function getFacilitatorStartupDetail(startupProfileId: string) {
     .from('startup_facilitator_assignments')
     .select('id, status, notes, created_at, reviewed_at')
     .eq('startup_id', startupProfileId)
-    .eq('facilitator_id', session.authId)
+    .eq('facilitator_id', session.effectiveFacilitatorId)
     .maybeSingle();
 
   if (ae) throw new Error(ae.message);

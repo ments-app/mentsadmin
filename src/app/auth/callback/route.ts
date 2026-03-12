@@ -80,7 +80,37 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    // 3. New user → role selection
+    // 3. Check if they were invited as a facilitator co-admin
+    const { data: teamInvite } = await admin
+      .from('facilitator_team_members')
+      .select('id, facilitator_id, display_name')
+      .eq('email', (user.email ?? '').toLowerCase())
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (teamInvite) {
+      await admin.from('admin_profiles').upsert({
+        id: user.id,
+        role: 'facilitator',
+        verification_status: 'approved',
+        email: user.email ?? '',
+        display_name: teamInvite.display_name ?? user.user_metadata?.full_name ?? user.email ?? '',
+        parent_facilitator_id: teamInvite.facilitator_id,
+      }, { onConflict: 'id' });
+
+      await admin.from('facilitator_team_members').update({
+        user_id: user.id,
+        status: 'active',
+        accepted_at: new Date().toISOString(),
+      }).eq('id', teamInvite.id);
+
+      const url = req.nextUrl.clone();
+      url.pathname = '/resolving';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
+
+    // 4. New user → role selection
     const url = req.nextUrl.clone();
     url.pathname = '/onboarding';
     url.search = '';
