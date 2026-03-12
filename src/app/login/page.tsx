@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { AlertCircle, Shield, Users, TrendingUp, Zap } from 'lucide-react';
 
+import Image from 'next/image';
+
 function LoginContent() {
   const searchParams = useSearchParams();
   const [error, setError] = useState('');
@@ -36,10 +38,10 @@ function LoginContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left branding panel — hidden on mobile */}
+    <div className="flex min-h-screen w-full flex-col lg:flex-row">
+      {/* Left branding panel */}
       <div
-        className="relative hidden w-1/2 overflow-hidden lg:flex lg:flex-col lg:justify-between"
+        className="relative hidden w-full overflow-hidden p-8 lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:p-12"
         style={{
           background: '#00ffa2',
         }}
@@ -54,82 +56,87 @@ function LoginContent() {
         />
 
         {/* Gradient orbs */}
-        <div
-          className="absolute -left-24 -top-24 h-96 w-96 rounded-full opacity-20"
-          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full opacity-15"
-          style={{ background: 'rgba(0, 0, 0, 0.05)' }}
-        />
+        <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-black/5 opacity-20 blur-3xl lg:h-96 lg:w-96" />
+        <div className="absolute -bottom-32 -right-32 h-80 w-80 rounded-full bg-black/5 opacity-15 blur-3xl lg:h-[500px] lg:w-[500px]" />
 
-        {/* Top — Logo and tagline */}
-        <div
-          className="relative z-10 px-12 pt-12"
+        {/* Branding Content Container */}
+        <div 
+          className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center text-center"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-            transition: 'opacity 0.6s ease, transform 0.6s ease',
+            transition: 'opacity 0.8s ease, transform 0.8s ease',
           }}
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-              <span className="text-lg font-bold text-white">M</span>
+          {/* Top — Logo */}
+          <div className="mb-6 flex flex-col items-center gap-3 lg:mb-10 lg:gap-4">
+            <div className="relative h-20 w-20 sm:h-24 sm:w-24 lg:h-32 lg:w-32">
+              <Image 
+                src="/black.png" 
+                alt="Ments Logo" 
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">Ments</span>
+            <h1 className="text-3xl font-black tracking-tighter text-black sm:text-4xl lg:text-5xl">
+              Ments
+            </h1>
           </div>
-          <p className="mt-4 text-lg font-medium text-indigo-100">
-            Admin Console
-          </p>
-          <p className="mt-1 max-w-sm text-sm leading-relaxed text-indigo-200/80">
-            Manage your platform, moderate content, and empower entrepreneurs from a single dashboard.
-          </p>
-        </div>
 
-        {/* Middle — Feature cards */}
-        <div className="relative z-10 flex-1 px-12 py-10">
-          <div className="flex flex-col gap-4">
+          {/* Tagline */}
+          <div className="mb-8 space-y-2 lg:mb-12 lg:space-y-3">
+            <h2 className="text-lg font-bold text-black sm:text-xl lg:text-2xl">
+              Ecosystem Management Hub
+            </h2>
+            <p className="mx-auto max-w-sm text-xs leading-relaxed text-black/70 sm:text-sm lg:max-w-md lg:text-base">
+              The unified platform for facilitators to nurture startups and for entrepreneurs to scale their businesses through structured support and resources.
+            </p>
+          </div>
+
+          {/* Feature cards grid */}
+          <div className="grid w-full grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {[
               {
                 icon: Users,
-                title: 'User Management',
-                desc: 'Manage accounts, roles, and permissions',
+                title: 'Network',
+                desc: 'Orchestrate cohorts and experts.',
                 delay: 200,
               },
               {
                 icon: Shield,
-                title: 'Content Moderation',
-                desc: 'Review reports and maintain community standards',
+                title: 'Programs',
+                desc: 'Track milestones and quality.',
                 delay: 350,
               },
               {
                 icon: TrendingUp,
-                title: 'Platform Analytics',
-                desc: 'Track growth, engagement, and key metrics',
+                title: 'Insights',
+                desc: 'Monitor growth and readiness.',
                 delay: 500,
               },
               {
                 icon: Zap,
-                title: 'Startup Ecosystem',
-                desc: 'Oversee profiles, facilitators, and funding',
+                title: 'Ops Tools',
+                desc: 'Centralize jobs and resources.',
                 delay: 650,
               },
             ].map(({ icon: Icon, title, desc, delay }) => (
               <div
                 key={title}
-                className="group flex items-start gap-4 rounded-xl bg-white/[0.08] px-5 py-4 backdrop-blur-sm transition-colors duration-200 hover:bg-white/[0.13]"
+                className="group flex flex-col items-center gap-2 rounded-xl bg-black/[0.04] p-3 text-center backdrop-blur-sm transition-all duration-300 hover:bg-black/[0.07] sm:p-4 lg:gap-3 lg:rounded-2xl lg:p-6"
                 style={{
                   opacity: mounted ? 1 : 0,
-                  transform: mounted ? 'translateX(0)' : 'translateX(-16px)',
+                  transform: mounted ? 'translateY(0)' : 'translateY(10px)',
                   transition: `opacity 0.5s ease ${delay}ms, transform 0.5s ease ${delay}ms, background-color 0.2s ease`,
                 }}
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10">
-                  <Icon className="h-[18px] w-[18px] text-indigo-100" strokeWidth={1.8} />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/10 sm:h-10 sm:w-10 lg:h-12 lg:w-12 lg:rounded-xl">
+                  <Icon className="h-4 w-4 text-black sm:h-5 sm:w-5 lg:h-6 lg:w-6" strokeWidth={2} />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{title}</p>
-                  <p className="mt-0.5 text-xs text-indigo-200/70">{desc}</p>
+                  <p className="text-[10px] font-bold text-black sm:text-xs lg:text-sm">{title}</p>
+                  <p className="mt-0.5 text-[9px] leading-tight text-black/60 sm:text-[10px] lg:mt-1 lg:text-[11px]">{desc}</p>
                 </div>
               </div>
             ))}
@@ -138,35 +145,39 @@ function LoginContent() {
 
         {/* Bottom — Footer */}
         <div
-          className="relative z-10 px-12 pb-8"
+          className="relative z-10 mt-auto hidden pt-8 lg:block"
           style={{
             opacity: mounted ? 1 : 0,
             transition: 'opacity 0.6s ease 0.7s',
           }}
         >
-          <div className="flex items-center gap-2 text-xs text-indigo-300/60">
-            <div className="h-px flex-1 bg-white/10" />
+          <div className="flex items-center gap-2 text-[10px] text-black/40 uppercase tracking-widest">
+            <div className="h-px flex-1 bg-black/10" />
             <span>Empowering Entrepreneurs</span>
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-black/10" />
           </div>
         </div>
       </div>
 
       {/* Right login panel */}
-      <div className="relative flex w-full flex-col items-center justify-center bg-background px-6 lg:w-1/2">
-        {/* Mobile logo — shown only on small screens */}
+      <div className="relative flex flex-1 flex-col items-center justify-center bg-background px-6 py-12 lg:w-1/2 lg:px-12">
+        {/* Logo — visible on all screens on this side */}
         <div
-          className="mb-10 flex items-center gap-2.5 lg:hidden"
+          className="mb-8 flex flex-col items-center gap-4"
           style={{
             opacity: mounted ? 1 : 0,
             transform: mounted ? 'translateY(0)' : 'translateY(8px)',
             transition: 'opacity 0.4s ease, transform 0.4s ease',
           }}
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-            <span className="text-base font-bold text-white">M</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">Ments</span>
+          <Image 
+            src="/green.png" 
+            alt="Ments Logo" 
+            width={64} 
+            height={64} 
+            className="h-16 w-16 object-contain"
+          />
+          <span className="text-2xl font-black tracking-tighter text-foreground lg:hidden">Ments</span>
         </div>
 
         {/* Login card */}
@@ -179,12 +190,12 @@ function LoginContent() {
           }}
         >
           {/* Heading */}
-          <div className="mb-8">
+          <div className="mb-8 text-center lg:text-left">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Welcome back
             </h1>
             <p className="mt-2 text-sm text-muted">
-              Sign in to access the admin console
+              Sign in to manage your ecosystem
             </p>
           </div>
 
@@ -220,15 +231,15 @@ function LoginContent() {
           {/* Divider */}
           <div className="mt-8 flex items-center gap-3">
             <div className="h-px flex-1 bg-card-border" />
-            <span className="text-xs text-muted/60">ADMIN ACCESS ONLY</span>
+            <span className="text-xs text-muted/60">AUTHORIZED ACCESS ONLY</span>
             <div className="h-px flex-1 bg-card-border" />
           </div>
 
           {/* Info text */}
           <p className="mt-6 text-center text-xs leading-relaxed text-muted/70">
-            Access is restricted to authorized administrators.
+            Access is restricted to verified organizations and startups.
             <br />
-            Contact your team lead if you need access.
+            Please use your registered workspace account.
           </p>
         </div>
 
