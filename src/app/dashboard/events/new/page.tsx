@@ -53,6 +53,7 @@ export default function NewEventPage() {
     entry_type: '' as string,
     arena_enabled: false,
     virtual_fund_amount: 1000000,
+    max_investment_per_startup: 100000,
   });
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
@@ -176,6 +177,24 @@ export default function NewEventPage() {
                 </div>
                 <p className="mt-1.5 text-xs text-muted">
                   Default: &#x20B9;10,00,000 -- Each audience member gets this amount to invest across stalls.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Max Investment per Startup</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted font-medium">&#x20B9;</span>
+                  <input
+                    type="number"
+                    value={form.max_investment_per_startup}
+                    onChange={(e) => update('max_investment_per_startup', parseInt(e.target.value) || 100000)}
+                    min={1000}
+                    step={1000}
+                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted">
+                  Limit the amount a single user can invest in one startup/stall.
                 </p>
               </div>
 

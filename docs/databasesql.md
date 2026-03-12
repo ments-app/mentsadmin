@@ -296,6 +296,7 @@ CREATE TABLE public.events (
   entry_type text CHECK (entry_type = ANY (ARRAY['startup'::text, 'project'::text])),
   arena_enabled boolean DEFAULT false,
   virtual_fund_amount bigint DEFAULT 1000000,
+  max_investment_per_startup bigint DEFAULT 100000,
   arena_round text CHECK (arena_round = ANY (ARRAY['registration'::text, 'investment'::text, 'completed'::text])),
   CONSTRAINT events_pkey PRIMARY KEY (id),
   CONSTRAINT events_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),

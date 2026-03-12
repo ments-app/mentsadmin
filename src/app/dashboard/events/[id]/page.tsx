@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Plus, Users, Store } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
-import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound } from '@/actions/events';
+import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStall } from '@/actions/events';
+import { getStartupProfiles } from '@/actions/startups';
 import LocationInput from '@/components/LocationInput';
-import { Users, Store } from 'lucide-react';
 
 const eventTypeOptions = [
   { value: 'online', label: 'Online' },
@@ -64,6 +64,7 @@ export default function EditEventPage() {
     entry_type: '' as string,
     arena_enabled: false,
     virtual_fund_amount: 1000000,
+    max_investment_per_startup: 100000,
     arena_round: '' as string,
   });
 
@@ -74,6 +75,23 @@ export default function EditEventPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [audienceList, setAudienceList] = useState<any[]>([]);
   const [roundSwitching, setRoundSwitching] = useState(false);
+
+  // Add Stall Modal State
+  const [showAddStall, setShowAddStall] = useState(false);
+  const [allStartups, setAllStartups] = useState<any[]>([]);
+  const [addingStall, setAddingStall] = useState(false);
+  const [stallForm, setStallForm] = useState({
+    startup_id: '',
+    stall_name: '',
+    tagline: '',
+    category: '',
+  });
+
+  const refreshArenaData = useCallback(() => {
+    getEventLeaderboard(id).then(setLeaderboard).catch(console.error);
+    getEventStalls(id).then(setStallsList).catch(console.error);
+    getEventAudience(id).then(setAudienceList).catch(console.error);
+  }, [id]);
 
   useEffect(() => {
     getEvent(id).then((data) => {
@@ -93,18 +111,18 @@ export default function EditEventPage() {
         entry_type: data.entry_type ?? '',
         arena_enabled: data.arena_enabled ?? false,
         virtual_fund_amount: data.virtual_fund_amount ?? 1000000,
+        max_investment_per_startup: data.max_investment_per_startup ?? 100000,
         arena_round: data.arena_round ?? '',
       });
       setLoading(false);
 
       // Load arena data if enabled
       if (data.arena_enabled) {
-        getEventLeaderboard(id).then(setLeaderboard).catch(console.error);
-        getEventStalls(id).then(setStallsList).catch(console.error);
-        getEventAudience(id).then(setAudienceList).catch(console.error);
+        refreshArenaData();
+        getStartupProfiles('published', 1, 200).then(res => setAllStartups(res.startups)).catch(console.error);
       }
     });
-  }, [id]);
+  }, [id, refreshArenaData]);
 
   function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -144,6 +162,34 @@ export default function EditEventPage() {
       console.error(err);
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function handleAddStall(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stallForm.startup_id || !stallForm.stall_name) return;
+    
+    setAddingStall(true);
+    try {
+      const selectedStartup = allStartups.find(s => s.id === stallForm.startup_id);
+      if (!selectedStartup) throw new Error('Startup not found');
+
+      await addEventStall(id, {
+        user_id: selectedStartup.owner_id,
+        stall_name: stallForm.stall_name,
+        tagline: stallForm.tagline,
+        category: stallForm.category,
+        startup_id: stallForm.startup_id,
+        logo_url: selectedStartup.logo_url,
+      });
+      
+      setShowAddStall(false);
+      setStallForm({ startup_id: '', stall_name: '', tagline: '', category: '' });
+      refreshArenaData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to add stall');
+    } finally {
+      setAddingStall(false);
     }
   }
 
@@ -249,6 +295,24 @@ export default function EditEventPage() {
                 </div>
               </div>
 
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Max Investment per Startup</label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted font-medium">&#x20B9;</span>
+                  <input
+                    type="number"
+                    value={form.max_investment_per_startup}
+                    onChange={(e) => update('max_investment_per_startup', parseInt(e.target.value) || 100000)}
+                    min={1000}
+                    step={1000}
+                    className="flex-1 rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-shadow"
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted">
+                  Limit the amount a single user can invest in one startup/stall.
+                </p>
+              </div>
+
               {/* Arena Round Control */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Current Round</label>
@@ -278,11 +342,21 @@ export default function EditEventPage() {
               </div>
 
               {/* Registered Stalls (Applicants) */}
-              {stallsList.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                     <Store size={14} /> Registered Stalls ({stallsList.length})
                   </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddStall(true)}
+                    className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    <Plus size={12} /> Add Stall
+                  </button>
+                </div>
+                
+                {stallsList.length > 0 ? (
                   <div className="rounded-xl border border-card-border overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-card-border/10">
@@ -318,11 +392,10 @@ export default function EditEventPage() {
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
-              {stallsList.length === 0 && (
-                <p className="text-xs text-muted italic py-2">No stalls registered yet.</p>
-              )}
+                ) : (
+                  <p className="text-xs text-muted italic py-2">No stalls registered yet.</p>
+                )}
+              </div>
 
               {/* Audience (Investors) */}
               {audienceList.length > 0 && (
@@ -416,6 +489,63 @@ export default function EditEventPage() {
           </button>
         </div>
       </form>
+
+      {/* Add Stall Modal */}
+      {showAddStall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Add Startup Stall</h2>
+              <button onClick={() => setShowAddStall(false)} className="text-muted hover:text-foreground"><X size={20} /></button>
+            </div>
+            
+            <form onSubmit={handleAddStall} className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Select Startup</label>
+                <select
+                  required
+                  value={stallForm.startup_id}
+                  onChange={(e) => {
+                    const s = allStartups.find(x => x.id === e.target.value);
+                    setStallForm(prev => ({ 
+                      ...prev, 
+                      startup_id: e.target.value,
+                      stall_name: s ? s.brand_name : '',
+                      category: s ? (s.categories?.[0] || '') : ''
+                    }));
+                  }}
+                  className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="">Select a startup...</option>
+                  {allStartups.map(s => (
+                    <option key={s.id} value={s.id}>{s.brand_name} ({s.owner?.full_name || s.owner?.username})</option>
+                  ))}
+                </select>
+              </div>
+
+              <FormField 
+                type="text" label="Stall Name" name="stall_name" required
+                value={stallForm.stall_name} onChange={(v) => setStallForm(p => ({ ...p, stall_name: v }))} 
+              />
+              <FormField 
+                type="text" label="Tagline" name="tagline" 
+                value={stallForm.tagline} onChange={(v) => setStallForm(p => ({ ...p, tagline: v }))} 
+              />
+              <FormField 
+                type="text" label="Category" name="category" 
+                value={stallForm.category} onChange={(v) => setStallForm(p => ({ ...p, category: v }))} 
+              />
+
+              <div className="flex gap-3 pt-2">
+                <button type="submit" disabled={addingStall} className="btn-primary flex-1">
+                  {addingStall ? 'Adding...' : 'Add Stall'}
+                </button>
+                <button type="button" onClick={() => setShowAddStall(false)} className="btn-secondary flex-1">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <DeleteConfirmModal open={showDelete} title={form.title}
         onConfirm={handleDelete} onCancel={() => setShowDelete(false)} loading={deleting} />
