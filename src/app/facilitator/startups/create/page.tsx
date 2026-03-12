@@ -84,6 +84,9 @@ export default function FacilitatorCreateStartupPage() {
   const [customCountry, setCustomCountry] = useState('');
   const [uploadingDeck, setUploadingDeck] = useState(false);
   const deckInputRef = useRef<HTMLInputElement>(null);
+  const [founders, setFounders] = useState([
+    { name: '', role: '', email: '', ments_username: '' },
+  ]);
   const [form, setForm] = useState({
     brand_name: '',
     registered_name: '',
@@ -137,6 +140,18 @@ export default function FacilitatorCreateStartupPage() {
         ? current.categories.filter((item) => item !== category)
         : [...current.categories, category],
     }));
+  }
+
+  function updateFounder(
+    index: number,
+    field: 'name' | 'role' | 'email' | 'ments_username',
+    value: string
+  ) {
+    setFounders((current) =>
+      current.map((founder, founderIndex) =>
+        founderIndex === index ? { ...founder, [field]: value } : founder
+      )
+    );
   }
 
   const isIndia = form.country === 'India';
@@ -235,6 +250,13 @@ export default function FacilitatorCreateStartupPage() {
         visibility: form.visibility as 'public' | 'investors_only' | 'private',
         categories: form.categories,
         keywords: form.keywords.split(',').map((item) => item.trim()).filter(Boolean),
+        founders: founders
+          .map((founder, index) => ({
+            ...founder,
+            display_order: index,
+            status: 'pending' as const,
+          }))
+          .filter((founder) => founder.name.trim()),
       });
 
       router.push(`/facilitator/startups/${id}/edit`);
@@ -519,6 +541,50 @@ export default function FacilitatorCreateStartupPage() {
           <Field label="Keywords" className="mt-4">
             <input className={inputCls} value={form.keywords} onChange={(e) => update('keywords', e.target.value)} placeholder="Comma-separated keywords" />
           </Field>
+        </div>
+
+        <div className="card-elevated mb-6 rounded-xl p-6">
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <h2 className="text-base font-semibold text-foreground">Startup Founders</h2>
+            <button
+              type="button"
+              onClick={() => setFounders((current) => [...current, { name: '', role: '', email: '', ments_username: '' }])}
+              className="rounded-lg border border-card-border px-3 py-2 text-sm font-medium text-foreground hover:border-primary hover:text-primary"
+            >
+              Add Founder
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {founders.map((founder, index) => (
+              <div key={index} className="grid gap-4 rounded-xl border border-card-border p-4 md:grid-cols-2">
+                <Field label="Founder Name">
+                  <input className={inputCls} value={founder.name} onChange={(e) => updateFounder(index, 'name', e.target.value)} />
+                </Field>
+                <Field label="Role">
+                  <input className={inputCls} value={founder.role} onChange={(e) => updateFounder(index, 'role', e.target.value)} />
+                </Field>
+                <Field label="Email">
+                  <input className={inputCls} type="email" value={founder.email} onChange={(e) => updateFounder(index, 'email', e.target.value)} />
+                </Field>
+                <Field label="Ments Username">
+                  <input className={inputCls} value={founder.ments_username} onChange={(e) => updateFounder(index, 'ments_username', e.target.value)} placeholder="@username" />
+                </Field>
+                <div className="md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={() => setFounders((current) => current.length === 1 ? [{ name: '', role: '', email: '', ments_username: '' }] : current.filter((_, founderIndex) => founderIndex !== index))}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Remove Founder
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted">
+            Founders added here are stored in `startup_founders`. Invite and account-linking can be layered later.
+          </p>
         </div>
 
         {error && (

@@ -60,6 +60,15 @@ export async function createFacilitatorStartupProfile(data: {
   categories?: string[];
   keywords?: string[];
   visibility?: 'public' | 'investors_only' | 'private';
+  founders?: Array<{
+    name: string;
+    role?: string;
+    email?: string;
+    ments_username?: string;
+    avatar_url?: string;
+    status?: 'pending' | 'accepted' | 'declined';
+    display_order?: number;
+  }>;
 }): Promise<{ id: string }> {
   const session = await requireFacilitator();
   const admin = createAdminClient();
@@ -122,6 +131,32 @@ export async function createFacilitatorStartupProfile(data: {
     .single();
 
   if (insertError) throw new Error(insertError.message);
+
+  const founders = Array.isArray(data.founders)
+    ? data.founders.filter((founder) => founder.name.trim())
+    : [];
+
+  if (founders.length > 0) {
+    const { error: founderInsertError } = await admin
+      .from('startup_founders')
+      .insert(
+        founders.map((founder, index) => ({
+          startup_id: sp.id,
+          name: founder.name.trim(),
+          role: founder.role?.trim() || null,
+          email: founder.email?.trim() || null,
+          ments_username: founder.ments_username?.trim() || null,
+          avatar_url: founder.avatar_url?.trim() || null,
+          status: founder.status ?? 'pending',
+          display_order: founder.display_order ?? index,
+        }))
+      );
+
+    if (founderInsertError) {
+      await admin.from('startup_profiles').delete().eq('id', sp.id);
+      throw new Error(founderInsertError.message);
+    }
+  }
 
   // Auto-create assignment so it shows in facilitator's "My Startups"
   await admin.from('startup_facilitator_assignments').insert({
