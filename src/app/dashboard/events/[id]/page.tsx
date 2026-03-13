@@ -267,9 +267,9 @@ export default function EditEventPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <FormField type="select" label="Category" name="category" value={form.category}
-              onChange={(v) => update('category', v)} options={categoryOptions} required />
+              onChange={(v) => update('category', v as 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar')} options={categoryOptions} required />
             <FormField type="select" label="Mode" name="event_type" value={form.event_type}
-              onChange={(v) => update('event_type', v)} options={eventTypeOptions} required />
+              onChange={(v) => update('event_type', v as 'online' | 'in-person' | 'hybrid')} options={eventTypeOptions} required />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
