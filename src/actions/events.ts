@@ -283,6 +283,33 @@ export async function addEventStall(eventId: string, stallData: {
   revalidatePath(`/dashboard/events/${eventId}`);
 }
 
+export async function addEventStallsBatch(eventId: string, stalls: Array<{
+  user_id: string;
+  stall_name: string;
+  tagline?: string;
+  category?: string;
+  startup_id?: string;
+  logo_url?: string;
+}>) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('event_stalls').insert(
+    stalls.map(s => ({
+      event_id: eventId,
+      user_id: s.user_id,
+      stall_name: s.stall_name,
+      tagline: s.tagline || null,
+      category: s.category || null,
+      startup_id: s.startup_id || null,
+      logo_url: s.logo_url || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }))
+  );
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/dashboard/events/${eventId}`);
+}
+
 export async function removeEventStall(eventId: string, stallId: string) {
   const supabase = createAdminClient();
   

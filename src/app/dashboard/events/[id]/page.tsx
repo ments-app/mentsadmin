@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X, Plus, Users, Store, Trash2 } from 'lucide-react';
+import { X, Plus, Users, Store, Trash2, Check } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
-import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStall, removeEventStall } from '@/actions/events';
+import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStallsBatch, removeEventStall } from '@/actions/events';
 import { getStartupProfiles } from '@/actions/startups';
 import LocationInput from '@/components/LocationInput';
 
@@ -80,19 +80,18 @@ export default function EditEventPage() {
   const [showAddStall, setShowAddStall] = useState(false);
   const [allStartups, setAllStartups] = useState<any[]>([]);
   const [startupSearch, setStartupSearch] = useState('');
+  const [selectedStartupIds, setSelectedStartupIds] = useState<string[]>([]);
   const [addingStall, setAddingStall] = useState(false);
-  const [stallForm, setStallForm] = useState({
-    startup_id: '',
-    stall_name: '',
-    tagline: '',
-    category: '',
-  });
 
-  const filteredStartups = (allStartups || []).filter(s => 
-    s.brand_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
-    s.owner?.full_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
-    s.owner?.username?.toLowerCase().includes(startupSearch.toLowerCase())
-  );
+  const registeredStartupIds = new Set(stallsList.map(s => s.startup_id).filter(Boolean));
+
+  const filteredStartups = (allStartups || [])
+    .filter(s => !registeredStartupIds.has(s.id))
+    .filter(s => 
+      s.brand_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
+      s.owner?.full_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
+      s.owner?.username?.toLowerCase().includes(startupSearch.toLowerCase())
+    );
 
   const refreshArenaData = useCallback(() => {
     if (!id) return;
@@ -189,32 +188,42 @@ export default function EditEventPage() {
     }
   }
 
-  async function handleAddStall(e: React.FormEvent) {
+  async function handleAddStallsBatch(e: React.FormEvent) {
     e.preventDefault();
-    if (!stallForm.startup_id || !stallForm.stall_name) return;
+    if (selectedStartupIds.length === 0) return;
     
     setAddingStall(true);
     try {
-      const selectedStartup = allStartups.find(s => s.id === stallForm.startup_id);
-      if (!selectedStartup) throw new Error('Startup not found');
+      const selectedStalls = allStartups
+        .filter(s => selectedStartupIds.includes(s.id))
+        .map(s => ({
+          user_id: s.owner_id,
+          stall_name: s.brand_name,
+          tagline: s.tagline || '',
+          category: s.categories?.[0] || '',
+          startup_id: s.id,
+          logo_url: s.logo_url,
+        }));
 
-      await addEventStall(id, {
-        user_id: selectedStartup.owner_id,
-        stall_name: stallForm.stall_name,
-        tagline: stallForm.tagline,
-        category: stallForm.category,
-        startup_id: stallForm.startup_id,
-        logo_url: selectedStartup.logo_url,
-      });
+      await addEventStallsBatch(id, selectedStalls);
       
       setShowAddStall(false);
-      setStallForm({ startup_id: '', stall_name: '', tagline: '', category: '' });
+      setSelectedStartupIds([]);
+      setStartupSearch('');
       refreshArenaData();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to add stall');
+      alert(err instanceof Error ? err.message : 'Failed to add stalls');
     } finally {
       setAddingStall(false);
     }
+  }
+
+  function toggleStartupSelection(startupId: string) {
+    setSelectedStartupIds(prev => 
+      prev.includes(startupId) 
+        ? prev.filter(id => id !== startupId) 
+        : [...prev, startupId]
+    );
   }
 
   async function handleRemoveStall(stallId: string, stallName: string) {
@@ -387,7 +396,7 @@ export default function EditEventPage() {
                     onClick={() => setShowAddStall(true)}
                     className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   >
-                    <Plus size={12} /> Add Stall
+                    <Plus size={12} /> Add Multiple Stalls
                   </button>
                 </div>
                 
@@ -536,71 +545,76 @@ export default function EditEventPage() {
         </div>
       </form>
 
-      {/* Add Stall Modal */}
+      {/* Add Stall Modal (Batch Selection) */}
       {showAddStall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-background p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-lg rounded-2xl bg-background p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-foreground">Add Startup Stall</h2>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Add Multiple Stalls</h2>
+                <p className="text-xs text-muted">Select startups to register for this event</p>
+              </div>
               <button onClick={() => setShowAddStall(false)} className="text-muted hover:text-foreground"><X size={20} /></button>
             </div>
             
-            <form onSubmit={handleAddStall} className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-foreground">Select Startup</label>
-                <div className="mb-2">
-                  <input
-                    type="text"
-                    placeholder="Search startup name or owner..."
-                    value={startupSearch}
-                    onChange={(e) => setStartupSearch(e.target.value)}
-                    className="w-full rounded-lg border border-card-border bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary"
-                  />
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search startup name or owner..."
+                  value={startupSearch}
+                  onChange={(e) => setStartupSearch(e.target.value)}
+                  className="w-full rounded-xl border border-card-border bg-background px-4 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="max-h-[300px] overflow-y-auto rounded-xl border border-card-border divide-y divide-card-border">
+              {filteredStartups.length > 0 ? (
+                filteredStartups.map(s => {
+                  const isSelected = selectedStartupIds.includes(s.id);
+                  return (
+                    <div 
+                      key={s.id} 
+                      onClick={() => toggleStartupSelection(s.id)}
+                      className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${isSelected ? 'bg-primary/5' : 'hover:bg-card-border/5'}`}
+                    >
+                      <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-all ${isSelected ? 'border-primary bg-primary' : 'border-card-border bg-background'}`}>
+                        {isSelected && <Check size={12} className="text-white" />}
+                      </div>
+                      <div className="h-8 w-8 shrink-0 overflow-hidden rounded bg-card-border/20">
+                        {s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-[10px] font-bold text-muted">{s.brand_name?.charAt(0)}</div>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{s.brand_name}</p>
+                        <p className="text-[10px] text-muted truncate">{s.owner?.full_name || s.owner?.username} · {s.stage}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center">
+                  <p className="text-sm text-muted">No available startups found.</p>
                 </div>
-                <select
-                  required
-                  value={stallForm.startup_id}
-                  onChange={(e) => {
-                    const s = allStartups.find(x => x.id === e.target.value);
-                    setStallForm(prev => ({ 
-                      ...prev, 
-                      startup_id: e.target.value,
-                      stall_name: s ? s.brand_name : '',
-                      category: s ? (s.categories?.[0] || '') : ''
-                    }));
-                  }}
-                  className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="">Select a startup...</option>
-                  {filteredStartups.map(s => (
-                    <option key={s.id} value={s.id}>{s.brand_name} ({s.owner?.full_name || s.owner?.username})</option>
-                  ))}
-                </select>
-                {filteredStartups.length === 0 && startupSearch && (
-                  <p className="mt-1 text-xs text-danger">No startups match your search.</p>
-                )}
-              </div>
+              )}
+            </div>
 
-              <FormField 
-                type="text" label="Stall Name" name="stall_name" required
-                value={stallForm.stall_name} onChange={(v) => setStallForm(p => ({ ...p, stall_name: v }))} 
-              />
-              <FormField 
-                type="text" label="Tagline" name="tagline" 
-                value={stallForm.tagline} onChange={(v) => setStallForm(p => ({ ...p, tagline: v }))} 
-              />
-              <FormField 
-                type="text" label="Category" name="category" 
-                value={stallForm.category} onChange={(v) => setStallForm(p => ({ ...p, category: v }))} 
-              />
-
-              <div className="flex gap-3 pt-2">
-                <button type="submit" disabled={addingStall} className="btn-primary flex-1">
-                  {addingStall ? 'Adding...' : 'Add Stall'}
-                </button>
-                <button type="button" onClick={() => setShowAddStall(false)} className="btn-secondary flex-1">Cancel</button>
-              </div>
-            </form>
+            <div className="mt-6 flex gap-3">
+              <button 
+                onClick={handleAddStallsBatch} 
+                disabled={addingStall || selectedStartupIds.length === 0} 
+                className="btn-primary flex-1 py-2.5"
+              >
+                {addingStall ? 'Registering...' : `Register ${selectedStartupIds.length} Startup${selectedStartupIds.length === 1 ? '' : 's'}`}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setShowAddStall(false)} 
+                className="btn-secondary flex-1 py-2.5"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
