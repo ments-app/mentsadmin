@@ -7,6 +7,7 @@ import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
+import StallQRCard from '@/components/StallQRCard';
 import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStallsBatch, removeEventStall } from '@/actions/events';
 import { getStartupProfiles } from '@/actions/startups';
 import LocationInput from '@/components/LocationInput';
@@ -239,7 +240,7 @@ export default function EditEventPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl animate-fade-in">
+      <div className="mx-auto max-w-5xl animate-fade-in">
         <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
         <div className="mt-8 space-y-6">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -251,7 +252,7 @@ export default function EditEventPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl animate-fade-in">
+    <div className="mx-auto max-w-5xl animate-fade-in">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Edit Event</h1>
@@ -401,8 +402,8 @@ export default function EditEventPage() {
                 </div>
                 
                 {stallsList.length > 0 ? (
-                  <div className="rounded-xl border border-card-border overflow-hidden">
-                    <table className="w-full text-sm">
+                  <div className="rounded-xl border border-card-border overflow-x-auto">
+                    <table className="w-full min-w-[700px] text-sm">
                       <thead className="bg-card-border/10">
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">#</th>
@@ -411,7 +412,7 @@ export default function EditEventPage() {
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Linked Startup</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Category</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Tagline</th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Action</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-card-border">
@@ -431,16 +432,25 @@ export default function EditEventPage() {
                               ) : '—'}
                             </td>
                             <td className="px-4 py-3 text-muted capitalize">{stall.category || '—'}</td>
-                            <td className="px-4 py-3 text-muted text-xs max-w-[200px] truncate">{stall.tagline || '—'}</td>
-                            <td className="px-4 py-3 text-right">
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveStall(stall.id, stall.stall_name)}
-                                className="text-muted hover:text-red-500 transition-colors"
-                                title="Remove Stall"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                            <td className="px-4 py-3 text-muted text-xs max-w-[140px] truncate">{stall.tagline || '—'}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-2">
+                                <StallQRCard
+                                  eventId={id}
+                                  stallId={stall.id}
+                                  stallName={stall.stall_name}
+                                  startupId={stall.startup_id}
+                                  logoUrl={stall.logo_url}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveStall(stall.id, stall.stall_name)}
+                                  className="text-muted hover:text-red-500 transition-colors"
+                                  title="Remove Stall"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
