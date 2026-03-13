@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X, Plus, Users, Store } from 'lucide-react';
+import { X, Plus, Users, Store, Trash2 } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
 import DeleteConfirmModal from '@/components/DeleteConfirmModal';
-import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStall } from '@/actions/events';
+import { getEvent, updateEvent, deleteEvent, getEventLeaderboard, getEventStalls, getEventAudience, updateArenaRound, addEventStall, removeEventStall } from '@/actions/events';
 import { getStartupProfiles } from '@/actions/startups';
 import LocationInput from '@/components/LocationInput';
 
@@ -79,6 +79,7 @@ export default function EditEventPage() {
   // Add Stall Modal State
   const [showAddStall, setShowAddStall] = useState(false);
   const [allStartups, setAllStartups] = useState<any[]>([]);
+  const [startupSearch, setStartupSearch] = useState('');
   const [addingStall, setAddingStall] = useState(false);
   const [stallForm, setStallForm] = useState({
     startup_id: '',
@@ -86,6 +87,12 @@ export default function EditEventPage() {
     tagline: '',
     category: '',
   });
+
+  const filteredStartups = allStartups.filter(s => 
+    s.brand_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
+    s.owner?.full_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
+    s.owner?.username?.toLowerCase().includes(startupSearch.toLowerCase())
+  );
 
   const refreshArenaData = useCallback(() => {
     getEventLeaderboard(id).then(setLeaderboard).catch(console.error);
@@ -190,6 +197,17 @@ export default function EditEventPage() {
       alert(err instanceof Error ? err.message : 'Failed to add stall');
     } finally {
       setAddingStall(false);
+    }
+  }
+
+  async function handleRemoveStall(stallId: string, stallName: string) {
+    if (!confirm(`Are you sure you want to remove the stall "${stallName}"? This will also delete all associated investments.`)) return;
+    
+    try {
+      await removeEventStall(id, stallId);
+      refreshArenaData();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to remove stall');
     }
   }
 
@@ -367,6 +385,7 @@ export default function EditEventPage() {
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Linked Startup</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Category</th>
                           <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted">Tagline</th>
+                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-card-border">
@@ -387,6 +406,16 @@ export default function EditEventPage() {
                             </td>
                             <td className="px-4 py-3 text-muted capitalize">{stall.category || '—'}</td>
                             <td className="px-4 py-3 text-muted text-xs max-w-[200px] truncate">{stall.tagline || '—'}</td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveStall(stall.id, stall.stall_name)}
+                                className="text-muted hover:text-red-500 transition-colors"
+                                title="Remove Stall"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -502,6 +531,15 @@ export default function EditEventPage() {
             <form onSubmit={handleAddStall} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Select Startup</label>
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Search startup name or owner..."
+                    value={startupSearch}
+                    onChange={(e) => setStartupSearch(e.target.value)}
+                    className="w-full rounded-lg border border-card-border bg-background px-3 py-1.5 text-xs text-foreground outline-none focus:border-primary"
+                  />
+                </div>
                 <select
                   required
                   value={stallForm.startup_id}
@@ -517,10 +555,13 @@ export default function EditEventPage() {
                   className="w-full rounded-lg border border-card-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Select a startup...</option>
-                  {allStartups.map(s => (
+                  {filteredStartups.map(s => (
                     <option key={s.id} value={s.id}>{s.brand_name} ({s.owner?.full_name || s.owner?.username})</option>
                   ))}
                 </select>
+                {filteredStartups.length === 0 && startupSearch && (
+                  <p className="mt-1 text-xs text-danger">No startups match your search.</p>
+                )}
               </div>
 
               <FormField 

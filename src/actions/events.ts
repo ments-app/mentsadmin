@@ -282,3 +282,15 @@ export async function addEventStall(eventId: string, stallData: {
   if (error) throw new Error(error.message);
   revalidatePath(`/dashboard/events/${eventId}`);
 }
+
+export async function removeEventStall(eventId: string, stallId: string) {
+  const supabase = createAdminClient();
+  
+  // First delete associated investments to avoid FK violations
+  await supabase.from('event_investments').delete().eq('stall_id', stallId);
+  
+  const { error } = await supabase.from('event_stalls').delete().eq('id', stallId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/dashboard/events/${eventId}`);
+}
