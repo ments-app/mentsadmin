@@ -54,12 +54,12 @@ export default function EditEventPage() {
     location: '',
     event_url: '',
     banner_image_url: '',
-    event_type: 'online',
+    event_type: 'online' as 'online' | 'in-person' | 'hybrid',
     is_active: true,
     tags: [] as string[],
     is_featured: false,
     organizer_name: '',
-    category: 'event',
+    category: 'event' as 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar',
     // Arena fields
     entry_type: '' as string,
     arena_enabled: false,
@@ -88,33 +88,42 @@ export default function EditEventPage() {
     category: '',
   });
 
-  const filteredStartups = allStartups.filter(s => 
+  const filteredStartups = (allStartups || []).filter(s => 
     s.brand_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
     s.owner?.full_name?.toLowerCase().includes(startupSearch.toLowerCase()) ||
     s.owner?.username?.toLowerCase().includes(startupSearch.toLowerCase())
   );
 
   const refreshArenaData = useCallback(() => {
+    if (!id) return;
     getEventLeaderboard(id).then(setLeaderboard).catch(console.error);
     getEventStalls(id).then(setStallsList).catch(console.error);
     getEventAudience(id).then(setAudienceList).catch(console.error);
   }, [id]);
 
   useEffect(() => {
+    if (!id) return;
+    
     getEvent(id).then((data) => {
+      if (!data) {
+        setError('Event not found');
+        setLoading(false);
+        return;
+      }
+
       setForm({
-        title: data.title,
+        title: data.title || '',
         description: data.description ?? '',
         event_date: data.event_date ? data.event_date.slice(0, 16) : '',
         location: data.location ?? '',
         event_url: data.event_url ?? '',
         banner_image_url: data.banner_image_url ?? '',
-        event_type: data.event_type,
-        is_active: data.is_active,
+        event_type: (data.event_type as 'online' | 'in-person' | 'hybrid') || 'online',
+        is_active: data.is_active ?? true,
         tags: data.tags ?? [],
         is_featured: data.is_featured ?? false,
         organizer_name: data.organizer_name ?? '',
-        category: data.category ?? 'event',
+        category: (data.category as 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar') ?? 'event',
         entry_type: data.entry_type ?? '',
         arena_enabled: data.arena_enabled ?? false,
         virtual_fund_amount: data.virtual_fund_amount ?? 1000000,
@@ -126,8 +135,16 @@ export default function EditEventPage() {
       // Load arena data if enabled
       if (data.arena_enabled) {
         refreshArenaData();
-        getStartupProfiles('published', 1, 200).then(res => setAllStartups(res.startups)).catch(console.error);
+        getStartupProfiles('published', 1, 200).then(res => {
+          if (res && res.startups) setAllStartups(res.startups);
+        }).catch(err => {
+          console.error('Failed to load startups:', err);
+        });
       }
+    }).catch(err => {
+      console.error('Failed to load event:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load event');
+      setLoading(false);
     });
   }, [id, refreshArenaData]);
 
