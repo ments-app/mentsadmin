@@ -28,7 +28,7 @@ function SkeletonRows({ cols }: { cols: number }) {
             <td key={j} className="px-5 py-4">
               <div
                 className="skeleton-shimmer h-4 rounded-md"
-                style={{ width: j === cols ? '60px' : `${60 + Math.random() * 30}%` }}
+                style={{ width: j === cols ? '60px' : `${60 + ((i * 7 + j * 13) % 30)}%` }}
               />
             </td>
           ))}

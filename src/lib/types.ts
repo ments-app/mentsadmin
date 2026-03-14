@@ -161,6 +161,7 @@ export interface Event {
   entry_type: 'startup' | 'project' | null;
   arena_enabled: boolean;
   virtual_fund_amount: number;
+  max_investment_per_startup: number;
   arena_round: 'registration' | 'investment' | 'completed' | null;
 }
 

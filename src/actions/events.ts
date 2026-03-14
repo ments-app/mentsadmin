@@ -23,7 +23,7 @@ export async function getEvent(id: string) {
     .eq('id', id)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return null;
   return { ...data, tags: data.tags ?? [] } as Event;
 }
 
@@ -46,6 +46,7 @@ export async function createEvent(formData: {
   entry_type?: string | null;
   arena_enabled?: boolean;
   virtual_fund_amount?: number;
+  max_investment_per_startup?: number;
 }) {
   const supabase = createAdminClient();
   const { error } = await supabase.from('events').insert({
@@ -65,6 +66,7 @@ export async function createEvent(formData: {
     entry_type: formData.entry_type || null,
     arena_enabled: formData.arena_enabled ?? false,
     virtual_fund_amount: formData.virtual_fund_amount ?? 1000000,
+    max_investment_per_startup: formData.max_investment_per_startup ?? 100000,
     arena_round: formData.arena_enabled ? 'registration' : null,
   });
 
@@ -95,6 +97,7 @@ export async function updateEvent(
     entry_type?: string | null;
     arena_enabled?: boolean;
     virtual_fund_amount?: number;
+    max_investment_per_startup?: number;
     arena_round?: string | null;
   }
 ) {
@@ -119,6 +122,7 @@ export async function updateEvent(
       entry_type: formData.entry_type || null,
       arena_enabled: formData.arena_enabled ?? false,
       virtual_fund_amount: formData.virtual_fund_amount ?? 1000000,
+      max_investment_per_startup: formData.max_investment_per_startup ?? 100000,
       arena_round: formData.arena_round || null,
       updated_at: new Date().toISOString(),
     })
@@ -250,4 +254,74 @@ export async function deleteEvent(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath('/dashboard/events');
   revalidatePath('/dashboard');
+}
+
+export async function addEventStall(eventId: string, stallData: {
+  user_id: string;
+  stall_name: string;
+  tagline?: string;
+  description?: string;
+  category?: string;
+  startup_id?: string;
+  logo_url?: string;
+}) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('event_stalls').insert({
+    event_id: eventId,
+    user_id: stallData.user_id,
+    stall_name: stallData.stall_name,
+    tagline: stallData.tagline || null,
+    description: stallData.description || null,
+    category: stallData.category || null,
+    startup_id: stallData.startup_id || null,
+    logo_url: stallData.logo_url || null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/dashboard/events/${eventId}`);
+}
+
+export async function addEventStallsBatch(eventId: string, stalls: Array<{
+  user_id: string;
+  stall_name: string;
+  tagline?: string;
+  category?: string;
+  startup_id?: string;
+  logo_url?: string;
+}>) {
+  const supabase = createAdminClient();
+  // Deduplicate by startup_id — keep last occurrence (Postgres can't upsert the same row twice in one statement)
+  const deduped = Object.values(
+    stalls.reduce((acc, s) => ({ ...acc, [s.startup_id ?? s.user_id]: s }), {} as Record<string, typeof stalls[0]>)
+  );
+  const { error } = await supabase.from('event_stalls').upsert(
+    deduped.map(s => ({
+      event_id: eventId,
+      user_id: s.user_id,
+      stall_name: s.stall_name,
+      tagline: s.tagline || null,
+      category: s.category || null,
+      startup_id: s.startup_id || null,
+      logo_url: s.logo_url || null,
+      updated_at: new Date().toISOString(),
+    })),
+    { onConflict: 'event_id,startup_id' }
+  );
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/dashboard/events/${eventId}`);
+}
+
+export async function removeEventStall(eventId: string, stallId: string) {
+  const supabase = createAdminClient();
+  
+  // First delete associated investments to avoid FK violations
+  await supabase.from('event_investments').delete().eq('stall_id', stallId);
+  
+  const { error } = await supabase.from('event_stalls').delete().eq('id', stallId);
+
+  if (error) throw new Error(error.message);
+  revalidatePath(`/dashboard/events/${eventId}`);
 }

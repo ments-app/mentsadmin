@@ -60,6 +60,7 @@ export default function StartupEditEventPage() {
       getMyApprovedFacilitators(),
     ]).then(([data, facs]) => {
       setFacilitators(facs);
+      if (!data) return;
       setForm({
         title: data.title,
         description: data.description ?? '',

@@ -45,6 +45,7 @@ export default function FacilitatorEditEventPage() {
 
   useEffect(() => {
     getEvent(id).then((data) => {
+      if (!data) return;
       setForm({
         title: data.title, description: data.description ?? '',
         event_date: data.event_date ? data.event_date.slice(0, 16) : '',
