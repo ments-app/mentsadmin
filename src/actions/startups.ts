@@ -288,15 +288,15 @@ export async function updateStartupCoreProfile(id: string, updates: Record<strin
 }
 
 export async function createAdminStartupProfile(
-  ownerId: string,
+  ownerId: string | null,
   data: { brand_name: string; legal_status: 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered'; stage?: string; startup_email?: string; startup_phone?: string }
 ): Promise<{ id: string }> {
-  await requireSuperAdmin();
+  const session = await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data: result, error } = await supabase
     .from('startup_profiles')
     .insert({
-      owner_id: ownerId,
+      owner_id: ownerId || session.authId,
       brand_name: data.brand_name,
       legal_status: data.legal_status,
       stage: data.stage || 'ideation',
