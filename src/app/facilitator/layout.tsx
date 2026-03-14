@@ -14,11 +14,11 @@ export default async function FacilitatorLayout({
 
   const { role, verification_status } = session.profile;
 
-  if (role !== 'facilitator') {
-    redirect(role === 'superadmin' ? '/dashboard' : '/startup/dashboard');
+  if (role !== 'facilitator' && role !== 'superadmin') {
+    redirect('/startup/dashboard');
   }
 
-  if (verification_status !== 'approved') {
+  if (role !== 'superadmin' && verification_status !== 'approved') {
     redirect('/pending-verification');
   }
 
@@ -29,16 +29,16 @@ export default async function FacilitatorLayout({
   return (
     <div className="flex h-screen">
       <Sidebar
-        role="facilitator"
+        role={role === 'superadmin' ? 'superadmin' : 'facilitator'}
         displayName={displayName}
-        orgName={fp?.organisation_name}
+        orgName={fp?.organisation_name ?? (role === 'superadmin' ? 'Super Admin' : undefined)}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top header bar */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-card-border bg-card-bg px-6">
           {/* Breadcrumb area */}
           <div className="flex items-center gap-2 text-sm text-muted">
-            <span className="font-medium text-foreground">Facilitator</span>
+            <span className="font-medium text-foreground">{role === 'superadmin' ? 'Super Admin' : 'Facilitator'}</span>
             <span>/</span>
             <span>Dashboard</span>
           </div>

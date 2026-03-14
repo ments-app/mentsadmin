@@ -5,10 +5,11 @@ import {
   getFacilitatorStartups, getUnassignedStartups,
   approveStartup, rejectStartup, suspendStartup, claimStartupForVerification
 } from '@/actions/facilitators';
+import { deleteStartupProfile } from '@/actions/startups';
 import { format } from 'date-fns';
 import {
   CheckCircle2, XCircle, ShieldAlert, Rocket,
-  RefreshCw, UserPlus, Eye, Plus, Pencil
+  RefreshCw, UserPlus, Eye, Plus, Pencil, Trash2
 } from 'lucide-react';
 import StatusBadge from '@/components/StatusBadge';
 import Link from 'next/link';
@@ -80,6 +81,16 @@ export default function FacilitatorStartupsPage() {
     setActionLoading('suspend-' + startupId);
     try {
       await suspendStartup(startupId, reason);
+      await load();
+    } catch (e: any) { alert(e.message); }
+    setActionLoading(null);
+  }
+
+  async function handleDelete(startupId: string, name: string) {
+    if (!confirm(`Are you sure you want to permanently delete "${name}"? This cannot be undone.`)) return;
+    setActionLoading('delete-' + startupId);
+    try {
+      await deleteStartupProfile(startupId);
       await load();
     } catch (e: any) { alert(e.message); }
     setActionLoading(null);
@@ -216,6 +227,13 @@ export default function FacilitatorStartupsPage() {
                           <ShieldAlert size={12} /> Suspend
                         </button>
                       )}
+                      <button
+                        onClick={() => handleDelete(sp?.id, sp?.brand_name ?? 'Unknown')}
+                        disabled={!!actionLoading}
+                        className="flex items-center gap-1 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
                     </div>
                   </div>
                 );
