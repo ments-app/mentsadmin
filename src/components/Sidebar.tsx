@@ -30,6 +30,7 @@ import {
   Monitor,
   Sparkles,
   UserCog,
+  Download,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -81,6 +82,12 @@ const SUPERADMIN_SECTIONS: NavSection[] = [
       { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
       { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },
       { href: '/dashboard/feed-analytics', label: 'Feed Analytics', icon: BarChart3 },
+    ],
+  },
+  {
+    title: 'EXPORTS',
+    items: [
+      { href: '/dashboard/download', label: 'Download', icon: Download },
     ],
   },
 ];

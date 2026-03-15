@@ -367,3 +367,42 @@ export async function upsertStartupAwards(
   );
   if (error) throw new Error(error.message);
 }
+
+export type StartupRankingEntry = {
+  rank: number;
+  startup_id: string;
+  name: string;
+  total_upvotes: number;
+};
+
+export async function getStartupRankings(): Promise<StartupRankingEntry[]> {
+  await requireSuperAdmin();
+  const supabase = createAdminClient();
+
+  const { data: startups, error } = await supabase
+    .from('startup_profiles')
+    .select('id, brand_name');
+
+  if (error || !startups) return [];
+
+  const { data: upvotes } = await supabase
+    .from('startup_upvotes')
+    .select('startup_id');
+
+  const upvoteMap = new Map<string, number>();
+  upvotes?.forEach((u: { startup_id: string }) => {
+    upvoteMap.set(u.startup_id, (upvoteMap.get(u.startup_id) ?? 0) + 1);
+  });
+
+  const sorted = [...startups].sort(
+    (a: { id: string }, b: { id: string }) =>
+      (upvoteMap.get(b.id) ?? 0) - (upvoteMap.get(a.id) ?? 0)
+  );
+
+  return sorted.map((s: { id: string; brand_name: string }, idx: number) => ({
+    rank: idx + 1,
+    startup_id: `MNT-${s.id.slice(0, 8).toUpperCase()}`,
+    name: s.brand_name,
+    total_upvotes: upvoteMap.get(s.id) ?? 0,
+  }));
+}

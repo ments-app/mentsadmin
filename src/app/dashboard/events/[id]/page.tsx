@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { X, Plus, Users, Store, Trash2, Check } from 'lucide-react';
+import { X, Plus, Users, Store, Trash2, Check, Download } from 'lucide-react';
 import FormField from '@/components/FormField';
 import ImageUpload from '@/components/ImageUpload';
 import DateTimePicker from '@/components/DateTimePicker';
@@ -504,7 +504,31 @@ export default function EditEventPage() {
               {/* Leaderboard Preview */}
               {leaderboard.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-3">Funding Leaderboard</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground">Funding Leaderboard</h3>
+                    <button
+                      onClick={() => {
+                        const data = leaderboard.map((stall, i) => ({
+                          rank: i + 1,
+                          stall_id: stall.id,
+                          stall_name: stall.stall_name,
+                          total_funding: stall.total_funding,
+                          investor_count: stall.investor_count,
+                        }));
+                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `leaderboard-${id}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      Download JSON
+                    </button>
+                  </div>
                   <div className="rounded-xl border border-card-border overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-card-border/10">
