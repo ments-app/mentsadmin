@@ -33,11 +33,14 @@ export async function getMyFullStartupProfile() {
 
   if (!data) return null;
 
-  const [founderRes, fundingRes, incubatorRes, awardRes] = await Promise.all([
+  const [founderRes, fundingRes, incubatorRes, awardRes, textSectionRes, linkRes, slideRes] = await Promise.all([
     admin.from('startup_founders').select('*').eq('startup_id', data.id).order('display_order', { ascending: true }),
     admin.from('startup_funding_rounds').select('*').eq('startup_id', data.id).order('round_date', { ascending: false }),
     admin.from('startup_incubators').select('*').eq('startup_id', data.id).order('year', { ascending: false }),
     admin.from('startup_awards').select('*').eq('startup_id', data.id).order('year', { ascending: false }),
+    admin.from('startup_text_sections').select('*').eq('startup_id', data.id).order('display_order', { ascending: true }),
+    admin.from('startup_links').select('*').eq('startup_id', data.id).order('display_order', { ascending: true }),
+    admin.from('startup_slides').select('*').eq('startup_id', data.id).order('slide_number', { ascending: true }),
   ]);
 
   return {
@@ -48,6 +51,9 @@ export async function getMyFullStartupProfile() {
     funding_rounds: fundingRes.data || [],
     incubators: incubatorRes.data || [],
     awards: awardRes.data || [],
+    text_sections: textSectionRes.data || [],
+    links: linkRes.data || [],
+    slides: slideRes.data || [],
   };
 }
 
@@ -196,6 +202,93 @@ export async function updateMyAwards(
   if (error) throw new Error(error.message);
 }
 
+export async function upsertMyTextSections(
+  sections: Array<{ heading: string; content: string; display_order?: number }>
+) {
+  const session = await requireStartup();
+  const admin = createAdminClient();
+
+  const { data: existing } = await admin
+    .from('startup_profiles')
+    .select('id')
+    .eq('owner_id', session.authId)
+    .maybeSingle();
+
+  if (!existing) throw new Error('No startup profile found');
+
+  await admin.from('startup_text_sections').delete().eq('startup_id', existing.id);
+  if (sections.length === 0) return;
+
+  const { error } = await admin.from('startup_text_sections').insert(
+    sections.map((section, index) => ({
+      startup_id: existing.id,
+      heading: section.heading.trim(),
+      content: section.content.trim(),
+      display_order: section.display_order ?? index,
+    }))
+  );
+
+  if (error) throw new Error(error.message);
+}
+
+export async function upsertMyStartupLinks(
+  links: Array<{ title: string; url: string; display_order?: number }>
+) {
+  const session = await requireStartup();
+  const admin = createAdminClient();
+
+  const { data: existing } = await admin
+    .from('startup_profiles')
+    .select('id')
+    .eq('owner_id', session.authId)
+    .maybeSingle();
+
+  if (!existing) throw new Error('No startup profile found');
+
+  await admin.from('startup_links').delete().eq('startup_id', existing.id);
+  if (links.length === 0) return;
+
+  const { error } = await admin.from('startup_links').insert(
+    links.map((link, index) => ({
+      startup_id: existing.id,
+      title: link.title.trim(),
+      url: link.url.trim(),
+      display_order: link.display_order ?? index,
+    }))
+  );
+
+  if (error) throw new Error(error.message);
+}
+
+export async function upsertMyStartupSlides(
+  slides: Array<{ slide_url: string; caption?: string; slide_number?: number }>
+) {
+  const session = await requireStartup();
+  const admin = createAdminClient();
+
+  const { data: existing } = await admin
+    .from('startup_profiles')
+    .select('id')
+    .eq('owner_id', session.authId)
+    .maybeSingle();
+
+  if (!existing) throw new Error('No startup profile found');
+
+  await admin.from('startup_slides').delete().eq('startup_id', existing.id);
+  if (slides.length === 0) return;
+
+  const { error } = await admin.from('startup_slides').insert(
+    slides.map((slide, index) => ({
+      startup_id: existing.id,
+      slide_url: slide.slide_url.trim(),
+      caption: slide.caption?.trim() || null,
+      slide_number: slide.slide_number ?? index,
+    }))
+  );
+
+  if (error) throw new Error(error.message);
+}
+
 // ─── Browse facilitators (for startup portal) ─────────────────
 
 export async function getApprovedFacilitators() {
@@ -320,9 +413,10 @@ export async function createMyStartupProfile(data: {
   const session = await requireStartup();
   const admin = createAdminClient();
 
-  const { error } = await admin.from('startup_profiles').insert({
+  const { data: created, error } = await admin.from('startup_profiles').insert({
     owner_id: session.authId,
     brand_name: data.brand_name,
+    legal_status: 'not_registered',
     stage: data.stage || 'ideation',
     startup_email: data.startup_email || null,
     startup_phone: data.startup_phone || null,
@@ -334,9 +428,10 @@ export async function createMyStartupProfile(data: {
     visibility: 'public',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-  });
+  }).select('id').single();
 
   if (error) throw new Error(error.message);
   revalidatePath('/startup/profile');
   revalidatePath('/startup/dashboard');
+  return created;
 }

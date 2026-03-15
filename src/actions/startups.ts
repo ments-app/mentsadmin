@@ -136,6 +136,27 @@ export async function toggleStartupVisibility(id: string, visibility: 'public' |
 export async function deleteStartupProfile(id: string) {
   await requireSuperAdmin();
   const supabase = createAdminClient();
+
+  // Remove dependent startup-owned data first to satisfy foreign keys.
+  await supabase.from('applications').delete().eq('startup_id', id);
+  await supabase.from('startup_bookmarks').delete().eq('startup_id', id);
+  await supabase.from('startup_profile_views').delete().eq('startup_id', id);
+  await supabase.from('startup_upvotes').delete().eq('startup_id', id);
+  await supabase.from('startup_links').delete().eq('startup_id', id);
+  await supabase.from('startup_slides').delete().eq('startup_id', id);
+  await supabase.from('startup_text_sections').delete().eq('startup_id', id);
+  await supabase.from('startup_awards').delete().eq('startup_id', id);
+  await supabase.from('startup_incubators').delete().eq('startup_id', id);
+  await supabase.from('startup_funding_rounds').delete().eq('startup_id', id);
+  await supabase.from('startup_founders').delete().eq('startup_id', id);
+  await supabase.from('startup_facilitator_assignments').delete().eq('startup_id', id);
+  await supabase.from('organization_startup_relations').delete().eq('startup_id', id);
+  await supabase.from('investor_deals').delete().eq('startup_id', id);
+  await supabase.from('competitions').delete().eq('startup_id', id);
+  await supabase.from('events').delete().eq('startup_id', id);
+  await supabase.from('gigs').delete().eq('startup_id', id);
+  await supabase.from('jobs').delete().eq('startup_id', id);
+
   const { error } = await supabase.from('startup_profiles').delete().eq('id', id);
   if (error) throw new Error(error.message);
   revalidatePath('/dashboard/startups');
@@ -267,15 +288,15 @@ export async function updateStartupCoreProfile(id: string, updates: Record<strin
 }
 
 export async function createAdminStartupProfile(
-  ownerId: string,
+  ownerId: string | null,
   data: { brand_name: string; legal_status: 'llp' | 'pvt_ltd' | 'sole_proprietorship' | 'not_registered'; stage?: string; startup_email?: string; startup_phone?: string }
 ): Promise<{ id: string }> {
-  await requireSuperAdmin();
+  const session = await requireSuperAdmin();
   const supabase = createAdminClient();
   const { data: result, error } = await supabase
     .from('startup_profiles')
     .insert({
-      owner_id: ownerId,
+      owner_id: ownerId || session.authId,
       brand_name: data.brand_name,
       legal_status: data.legal_status,
       stage: data.stage || 'ideation',

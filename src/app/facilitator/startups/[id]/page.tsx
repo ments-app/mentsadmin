@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getFacilitatorStartupDetail, approveStartup, rejectStartup, suspendStartup } from '@/actions/facilitators';
 import { searchUserForTransfer, transferStartupOwnership } from '@/actions/facilitator-startups';
+import { deleteStartupProfile } from '@/actions/startups';
 import { format } from 'date-fns';
 import {
   ArrowLeft, Building2, Mail, Phone, Globe, MapPin, Calendar,
   Users, DollarSign, Award, Rocket, CheckCircle2, XCircle,
   ShieldAlert, RefreshCw, ExternalLink, Briefcase, Target,
   TrendingUp, Lightbulb, Layers, ArrowRightLeft, Search,
-  UserCircle2, Loader2, Pencil,
+  UserCircle2, Loader2, Pencil, Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
@@ -79,6 +80,16 @@ export default function FacilitatorStartupDetailPage() {
     try {
       await suspendStartup(data.profile.id, reason);
       await load();
+    } catch (e: any) { alert(e.message); }
+    setActionLoading(null);
+  }
+
+  async function handleDelete() {
+    if (!confirm(`Are you sure you want to permanently delete "${data?.profile?.brand_name}"? This cannot be undone.`)) return;
+    setActionLoading('delete');
+    try {
+      await deleteStartupProfile(data.profile.id);
+      window.location.href = '/facilitator/startups';
     } catch (e: any) { alert(e.message); }
     setActionLoading(null);
   }
@@ -161,7 +172,7 @@ export default function FacilitatorStartupDetailPage() {
       </div>
 
       {/* Action bar */}
-      {(assignment.status === 'pending' || assignment.status === 'approved') && (
+      {(assignment.status === 'pending' || assignment.status === 'approved' || assignment.status === 'unassigned') && (
         <div className="mb-6 flex flex-wrap gap-2 rounded-xl border border-card-border bg-card-bg p-4">
           <span className="mr-2 self-center text-sm font-medium text-foreground">Actions:</span>
           <Link
@@ -200,6 +211,14 @@ export default function FacilitatorStartupDetailPage() {
               {actionLoading === 'suspend' ? 'Suspending...' : 'Suspend'}
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            disabled={!!actionLoading}
+            className="flex items-center gap-1.5 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+          >
+            <Trash2 size={14} />
+            {actionLoading === 'delete' ? 'Deleting...' : 'Delete'}
+          </button>
         </div>
       )}
 
@@ -484,7 +503,11 @@ export default function FacilitatorStartupDetailPage() {
 
           {/* Assignment info */}
           <Section icon={<Calendar size={16} />} title="Verification">
-            <Kv label="Claimed" value={format(new Date(assignment.created_at), 'MMM d, yyyy')} />
+            {assignment.created_at ? (
+              <Kv label="Claimed" value={format(new Date(assignment.created_at), 'MMM d, yyyy')} />
+            ) : (
+              <Kv label="Status" value="Unassigned" />
+            )}
             {assignment.reviewed_at && (
               <Kv label="Reviewed" value={format(new Date(assignment.reviewed_at), 'MMM d, yyyy')} />
             )}

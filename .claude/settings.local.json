@@ -4,7 +4,8 @@
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
       "Bash(find /c/Users/Lenovo/onedrive/desktop/mentsweb/ments_admin -name \"tailwind.config.*\" -o -name \"tsconfig.json\" -o -name \"postcss.config.*\" 2>/dev/null | head -10)",
-      "Bash(grep -r \"facilitator_profiles\\\\|startup_facilitator_assignments\" /c/Users/Lenovo/onedrive/desktop/mentsweb/ments_admin/src --include=\"*.sql\" 2>/dev/null | head -10)"
+      "Bash(grep -r \"facilitator_profiles\\\\|startup_facilitator_assignments\" /c/Users/Lenovo/onedrive/desktop/mentsweb/ments_admin/src --include=\"*.sql\" 2>/dev/null | head -10)",
+      "Bash(find /Users/ayushmansingh/code/mentsadmin/mentsadmin -name *.sql -o -name *schema* -o -name *migration*)"
     ]
   }
 }

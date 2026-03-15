@@ -14,16 +14,21 @@ import {
   updateMyFundingRounds,
   updateMyIncubators,
   updateMyAwards,
+  upsertMyTextSections,
+  upsertMyStartupLinks,
+  upsertMyStartupSlides,
   createMyStartupProfile,
 } from '@/actions/startup-profile';
 import { supabase } from '@/lib/supabase';
+import StepShowcase, { type ShowcaseLink, type ShowcaseSlide, type ShowcaseTextSection } from '@/components/StepShowcase';
 
-type Tab = 'identity' | 'content' | 'market' | 'financials' | 'team' | 'recognition' | 'media';
+type Tab = 'identity' | 'content' | 'showcase' | 'market' | 'financials' | 'team' | 'recognition' | 'media';
 type Mode = 'view' | 'edit';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'identity',    label: 'Identity',     icon: <Building2 size={14} /> },
   { id: 'content',     label: 'Content',      icon: <FileText size={14} /> },
+  { id: 'showcase',    label: 'Showcase',     icon: <Link2 size={14} /> },
   { id: 'market',      label: 'Market',       icon: <Tag size={14} /> },
   { id: 'financials',  label: 'Financials',   icon: <TrendingUp size={14} /> },
   { id: 'team',        label: 'Team',         icon: <Users size={14} /> },
@@ -74,6 +79,9 @@ export default function StartupProfilePage() {
   const [creating, setCreating] = useState(false);
   const [createForm, setCreateForm] = useState({ brand_name: '', stage: 'ideation', startup_email: '', startup_phone: '' });
   const [createError, setCreateError] = useState('');
+  const [createTextSections, setCreateTextSections] = useState<ShowcaseTextSection[]>([]);
+  const [createShowcaseLinks, setCreateShowcaseLinks] = useState<ShowcaseLink[]>([]);
+  const [createShowcaseSlides, setCreateShowcaseSlides] = useState<ShowcaseSlide[]>([]);
 
   const load = useCallback(async () => {
     const data = await getMyFullStartupProfile();
@@ -94,6 +102,23 @@ export default function StartupProfilePage() {
     setCreating(true); setCreateError('');
     try {
       await createMyStartupProfile(createForm);
+      await Promise.all([
+        upsertMyTextSections(
+          createTextSections
+            .map((section, index) => ({ ...section, display_order: index }))
+            .filter((section) => section.heading.trim() && section.content.trim())
+        ),
+        upsertMyStartupLinks(
+          createShowcaseLinks
+            .map((link, index) => ({ ...link, display_order: index }))
+            .filter((link) => link.title.trim() && link.url.trim())
+        ),
+        upsertMyStartupSlides(
+          createShowcaseSlides
+            .map((slide, index) => ({ ...slide, slide_number: index }))
+            .filter((slide) => slide.slide_url.trim())
+        ),
+      ]);
       await load();
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create profile');
@@ -126,6 +151,16 @@ export default function StartupProfilePage() {
           <div className="grid grid-cols-2 gap-4">
             <Field label="Contact Email" type="email" value={createForm.startup_email} onChange={v => setCreateForm(f => ({ ...f, startup_email: v }))} />
             <Field label="Contact Phone" value={createForm.startup_phone} onChange={v => setCreateForm(f => ({ ...f, startup_phone: v }))} />
+          </div>
+          <div className="border-t border-card-border pt-5">
+            <StepShowcase
+              textSections={createTextSections}
+              slides={createShowcaseSlides}
+              links={createShowcaseLinks}
+              onTextSectionsChange={setCreateTextSections}
+              onSlidesChange={setCreateShowcaseSlides}
+              onLinksChange={setCreateShowcaseLinks}
+            />
           </div>
           <button type="submit" disabled={creating}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-white disabled:opacity-50">
@@ -197,6 +232,25 @@ export default function StartupProfilePage() {
             updateMyStartupProfile(data).then(() => { setProfile((p: any) => p ? { ...p, ...data } : p); showSaved('content'); });
           }} />
         )}
+        {activeTab === 'showcase' && (
+          <ShowcaseTab
+            profile={profile}
+            onSave={async (data) => {
+              await Promise.all([
+                upsertMyTextSections(data.textSections),
+                upsertMyStartupLinks(data.links),
+                upsertMyStartupSlides(data.slides),
+              ]);
+              setProfile((current: any) => current ? {
+                ...current,
+                text_sections: data.textSections,
+                links: data.links,
+                slides: data.slides,
+              } : current);
+              showSaved('showcase');
+            }}
+          />
+        )}
         {activeTab === 'market' && (
           <MarketTab profile={profile} onSave={(data) => {
             updateMyStartupProfile(data).then(() => { setProfile((p: any) => p ? { ...p, ...data } : p); showSaved('market'); });
@@ -242,6 +296,70 @@ export default function StartupProfilePage() {
           />
         )}
       </div>
+    </div>
+  );
+}
+
+function ShowcaseTab({
+  profile,
+  onSave,
+}: {
+  profile: any;
+  onSave: (data: {
+    textSections: Array<{ heading: string; content: string; display_order?: number }>;
+    links: Array<{ title: string; url: string; display_order?: number }>;
+    slides: Array<{ slide_url: string; caption?: string; slide_number?: number }>;
+  }) => Promise<void>;
+}) {
+  const [textSections, setTextSections] = useState<ShowcaseTextSection[]>(
+    (profile.text_sections || []).map((section: any) => ({
+      heading: section.heading || '',
+      content: section.content || '',
+    }))
+  );
+  const [links, setLinks] = useState<ShowcaseLink[]>(
+    (profile.links || []).map((link: any) => ({
+      title: link.title || '',
+      url: link.url || '',
+    }))
+  );
+  const [slides, setSlides] = useState<ShowcaseSlide[]>(
+    (profile.slides || []).map((slide: any) => ({
+      slide_url: slide.slide_url || '',
+      caption: slide.caption || '',
+    }))
+  );
+  const [saving, setSaving] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      <StepShowcase
+        textSections={textSections}
+        slides={slides}
+        links={links}
+        onTextSectionsChange={setTextSections}
+        onSlidesChange={setSlides}
+        onLinksChange={setLinks}
+      />
+      <SaveButton
+        saving={saving}
+        label="Save Showcase"
+        onClick={async () => {
+          setSaving(true);
+          await onSave({
+            textSections: textSections
+              .map((section, index) => ({ ...section, display_order: index }))
+              .filter((section) => section.heading.trim() && section.content.trim()),
+            links: links
+              .map((link, index) => ({ ...link, display_order: index }))
+              .filter((link) => link.title.trim() && link.url.trim()),
+            slides: slides
+              .map((slide, index) => ({ ...slide, slide_number: index }))
+              .filter((slide) => slide.slide_url.trim()),
+          });
+          setSaving(false);
+        }}
+      />
     </div>
   );
 }

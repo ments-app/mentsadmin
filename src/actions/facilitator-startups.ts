@@ -1,19 +1,10 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase-server';
-import { requireFacilitator } from '@/lib/auth';
+import { requireAdminOrFacilitator } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
-async function getEditableFacilitatorStartup(admin: ReturnType<typeof createAdminClient>, facilitatorId: string, startupId: string) {
-  const { data: assignment, error: assignmentError } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id')
-    .eq('startup_id', startupId)
-    .eq('facilitator_id', facilitatorId)
-    .maybeSingle();
-
-  if (assignmentError) throw new Error(assignmentError.message);
-
+async function getEditableFacilitatorStartup(admin: ReturnType<typeof createAdminClient>, facilitatorId: string, startupId: string, isSuperAdmin = false) {
   const { data: startup, error: startupError } = await admin
     .from('startup_profiles')
     .select('id, owner_id')
@@ -22,6 +13,18 @@ async function getEditableFacilitatorStartup(admin: ReturnType<typeof createAdmi
 
   if (startupError) throw new Error(startupError.message);
   if (!startup) throw new Error('Startup not found');
+
+  // SuperAdmins can edit any startup
+  if (isSuperAdmin) return startup;
+
+  const { data: assignment, error: assignmentError } = await admin
+    .from('startup_facilitator_assignments')
+    .select('id')
+    .eq('startup_id', startupId)
+    .eq('facilitator_id', facilitatorId)
+    .maybeSingle();
+
+  if (assignmentError) throw new Error(assignmentError.message);
 
   if (!assignment && startup.owner_id !== facilitatorId) {
     throw new Error('Startup not found or not editable by your facilitator account');
@@ -82,18 +85,18 @@ export async function createFacilitatorStartupProfile(data: {
     display_order?: number;
   }>;
 }): Promise<{ id: string }> {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
 
   const brandName = data.brand_name?.trim();
   if (!brandName) throw new Error('Brand name is required');
   if (!data.legal_status) throw new Error('Legal status is required');
 
-  // Create startup with facilitator as temporary owner
+  // Create startup with facilitator/superadmin as temporary owner
   const { data: sp, error: insertError } = await admin
     .from('startup_profiles')
     .insert({
-      owner_id: session.effectiveFacilitatorId,
+      owner_id: session.authId,
       brand_name: brandName,
       registered_name: data.registered_name?.trim() || null,
       legal_status: data.legal_status,
@@ -170,16 +173,18 @@ export async function createFacilitatorStartupProfile(data: {
     }
   }
 
-  // Auto-create assignment so it shows in facilitator's "My Startups"
-  await admin.from('startup_facilitator_assignments').insert({
-    startup_id: sp.id,
-    facilitator_id: session.effectiveFacilitatorId,
-    status: 'approved',
-    assigned_by: session.authId,
-    reviewed_at: new Date().toISOString(),
-    notes: 'Auto-assigned: created by facilitator',
-    relation_type: 'supported',
-  });
+  // Auto-create assignment so it shows in facilitator's "My Startups" (skip for superadmins)
+  if (session.profile?.role === 'facilitator') {
+    await admin.from('startup_facilitator_assignments').insert({
+      startup_id: sp.id,
+      facilitator_id: session.effectiveFacilitatorId,
+      status: 'approved',
+      assigned_by: session.authId,
+      reviewed_at: new Date().toISOString(),
+      notes: 'Auto-assigned: created by facilitator',
+      relation_type: 'supported',
+    });
+  }
 
   revalidatePath('/facilitator/startups');
   return { id: sp.id };
@@ -188,7 +193,7 @@ export async function createFacilitatorStartupProfile(data: {
 // ─── Facilitator: Get startups created by me ─────────────────
 
 export async function getFacilitatorCreatedStartups() {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
 
   const { data, error } = await admin
@@ -204,7 +209,7 @@ export async function getFacilitatorCreatedStartups() {
 // ─── Facilitator: Transfer startup ownership ─────────────────
 
 export async function searchUserForTransfer(email: string) {
-  await requireFacilitator();
+  await requireAdminOrFacilitator();
   const admin = createAdminClient();
 
   const trimmed = email.toLowerCase().trim();
@@ -220,18 +225,21 @@ export async function searchUserForTransfer(email: string) {
 }
 
 export async function transferStartupOwnership(startupId: string, newOwnerEmail: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  // Verify facilitator has access to this startup via assignment
-  const { data: assignment } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id')
-    .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId)
-    .maybeSingle();
+  if (!isSuperAdmin) {
+    // Verify facilitator has access to this startup via assignment
+    const { data: assignment } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id')
+      .eq('startup_id', startupId)
+      .eq('facilitator_id', session.effectiveFacilitatorId)
+      .maybeSingle();
 
-  if (!assignment) throw new Error('Forbidden: startup not assigned to you');
+    if (!assignment) throw new Error('Forbidden: startup not assigned to you');
+  }
 
   // Verify the startup is still owned by the facilitator (hasn't been transferred already)
   const { data: sp } = await admin
@@ -297,10 +305,11 @@ export async function transferStartupOwnership(startupId: string, newOwnerEmail:
 }
 
 export async function getFacilitatorOwnedStartupProfile(startupId: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId, isSuperAdmin);
 
   const { data: profile, error } = await admin
     .from('startup_profiles')
@@ -327,10 +336,11 @@ export async function getFacilitatorOwnedStartupProfile(startupId: string) {
 }
 
 export async function updateFacilitatorOwnedStartupProfile(startupId: string, updates: Record<string, unknown>) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId, isSuperAdmin);
 
   const payload = {
     ...updates,
@@ -353,10 +363,11 @@ export async function updateFacilitatorOwnedStartupFounders(
   startupId: string,
   founders: Array<{ name: string; role?: string; email?: string; ments_username?: string; display_order?: number }>
 ) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId);
+  await getEditableFacilitatorStartup(admin, session.effectiveFacilitatorId, startupId, isSuperAdmin);
 
   await admin.from('startup_founders').delete().eq('startup_id', startupId);
   if (founders.length === 0) {

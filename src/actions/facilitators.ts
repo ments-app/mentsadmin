@@ -1,7 +1,7 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase-server';
-import { requireSuperAdmin, requireFacilitator } from '@/lib/auth';
+import { requireSuperAdmin, requireFacilitator, requireAdminOrFacilitator } from '@/lib/auth';
 import { writeAuditLog } from './rbac';
 import { revalidatePath } from 'next/cache';
 
@@ -171,11 +171,52 @@ export async function suspendFacilitator(facilitatorId: string, reason: string) 
 
 // ─── Facilitator: Manage Startups ─────────────────────────────
 
-/** Get all startups visible to this facilitator (their approved/pending ones). */
+/** Get all startups visible to this facilitator (their approved/pending ones).
+ *  SuperAdmins see ALL startups regardless of assignment. */
 export async function getFacilitatorStartups(statusFilter?: 'all' | 'pending' | 'approved' | 'rejected' | 'suspended') {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
+  if (isSuperAdmin) {
+    // SuperAdmin: return ALL startup profiles directly (no assignment required)
+    const { data: startups, error } = await admin
+      .from('startup_profiles')
+      .select('id, brand_name, logo_url, stage, city, country, is_published, is_featured, owner_id, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    if (!startups || startups.length === 0) return [];
+
+    // Check assignment statuses for display
+    const startupIds = startups.map((s: any) => s.id);
+    const { data: assignments } = await admin
+      .from('startup_facilitator_assignments')
+      .select('startup_id, status, created_at, reviewed_at, notes')
+      .in('startup_id', startupIds);
+    const assignMap = new Map((assignments ?? []).map((a: any) => [a.startup_id, a]));
+
+    let results = startups.map((s: any) => {
+      const a = assignMap.get(s.id);
+      return {
+        id: a?.startup_id ?? s.id,
+        status: a?.status ?? 'unassigned',
+        created_at: a?.created_at ?? s.created_at,
+        reviewed_at: a?.reviewed_at ?? null,
+        notes: a?.notes ?? null,
+        startup_id: s.id,
+        startup_profiles: s,
+      };
+    });
+
+    if (statusFilter && statusFilter !== 'all') {
+      results = results.filter(r => r.status === statusFilter);
+    }
+
+    return results;
+  }
+
+  // Regular facilitator: only their assigned startups
   let query = admin
     .from('startup_facilitator_assignments')
     .select('id, status, created_at, reviewed_at, notes, startup_id')
@@ -203,7 +244,7 @@ export async function getFacilitatorStartups(statusFilter?: 'all' | 'pending' | 
 
 /** Get unverified startups not yet assigned to any facilitator. */
 export async function getUnassignedStartups() {
-  await requireFacilitator();
+  await requireAdminOrFacilitator();
   const admin = createAdminClient();
 
   // 1. Get all startup_profile IDs already in any assignment
@@ -251,7 +292,7 @@ export async function getUnassignedStartups() {
 }
 
 export async function claimStartupForVerification(startupUserId: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
 
   // Find the startup_profile linked to this user
@@ -284,19 +325,23 @@ export async function claimStartupForVerification(startupUserId: string) {
 }
 
 export async function approveStartup(startupId: string, notes?: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  // Verify this facilitator owns the assignment
-  const { data: assignment, error: ae } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id')
-    .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId)
-    .single();
+  if (!isSuperAdmin) {
+    // Verify this facilitator owns the assignment
+    const { data: assignment, error: ae } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id')
+      .eq('startup_id', startupId)
+      .eq('facilitator_id', session.effectiveFacilitatorId)
+      .single();
 
-  if (ae || !assignment) throw new Error('Forbidden: assignment not found');
+    if (ae || !assignment) throw new Error('Forbidden: assignment not found');
+  }
 
+  // Update assignment if it exists
   const { error } = await admin
     .from('startup_facilitator_assignments')
     .update({
@@ -305,7 +350,7 @@ export async function approveStartup(startupId: string, notes?: string) {
       notes: notes ?? null,
     })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId);
+    .match(isSuperAdmin ? {} : { facilitator_id: session.effectiveFacilitatorId });
 
   if (error) throw new Error(error.message);
 
@@ -336,17 +381,20 @@ export async function approveStartup(startupId: string, notes?: string) {
 }
 
 export async function rejectStartup(startupId: string, notes: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  const { data: assignment } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id')
-    .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId)
-    .single();
+  if (!isSuperAdmin) {
+    const { data: assignment } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id')
+      .eq('startup_id', startupId)
+      .eq('facilitator_id', session.effectiveFacilitatorId)
+      .single();
 
-  if (!assignment) throw new Error('Forbidden: assignment not found');
+    if (!assignment) throw new Error('Forbidden: assignment not found');
+  }
 
   await admin
     .from('startup_facilitator_assignments')
@@ -356,7 +404,7 @@ export async function rejectStartup(startupId: string, notes: string) {
       notes,
     })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId);
+    .match(isSuperAdmin ? {} : { facilitator_id: session.effectiveFacilitatorId });
 
   const { data: sp } = await admin
     .from('startup_profiles')
@@ -384,23 +432,26 @@ export async function rejectStartup(startupId: string, notes: string) {
 }
 
 export async function suspendStartup(startupId: string, reason: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  const { data: assignment } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id')
-    .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId)
-    .single();
+  if (!isSuperAdmin) {
+    const { data: assignment } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id')
+      .eq('startup_id', startupId)
+      .eq('facilitator_id', session.effectiveFacilitatorId)
+      .single();
 
-  if (!assignment) throw new Error('Forbidden: assignment not found');
+    if (!assignment) throw new Error('Forbidden: assignment not found');
+  }
 
   await admin
     .from('startup_facilitator_assignments')
     .update({ status: 'suspended', notes: reason })
     .eq('startup_id', startupId)
-    .eq('facilitator_id', session.effectiveFacilitatorId);
+    .match(isSuperAdmin ? {} : { facilitator_id: session.effectiveFacilitatorId });
 
   const { data: sp } = await admin
     .from('startup_profiles')
@@ -890,21 +941,33 @@ export async function getFacilitatorDashboardStats() {
   };
 }
 
-/** Get full startup profile detail — only if assigned to this facilitator. */
+/** Get full startup profile detail — only if assigned to this facilitator (or superadmin). */
 export async function getFacilitatorStartupDetail(startupProfileId: string) {
-  const session = await requireFacilitator();
+  const session = await requireAdminOrFacilitator();
   const admin = createAdminClient();
+  const isSuperAdmin = session.profile?.role === 'superadmin';
 
-  // Verify this facilitator has access to this startup
-  const { data: assignment, error: ae } = await admin
-    .from('startup_facilitator_assignments')
-    .select('id, status, notes, created_at, reviewed_at')
-    .eq('startup_id', startupProfileId)
-    .eq('facilitator_id', session.effectiveFacilitatorId)
-    .maybeSingle();
+  let assignment: any = null;
+  if (isSuperAdmin) {
+    // SuperAdmin can view any startup; fetch assignment if it exists
+    const { data } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id, status, notes, created_at, reviewed_at')
+      .eq('startup_id', startupProfileId)
+      .maybeSingle();
+    assignment = data ?? { id: null, status: 'unassigned', notes: null, created_at: null, reviewed_at: null };
+  } else {
+    const { data, error: ae } = await admin
+      .from('startup_facilitator_assignments')
+      .select('id, status, notes, created_at, reviewed_at')
+      .eq('startup_id', startupProfileId)
+      .eq('facilitator_id', session.effectiveFacilitatorId)
+      .maybeSingle();
 
-  if (ae) throw new Error(ae.message);
-  if (!assignment) throw new Error('Forbidden: startup not assigned to you');
+    if (ae) throw new Error(ae.message);
+    if (!data) throw new Error('Forbidden: startup not assigned to you');
+    assignment = data;
+  }
 
   // Fetch full startup profile
   const { data: sp, error: spe } = await admin
