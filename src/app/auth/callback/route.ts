@@ -8,8 +8,11 @@ export async function GET(req: NextRequest) {
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = '/login';
 
+  const cookieNames = req.cookies.getAll().map(c => c.name);
   console.log('[auth/callback] URL:', req.url);
   console.log('[auth/callback] Code present:', !!code);
+  console.log('[auth/callback] Cookies:', cookieNames.join(', '));
+  console.log('[auth/callback] Has code verifier:', cookieNames.some(n => n.includes('code-verifier')));
 
   if (!code) {
     console.error('[auth/callback] No code param');
@@ -22,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      console.error('[auth/callback] Code exchange failed:', error.message);
+      console.error('[auth/callback] Code exchange failed:', error.message, JSON.stringify(error));
       loginUrl.searchParams.set('error', 'auth_failed');
       return NextResponse.redirect(loginUrl);
     }
