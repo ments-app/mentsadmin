@@ -10,6 +10,10 @@ export async function createAuthClient() {
     {
       cookieOptions: {
         name: 'sb-admin-auth',
+        domain: process.env.NODE_ENV === 'production' ? 'business.ments.app' : undefined,
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7,
       },
       cookies: {
         getAll() {

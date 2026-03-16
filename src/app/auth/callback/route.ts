@@ -8,7 +8,11 @@ export async function GET(req: NextRequest) {
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = '/login';
 
+  console.log('[auth/callback] URL:', req.url);
+  console.log('[auth/callback] Code present:', !!code);
+
   if (!code) {
+    console.error('[auth/callback] No code param');
     loginUrl.searchParams.set('error', 'auth_failed');
     return NextResponse.redirect(loginUrl);
   }
