@@ -39,10 +39,12 @@ function LoginContent() {
   if (!mounted) return null;
 
   return (
-    <div className="flex min-h-screen w-full bg-white dark:bg-black text-black dark:text-white font-sans">
+    <div className="flex min-h-screen w-full bg-black text-white font-sans">
       
       {/* Left Panel - Branding & Green Mesh Gradient */}
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-black p-16 lg:flex">
+        {/* Fade-to-black blend on right edge */}
+        <div className="absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-r from-transparent to-black pointer-events-none" />
         {/* Glow Effects - strictly Green/Black */}
         <div className="absolute inset-0 z-0 opacity-40">
           <div className="absolute -left-[10%] top-[10%] h-[500px] w-[500px] rounded-full bg-[#00ffa2]/40 blur-[140px]" />
@@ -80,7 +82,7 @@ function LoginContent() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex w-full flex-col items-center justify-center px-8 lg:w-1/2">
+      <div className="flex w-full flex-col items-center justify-center px-8 lg:w-1/2 bg-black">
         <div className="w-full max-w-[400px]">
           
           {/* Mobile Logo */}
@@ -96,8 +98,8 @@ function LoginContent() {
           </div>
 
           <div className="mb-12">
-            <h2 className="text-3xl font-bold tracking-tight text-black dark:text-white">Sign in</h2>
-            <p className="mt-3 text-neutral-500 dark:text-neutral-400">
+            <h2 className="text-3xl font-bold tracking-tight text-white">Sign in</h2>
+            <p className="mt-3 text-neutral-400">
               Access the administrative console to manage the platform.
             </p>
           </div>
@@ -114,7 +116,7 @@ function LoginContent() {
             <button
               onClick={handleGoogleSignIn}
               disabled={loading}
-              className="flex w-full items-center justify-center gap-4 rounded-xl border-2 border-neutral-100 bg-white px-6 py-4 text-lg font-bold text-black transition-all hover:bg-neutral-50 hover:border-neutral-200 active:scale-[0.99] disabled:opacity-50 dark:bg-black dark:border-neutral-800 dark:text-white dark:hover:bg-neutral-900 shadow-sm"
+              className="flex w-full items-center justify-center gap-4 rounded-xl border-2 border-neutral-800 bg-neutral-900 px-6 py-4 text-lg font-bold text-white transition-all hover:bg-neutral-800 hover:border-neutral-700 active:scale-[0.99] disabled:opacity-50 shadow-sm"
             >
               {loading ? (
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-300 border-t-black dark:border-neutral-700 dark:border-t-white" />
@@ -130,10 +132,10 @@ function LoginContent() {
             </button>
           </div>
 
-          <div className="mt-16 border-t border-neutral-100 pt-8 dark:border-neutral-800">
+          <div className="mt-16 border-t border-neutral-800 pt-8">
             <p className="text-center text-sm text-neutral-500">
               This system is restricted to authorized Ments Hub administrators. <br />
-              <a href="#" className="mt-3 inline-block font-semibold text-black hover:underline dark:text-[#00ffa2]">
+              <a href="#" className="mt-3 inline-block font-semibold text-[#00ffa2] hover:underline">
                 Contact Security Support
               </a>
             </p>

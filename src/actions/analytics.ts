@@ -115,6 +115,8 @@ export interface UserSegmentation {
   newThisMonth: number;
   verificationRate: number;
   suspensionRate: number;
+  profileCompleted: number;
+  profileCompletionRate: number;
 }
 
 export interface SkillDemand {
@@ -619,12 +621,16 @@ export async function getTopOpportunities(): Promise<TopOpportunities> {
 export async function getUserSegmentation(): Promise<UserSegmentation> {
   const supabase = createAdminClient();
   try {
-    const [allUsersRes, newWeekRes, newMonthRes] = await Promise.all([
+    const [allUsersRes, newWeekRes, newMonthRes, profileCompletedRes] = await Promise.all([
       supabase.from('users').select('user_type,is_verified,is_suspended'),
       supabase.from('users').select('id', { count: 'exact', head: true })
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
       supabase.from('users').select('id', { count: 'exact', head: true })
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+      supabase.from('users').select('id', { count: 'exact', head: true })
+        .not('full_name', 'is', null).neq('full_name', '')
+        .not('about', 'is', null).neq('about', '')
+        .not('avatar_url', 'is', null).neq('avatar_url', ''),
     ]);
 
     const users = (allUsersRes.data ?? []) as {
@@ -637,6 +643,7 @@ export async function getUserSegmentation(): Promise<UserSegmentation> {
     const verified = users.filter((u) => u.is_verified).length;
     const suspended = users.filter((u) => u.is_suspended).length;
     const byUserType = groupBy(users as unknown as Record<string, unknown>[], 'user_type');
+    const profileCompleted = profileCompletedRes.count ?? 0;
 
     return {
       total,
@@ -647,11 +654,14 @@ export async function getUserSegmentation(): Promise<UserSegmentation> {
       newThisMonth: newMonthRes.count ?? 0,
       verificationRate: total > 0 ? Math.round((verified / total) * 100) : 0,
       suspensionRate: total > 0 ? Math.round((suspended / total) * 100) : 0,
+      profileCompleted,
+      profileCompletionRate: total > 0 ? Math.round((profileCompleted / total) * 100) : 0,
     };
   } catch {
     return {
       total: 0, verified: 0, suspended: 0, byUserType: {},
       newThisWeek: 0, newThisMonth: 0, verificationRate: 0, suspensionRate: 0,
+      profileCompleted: 0, profileCompletionRate: 0,
     };
   }
 }
@@ -853,6 +863,170 @@ export async function getPlatformPulse(days: number): Promise<PlatformPulse> {
       totalRaisedAcrossPlatform: 0,
       avgApplicationsPerJob: 0,
       avgApplicationsPerGig: 0,
+    };
+  }
+}
+
+// ─── Profile Completion Analytics ────────────────────────────
+
+export interface ProfileCompletionAnalytics {
+  total: number;
+  // Tier counts
+  tiers: {
+    full: number;       // all 4 key fields
+    good: number;       // 3 of 4
+    partial: number;    // 2 of 4
+    minimal: number;    // 1 of 4
+    empty: number;      // 0 of 4
+  };
+  tierRates: {
+    full: number;
+    good: number;
+    partial: number;
+    minimal: number;
+    empty: number;
+  };
+  // Per-field fill rates
+  fields: {
+    name: number;
+    bio: number;
+    avatar: number;
+    skills: number;
+    banner: number;
+  };
+  fieldRates: {
+    name: number;
+    bio: number;
+    avatar: number;
+    skills: number;
+    banner: number;
+  };
+  // Breakdown by user type
+  byUserType: {
+    userType: string;
+    total: number;
+    completed: number;
+    rate: number;
+  }[];
+  // Recent completions
+  completedThisWeek: number;
+  completedThisMonth: number;
+}
+
+export async function getProfileCompletionAnalytics(): Promise<ProfileCompletionAnalytics> {
+  const supabase = createAdminClient();
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data } = await supabase
+      .from('users')
+      .select('full_name,about,avatar_url,banner_image,skills,user_type,created_at');
+
+    const users = (data ?? []) as {
+      full_name: string | null;
+      about: string | null;
+      avatar_url: string | null;
+      banner_image: string | null;
+      skills: unknown;
+      user_type: string | null;
+      created_at: string | null;
+    }[];
+
+    const total = users.length;
+
+    const hasName = (u: typeof users[0]) => !!u.full_name?.trim();
+    const hasBio = (u: typeof users[0]) => !!u.about?.trim();
+    const hasAvatar = (u: typeof users[0]) => !!u.avatar_url?.trim();
+    const hasSkills = (u: typeof users[0]) => {
+      const s = u.skills;
+      if (Array.isArray(s)) return s.length > 0;
+      if (typeof s === 'string') return s.trim().length > 0 && s !== '[]';
+      return false;
+    };
+    const hasBanner = (u: typeof users[0]) => !!u.banner_image?.trim();
+
+    const score = (u: typeof users[0]) =>
+      (hasName(u) ? 1 : 0) + (hasBio(u) ? 1 : 0) + (hasAvatar(u) ? 1 : 0) + (hasSkills(u) ? 1 : 0);
+
+    const tiers = { full: 0, good: 0, partial: 0, minimal: 0, empty: 0 };
+    const fields = { name: 0, bio: 0, avatar: 0, skills: 0, banner: 0 };
+
+    // Per-type aggregation
+    const typeMap: Record<string, { total: number; completed: number }> = {};
+
+    for (const u of users) {
+      const s = score(u);
+      if (s === 4) tiers.full++;
+      else if (s === 3) tiers.good++;
+      else if (s === 2) tiers.partial++;
+      else if (s === 1) tiers.minimal++;
+      else tiers.empty++;
+
+      if (hasName(u)) fields.name++;
+      if (hasBio(u)) fields.bio++;
+      if (hasAvatar(u)) fields.avatar++;
+      if (hasSkills(u)) fields.skills++;
+      if (hasBanner(u)) fields.banner++;
+
+      const ut = u.user_type ?? 'unknown';
+      if (!typeMap[ut]) typeMap[ut] = { total: 0, completed: 0 };
+      typeMap[ut].total++;
+      if (s === 4) typeMap[ut].completed++;
+    }
+
+    const rate = (n: number) => (total > 0 ? Math.round((n / total) * 100) : 0);
+
+    const byUserType = Object.entries(typeMap)
+      .map(([userType, v]) => ({
+        userType,
+        total: v.total,
+        completed: v.completed,
+        rate: v.total > 0 ? Math.round((v.completed / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    // Recent completions: users with all 4 fields whose created_at is recent
+    const completedThisWeek = users.filter(
+      (u) => score(u) === 4 && u.created_at && u.created_at >= weekAgo
+    ).length;
+    const completedThisMonth = users.filter(
+      (u) => score(u) === 4 && u.created_at && u.created_at >= monthAgo
+    ).length;
+
+    return {
+      total,
+      tiers,
+      tierRates: {
+        full: rate(tiers.full),
+        good: rate(tiers.good),
+        partial: rate(tiers.partial),
+        minimal: rate(tiers.minimal),
+        empty: rate(tiers.empty),
+      },
+      fields,
+      fieldRates: {
+        name: rate(fields.name),
+        bio: rate(fields.bio),
+        avatar: rate(fields.avatar),
+        skills: rate(fields.skills),
+        banner: rate(fields.banner),
+      },
+      byUserType,
+      completedThisWeek,
+      completedThisMonth,
+    };
+  } catch (err) {
+    console.error('[getProfileCompletionAnalytics]', err);
+    return {
+      total: 0,
+      tiers: { full: 0, good: 0, partial: 0, minimal: 0, empty: 0 },
+      tierRates: { full: 0, good: 0, partial: 0, minimal: 0, empty: 0 },
+      fields: { name: 0, bio: 0, avatar: 0, skills: 0, banner: 0 },
+      fieldRates: { name: 0, bio: 0, avatar: 0, skills: 0, banner: 0 },
+      byUserType: [],
+      completedThisWeek: 0,
+      completedThisMonth: 0,
     };
   }
 }

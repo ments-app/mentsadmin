@@ -100,6 +100,7 @@ export async function createStartupJob(jobData: {
   description: string;
   location?: string;
   salary_range?: string;
+  is_unpaid?: boolean;
   job_type?: string;
   requirements?: string;
   deadline?: string;
@@ -120,7 +121,8 @@ export async function createStartupJob(jobData: {
     ...jobData,
     created_by: session.authId,
     startup_id: startupId,
-    is_active: true,
+    is_active: false,
+    approval_status: 'pending',
     visibility: jobData.visibility ?? 'public',
     target_facilitator_ids: jobData.target_facilitator_ids ?? null,
   }).select().single();
@@ -240,7 +242,8 @@ export async function createStartupGig(gigData: {
     ...gigData,
     created_by: session.authId,
     startup_id: startupId,
-    is_active: gigData.is_active ?? true,
+    is_active: false,
+    approval_status: 'pending',
     visibility: gigData.visibility ?? 'public',
     target_facilitator_ids: gigData.target_facilitator_ids ?? null,
   }).select().single();
@@ -301,7 +304,8 @@ export async function createStartupEvent(eventData: {
     ...eventData,
     created_by: session.authId,
     startup_id: startupId,
-    is_active: eventData.is_active ?? true,
+    is_active: false,
+    approval_status: 'pending',
     tags: eventData.tags ?? [],
     is_featured: eventData.is_featured ?? false,
     visibility: eventData.visibility ?? 'public',
@@ -369,7 +373,8 @@ export async function createStartupCompetition(compData: {
     ...compData,
     created_by: session.authId,
     startup_id: startupId,
-    is_active: compData.is_active ?? true,
+    is_active: false,
+    approval_status: 'pending',
     tags: compData.tags ?? [],
     is_featured: compData.is_featured ?? false,
     is_external: compData.is_external ?? false,

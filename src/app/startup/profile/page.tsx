@@ -6,6 +6,7 @@ import {
   FileText, Tag, TrendingUp, Users, Award, Upload, X, ImageIcon,
   MapPin, Globe, Mail, Phone, Calendar, Hash, ExternalLink,
   Pencil, ArrowLeft, Link2, DollarSign, Lightbulb, Target, BarChart2,
+  ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import {
   getMyFullStartupProfile,
@@ -21,6 +22,7 @@ import {
 } from '@/actions/startup-profile';
 import { supabase } from '@/lib/supabase';
 import StepShowcase, { type ShowcaseLink, type ShowcaseSlide, type ShowcaseTextSection } from '@/components/StepShowcase';
+import { Country, State, City } from 'country-state-city';
 
 type Tab = 'identity' | 'content' | 'showcase' | 'market' | 'financials' | 'team' | 'recognition' | 'media';
 type Mode = 'view' | 'edit';
@@ -746,67 +748,378 @@ function InfoCell({ label, value }: { label: string; value: string }) {
   );
 }
 
+// ─── Date Picker ───────────────────────────────────────────────
+
+function DatePickerField({ label, value, onChange }: {
+  label: string;
+  value: string; // YYYY-MM-DD or ''
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [viewDate, setViewDate] = useState<Date>(() => (value ? new Date(value) : new Date()));
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const selected = value ? new Date(value) : undefined;
+  const displayValue = selected
+    ? selected.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '';
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function selectDay(day: number) {
+    const d = new Date(year, month, day);
+    onChange(d.toISOString().slice(0, 10));
+    setOpen(false);
+  }
+
+  function prevMonth() { setViewDate(new Date(year, month - 1, 1)); }
+  function nextMonth() { setViewDate(new Date(year, month + 1, 1)); }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className="relative" ref={ref}>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex w-full items-center justify-between rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm text-foreground outline-none focus:border-primary hover:border-primary/50 transition-colors"
+      >
+        <span className={displayValue ? '' : 'text-muted'}>{displayValue || 'Select date'}</span>
+        <Calendar size={15} className="text-muted shrink-0" />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-72 rounded-xl border border-card-border bg-card-bg p-3 shadow-xl">
+          {/* Header */}
+          <div className="mb-3 flex items-center justify-between">
+            <button type="button" onClick={prevMonth} className="rounded-lg p-1.5 text-muted hover:bg-surface-hover hover:text-foreground transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <span className="text-sm font-semibold text-foreground">{MONTHS[month]} {year}</span>
+            <button type="button" onClick={nextMonth} className="rounded-lg p-1.5 text-muted hover:bg-surface-hover hover:text-foreground transition-colors">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="mb-1 grid grid-cols-7 text-center">
+            {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
+              <span key={d} className="py-1 text-[11px] font-medium text-muted">{d}</span>
+            ))}
+          </div>
+
+          {/* Days */}
+          <div className="grid grid-cols-7 gap-y-0.5 text-center">
+            {cells.map((day, i) => {
+              if (!day) return <span key={i} />;
+              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+              const isSelected = dateStr === value;
+              const isToday = dateStr === todayStr;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => selectDay(day)}
+                  className={`rounded-lg py-1.5 text-sm transition-colors ${
+                    isSelected
+                      ? 'bg-primary text-white font-semibold'
+                      : isToday
+                      ? 'border border-primary text-primary font-medium hover:bg-primary/10'
+                      : 'text-foreground hover:bg-surface-hover'
+                  }`}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+
+          {value && (
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false); }}
+              className="mt-2 w-full rounded-lg py-1.5 text-xs text-muted hover:text-danger transition-colors text-center"
+            >
+              Clear date
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Location Cascade ───────────────────────────────────────────
+
+function LocationCascade({ country, state, city, onChange }: {
+  country: string;
+  state: string;
+  city: string;
+  onChange: (updates: { country?: string; state?: string; city?: string }) => void;
+}) {
+  const allCountries = Country.getAllCountries();
+
+  const selectedCountry = allCountries.find(c => c.name === country || c.isoCode === country) ?? null;
+  const states = selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+  const selectedState = states.find(s => s.name === state || s.isoCode === state) ?? null;
+  const cities = selectedCountry && selectedState
+    ? City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+    : [];
+
+  function SearchableSelect({ label, value, options, onSelect, disabled, placeholder }: {
+    label: string;
+    value: string;
+    options: { label: string; value: string }[];
+    onSelect: (v: string, label: string) => void;
+    disabled?: boolean;
+    placeholder?: string;
+  }) {
+    const [open, setOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const ref = useRef<HTMLDivElement>(null);
+    const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase())).slice(0, 80);
+
+    useEffect(() => {
+      function handleClick(e: MouseEvent) {
+        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      }
+      document.addEventListener('mousedown', handleClick);
+      return () => document.removeEventListener('mousedown', handleClick);
+    }, []);
+
+    return (
+      <div className="relative" ref={ref}>
+        <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => { if (!disabled) { setSearch(''); setOpen(o => !o); } }}
+          className="flex w-full items-center justify-between rounded-lg border border-card-border bg-card-bg px-3 py-2 text-sm outline-none focus:border-primary hover:border-primary/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className={value ? 'text-foreground' : 'text-muted'}>{value || placeholder || 'Select…'}</span>
+          <ChevronDown size={14} className="text-muted shrink-0" />
+        </button>
+
+        {open && (
+          <div className="absolute z-50 mt-1 w-full rounded-xl border border-card-border bg-card-bg shadow-xl">
+            <div className="p-2 border-b border-card-border">
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-full rounded-lg bg-background px-3 py-1.5 text-sm text-foreground outline-none placeholder:text-muted"
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {filtered.length === 0 && (
+                <p className="px-3 py-2 text-sm text-muted">No results</p>
+              )}
+              {filtered.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => { onSelect(opt.value, opt.label); setOpen(false); }}
+                  className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-surface-hover ${
+                    opt.label === value ? 'text-primary font-medium' : 'text-foreground'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <SearchableSelect
+        label="Country"
+        value={country}
+        options={allCountries.map(c => ({ label: c.name, value: c.isoCode }))}
+        onSelect={(_, label) => onChange({ country: label, state: '', city: '' })}
+        placeholder="Select country"
+      />
+      <div className="grid grid-cols-2 gap-4">
+        <SearchableSelect
+          label="State / Province"
+          value={state}
+          options={states.map(s => ({ label: s.name, value: s.isoCode }))}
+          onSelect={(_, label) => onChange({ state: label, city: '' })}
+          disabled={!selectedCountry}
+          placeholder="Select state"
+        />
+        <SearchableSelect
+          label="City"
+          value={city}
+          options={cities.map(c => ({ label: c.name, value: c.name }))}
+          onSelect={(val) => onChange({ city: val })}
+          disabled={!selectedState}
+          placeholder="Select city"
+        />
+      </div>
+    </div>
+  );
+}
+
 // ─── Identity Tab ──────────────────────────────────────────────
+
+function ToggleGroup({ label, value, onChange, options }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string; sub?: string }[];
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-foreground">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map(opt => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+              value === opt.value
+                ? 'border-primary bg-primary/10 text-primary'
+                : 'border-card-border bg-card-bg text-muted hover:border-primary/50 hover:text-foreground'
+            }`}
+          >
+            <span>{opt.label}</span>
+            {opt.sub && <span className="ml-1 text-xs opacity-60">· {opt.sub}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function IdentityTab({ profile, onSave }: { profile: any; onSave: (d: Record<string, unknown>) => void }) {
   const [form, setForm] = useState({
     brand_name:       profile.brand_name || '',
     registered_name:  profile.registered_name || '',
-    tagline:          profile.tagline || '',
     legal_status:     profile.legal_status || '',
     cin:              profile.cin || '',
     stage:            profile.stage || '',
-    founded_date:     profile.founded_date || '',
-    city:             profile.city || '',
-    state:            profile.state || '',
-    country:          profile.country || '',
+    business_model:   profile.business_model || '',
     startup_email:    profile.startup_email || '',
     startup_phone:    profile.startup_phone || '',
-    business_model:   profile.business_model || '',
+    founded_date:     profile.founded_date ? profile.founded_date.slice(0, 10) : '',
+    country:          profile.country || '',
+    state:            profile.state || '',
+    city:             profile.city || '',
+    address_line1:    profile.address_line1 || '',
+    address_line2:    profile.address_line2 || '',
     team_size:        profile.team_size?.toString() || '',
     website:          profile.website || '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const showCin = form.legal_status === 'llp' || form.legal_status === 'pvt_ltd';
+
   async function handleSave() {
     if (!form.brand_name.trim()) { setError('Brand name is required'); return; }
     setSaving(true); setError('');
-    try { onSave({ ...form, founded_date: form.founded_date || null, team_size: form.team_size || null }); }
+    try {
+      onSave({
+        ...form,
+        founded_date: form.founded_date || null,
+        team_size: form.team_size || null,
+        cin: showCin ? form.cin : null,
+      });
+    }
     catch (e) { setError(e instanceof Error ? e.message : 'Save failed'); }
     finally { setSaving(false); }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Brand & Legal */}
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Brand Name *" value={form.brand_name} onChange={v => setForm({ ...form, brand_name: v })} />
-        <Field label="Registered Name" value={form.registered_name} onChange={v => setForm({ ...form, registered_name: v })} />
+        <Field label="Brand Name *" value={form.brand_name} onChange={v => setForm({ ...form, brand_name: v })} placeholder="e.g. Acme Technologies" />
+        <Field label="Registered / Legal Name" value={form.registered_name} onChange={v => setForm({ ...form, registered_name: v })} placeholder="e.g. Acme Technologies Pvt. Ltd." />
       </div>
-      <Field label="Tagline" value={form.tagline} onChange={v => setForm({ ...form, tagline: v })} placeholder="Short catchy tagline" />
+
+      <ToggleGroup
+        label="Legal Structure"
+        value={form.legal_status}
+        onChange={v => setForm({ ...form, legal_status: v })}
+        options={[
+          { value: 'not_registered',    label: 'Not Registered', sub: 'Pre-incorporation' },
+          { value: 'sole_proprietorship', label: 'Sole Prop',    sub: 'Individual' },
+          { value: 'llp',               label: 'LLP',           sub: 'Limited Liability' },
+          { value: 'pvt_ltd',           label: 'Pvt Ltd',       sub: 'Private Limited' },
+        ]}
+      />
+
+      {showCin && (
+        <Field label="CIN / LLPIN" value={form.cin} onChange={v => setForm({ ...form, cin: v })} placeholder="e.g. U72200KA2020PTC123456" />
+      )}
+
+      <ToggleGroup
+        label="Current Stage"
+        value={form.stage}
+        onChange={v => setForm({ ...form, stage: v })}
+        options={STAGES.map(s => ({ value: s.value, label: s.label }))}
+      />
+
+      <ToggleGroup
+        label="Business Model"
+        value={form.business_model}
+        onChange={v => setForm({ ...form, business_model: v })}
+        options={['B2B', 'B2C', 'B2B2C'].map(m => ({ value: m, label: m }))}
+      />
+
+      {/* Contact */}
       <div className="grid grid-cols-2 gap-4">
-        <SelectField label="Legal Status" value={form.legal_status} onChange={v => setForm({ ...form, legal_status: v })} options={LEGAL_STATUSES} />
-        <Field label="CIN / Reg. No." value={form.cin} onChange={v => setForm({ ...form, cin: v })} />
+        <Field label="Startup Email *" type="email" value={form.startup_email} onChange={v => setForm({ ...form, startup_email: v })} placeholder="hello@startup.com" />
+        <Field label="Contact Phone" value={form.startup_phone} onChange={v => setForm({ ...form, startup_phone: v })} placeholder="+91 98765 43210" />
       </div>
+
+      {/* Founded Date + Website */}
       <div className="grid grid-cols-2 gap-4">
-        <SelectField label="Stage" value={form.stage} onChange={v => setForm({ ...form, stage: v })} options={STAGES} />
-        <Field label="Founded Date" type="date" value={form.founded_date} onChange={v => setForm({ ...form, founded_date: v })} />
-      </div>
-      <div className="grid grid-cols-3 gap-4">
-        <Field label="City" value={form.city} onChange={v => setForm({ ...form, city: v })} />
-        <Field label="State" value={form.state} onChange={v => setForm({ ...form, state: v })} />
-        <Field label="Country" value={form.country} onChange={v => setForm({ ...form, country: v })} />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Contact Email" type="email" value={form.startup_email} onChange={v => setForm({ ...form, startup_email: v })} />
-        <Field label="Contact Phone" value={form.startup_phone} onChange={v => setForm({ ...form, startup_phone: v })} />
-      </div>
-      <div className="grid grid-cols-3 gap-4">
-        <SelectField label="Business Model" value={form.business_model} onChange={v => setForm({ ...form, business_model: v })}
-          options={['B2B', 'B2C', 'B2B2C', 'D2C', 'Marketplace', 'SaaS', 'Other'].map(m => ({ value: m, label: m }))} />
-        <Field label="Team Size" value={form.team_size} onChange={v => setForm({ ...form, team_size: v })} placeholder="e.g. 5-10" />
+        <DatePickerField
+          label="Founded Date"
+          value={form.founded_date}
+          onChange={v => setForm({ ...form, founded_date: v })}
+        />
         <Field label="Website" type="url" value={form.website} onChange={v => setForm({ ...form, website: v })} placeholder="https://" />
       </div>
+
+      {/* Location */}
+      <LocationCascade
+        country={form.country}
+        state={form.state}
+        city={form.city}
+        onChange={updates => setForm(f => ({ ...f, ...updates }))}
+      />
+      <Field label="Address Line 1 (Optional)" value={form.address_line1} onChange={v => setForm({ ...form, address_line1: v })} placeholder="Street address, building" />
+      <Field label="Address Line 2 (Optional)" value={form.address_line2} onChange={v => setForm({ ...form, address_line2: v })} placeholder="Apartment, suite, floor" />
+
+      <Field label="Team Size" value={form.team_size} onChange={v => setForm({ ...form, team_size: v })} placeholder="e.g. 5-10" />
+
       {error && <p className="text-xs text-danger">{error}</p>}
       <SaveButton saving={saving} onClick={handleSave} />
     </div>

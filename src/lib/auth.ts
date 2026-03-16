@@ -140,7 +140,7 @@ export async function requireFacilitator(): Promise<SessionUser> {
  * Require a verified Startup.
  */
 export async function requireStartup(): Promise<SessionUser> {
-  return requireRole(['startup']);
+  return requireRole(['startup'], false);
 }
 
 /**

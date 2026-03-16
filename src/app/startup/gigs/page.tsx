@@ -48,11 +48,18 @@ const columns: Column<Gig & { _appCount?: number }>[] = [
   {
     key: 'is_active',
     label: 'Status',
-    render: (item) => (
-      <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
-        {item.is_active ? 'Active' : 'Inactive'}
-      </span>
-    ),
+    render: (item) => {
+      const approval = (item as any).approval_status ?? 'approved';
+      if (approval === 'pending')
+        return <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900 dark:text-amber-300">⏳ Pending Review</span>;
+      if (approval === 'rejected')
+        return <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900 dark:text-red-300">✕ Rejected</span>;
+      return (
+        <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${item.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}>
+          {item.is_active ? 'Active' : 'Inactive'}
+        </span>
+      );
+    },
   },
   {
     key: 'created_at',

@@ -71,6 +71,7 @@ export default function StartupEditJobPage() {
     description: '',
     location: '',
     salary_range: '',
+    is_unpaid: false,
     job_type: 'full-time',
     requirements: '',
     deadline: '',
@@ -101,7 +102,8 @@ export default function StartupEditJobPage() {
         company: data.company,
         description: data.description ?? '',
         location: data.location ?? '',
-        salary_range: data.salary_range ?? '',
+        salary_range: data.salary_range === 'Unpaid' ? '' : (data.salary_range ?? ''),
+        is_unpaid: data.salary_range === 'Unpaid',
         job_type: data.job_type,
         requirements: data.requirements ?? '',
         deadline: data.deadline ? data.deadline.slice(0, 16) : '',
@@ -290,8 +292,29 @@ export default function StartupEditJobPage() {
           <div className="grid grid-cols-2 gap-4">
             <LocationInput label="Location" name="location" value={form.location} onChange={(v) => update('location', v)} placeholder="e.g. Bengaluru, Delhi, Online..." />
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Salary Range</label>
-              <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-sm font-medium text-foreground">Salary Range</label>
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted">
+                  <input
+                    type="checkbox"
+                    checked={form.is_unpaid}
+                    onChange={(e) => {
+                      update('is_unpaid', e.target.checked);
+                      if (e.target.checked) update('salary_range', 'Unpaid');
+                      else update('salary_range', '');
+                    }}
+                    className="h-3.5 w-3.5 rounded accent-primary"
+                  />
+                  Unpaid
+                </label>
+              </div>
+              {form.is_unpaid ? (
+                <div className="flex h-10 items-center rounded-xl border border-card-border bg-card-bg/50 px-3 text-sm text-muted">
+                  Unpaid position
+                </div>
+              ) : (
+                <SalaryInput value={form.salary_range} onChange={(v) => update('salary_range', v)} />
+              )}
             </div>
           </div>
           <DateTimePicker label="Deadline" name="deadline" value={form.deadline} onChange={(v) => update('deadline', v)} />

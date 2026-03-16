@@ -6,6 +6,7 @@ import {
   Users, Rocket, ShieldCheck, ClipboardList, Trophy, MessageSquare,
   Package, Layers, AlertCircle, UserX, Clock, Briefcase, Zap,
   TrendingUp, TrendingDown, Minus, MapPin, Star, BarChart3,
+  UserCheck, ImageIcon, FileText, Wrench, Image,
 } from 'lucide-react';
 import {
   getPlatformOverview,
@@ -22,6 +23,7 @@ import {
   getGeographicDistribution,
   getContentPipelineHealth,
   getPlatformPulse,
+  getProfileCompletionAnalytics,
 } from '@/actions/analytics';
 
 // ─── Micro-components ─────────────────────────────────────────
@@ -247,7 +249,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   const [
     overview, growth, appVelocity, content, funnel,
     facilitatorStats, startupStats, auditLog, topOpps,
-    userSeg, skills, geo, pipeline, pulse,
+    userSeg, skills, geo, pipeline, pulse, profileCompletion,
   ] = await Promise.all([
     getPlatformOverview(),
     getUserGrowthByDay(period),
@@ -263,6 +265,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
     getGeographicDistribution(),
     getContentPipelineHealth(),
     getPlatformPulse(period),
+    getProfileCompletionAnalytics(),
   ]);
 
   const totalContent =
@@ -407,7 +410,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
       {/* ── 5. User Intelligence ── */}
       <div className="card-elevated rounded-xl p-5">
         <h3 className="text-sm font-semibold text-foreground mb-4">User Intelligence</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-5">
           <div className="rounded-xl bg-card-border/20 p-4 text-center">
             <p className="text-xl font-bold text-foreground">{userSeg.total.toLocaleString()}</p>
             <p className="text-[10px] font-medium text-muted mt-1">Total Users</p>
@@ -423,6 +426,10 @@ export default async function AnalyticsPage({ searchParams }: Props) {
           <div className="rounded-xl bg-violet-50 border border-violet-200/50 p-4 text-center dark:bg-violet-900/20 dark:border-violet-800/40">
             <p className="text-xl font-bold text-violet-600">{userSeg.newThisMonth}</p>
             <p className="text-[10px] font-medium text-muted mt-1">New This Month</p>
+          </div>
+          <div className="rounded-xl bg-amber-50 border border-amber-200/50 p-4 text-center dark:bg-amber-900/20 dark:border-amber-800/40">
+            <p className="text-xl font-bold text-amber-600">{userSeg.profileCompleted.toLocaleString()}</p>
+            <p className="text-[10px] font-medium text-muted mt-1">Completed Profile ({userSeg.profileCompletionRate}%)</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -456,6 +463,20 @@ export default async function AnalyticsPage({ searchParams }: Props) {
                   />
                 </div>
               </div>
+              <div>
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-muted font-medium">Profile Completion Rate</span>
+                  <span className={`font-bold ${userSeg.profileCompletionRate >= 50 ? 'text-amber-600' : 'text-muted'}`}>
+                    {userSeg.profileCompletionRate}%
+                  </span>
+                </div>
+                <div className="h-2 bg-card-border/40 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-amber-400 rounded-full transition-all"
+                    style={{ width: `${userSeg.profileCompletionRate}%` }}
+                  />
+                </div>
+              </div>
               <div className="pt-1">
                 <p className="text-xs text-muted">
                   <span className="font-bold text-foreground">{userSeg.suspended}</span> suspended ·&nbsp;
@@ -464,11 +485,148 @@ export default async function AnalyticsPage({ searchParams }: Props) {
                   </span> unverified ·&nbsp;
                   <span className="font-bold text-foreground">
                     {funnel.unique_applicants}
-                  </span> have applied
+                  </span> have applied ·&nbsp;
+                  <span className="font-bold text-foreground">
+                    {userSeg.total - userSeg.profileCompleted}
+                  </span> incomplete profile
                 </p>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── 5b. Profile Completion Deep Analytics ── */}
+      <div className="card-elevated rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
+            <UserCheck size={15} className="text-amber-600" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Profile Completion Analytics</h3>
+            <p className="text-[10px] text-muted">Based on: name · bio · avatar · skills (4 key fields)</p>
+          </div>
+          <div className="ml-auto flex gap-3 text-right">
+            <div>
+              <p className="text-lg font-bold text-amber-600">{profileCompletion.tiers.full.toLocaleString()}</p>
+              <p className="text-[10px] text-muted">Fully Complete</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-foreground">{profileCompletion.tiers.empty.toLocaleString()}</p>
+              <p className="text-[10px] text-muted">Empty Profiles</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-emerald-600">{profileCompletion.completedThisMonth}</p>
+              <p className="text-[10px] text-muted">Completed (30d)</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-blue-600">{profileCompletion.completedThisWeek}</p>
+              <p className="text-[10px] text-muted">Completed (7d)</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* Completion Tiers */}
+          <div>
+            <p className="text-xs font-semibold text-muted mb-3 uppercase tracking-wide">Completion Tiers</p>
+            <div className="space-y-2.5">
+              {[
+                { label: '100% — All 4 fields', count: profileCompletion.tiers.full, rate: profileCompletion.tierRates.full, color: 'bg-emerald-500', textColor: 'text-emerald-600' },
+                { label: '75% — 3 of 4 fields', count: profileCompletion.tiers.good, rate: profileCompletion.tierRates.good, color: 'bg-blue-500', textColor: 'text-blue-600' },
+                { label: '50% — 2 of 4 fields', count: profileCompletion.tiers.partial, rate: profileCompletion.tierRates.partial, color: 'bg-amber-400', textColor: 'text-amber-600' },
+                { label: '25% — 1 of 4 fields', count: profileCompletion.tiers.minimal, rate: profileCompletion.tierRates.minimal, color: 'bg-orange-400', textColor: 'text-orange-600' },
+                { label: '0% — No fields filled', count: profileCompletion.tiers.empty, rate: profileCompletion.tierRates.empty, color: 'bg-red-400', textColor: 'text-red-600' },
+              ].map((tier) => (
+                <div key={tier.label}>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-foreground font-medium">{tier.label}</span>
+                    <span className={`font-bold ${tier.textColor}`}>{tier.count} <span className="text-muted font-normal">({tier.rate}%)</span></span>
+                  </div>
+                  <div className="h-2 bg-card-border/40 rounded-full overflow-hidden">
+                    <div className={`h-full ${tier.color} rounded-full transition-all`} style={{ width: `${tier.rate}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Field-by-Field Fill Rate */}
+          <div>
+            <p className="text-xs font-semibold text-muted mb-3 uppercase tracking-wide">Field Fill Rates</p>
+            <div className="space-y-2.5">
+              {[
+                { label: 'Full Name', count: profileCompletion.fields.name, rate: profileCompletion.fieldRates.name, icon: FileText },
+                { label: 'Bio / About', count: profileCompletion.fields.bio, rate: profileCompletion.fieldRates.bio, icon: FileText },
+                { label: 'Profile Avatar', count: profileCompletion.fields.avatar, rate: profileCompletion.fieldRates.avatar, icon: ImageIcon },
+                { label: 'Skills', count: profileCompletion.fields.skills, rate: profileCompletion.fieldRates.skills, icon: Wrench },
+                { label: 'Banner Image', count: profileCompletion.fields.banner, rate: profileCompletion.fieldRates.banner, icon: Image },
+              ].map((field) => {
+                const Icon = field.icon;
+                const color = field.rate >= 70 ? 'bg-emerald-500' : field.rate >= 40 ? 'bg-amber-400' : 'bg-red-400';
+                const textColor = field.rate >= 70 ? 'text-emerald-600' : field.rate >= 40 ? 'text-amber-600' : 'text-red-600';
+                return (
+                  <div key={field.label}>
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="flex items-center gap-1.5 text-foreground font-medium">
+                        <Icon size={11} className="text-muted" />
+                        {field.label}
+                      </span>
+                      <span className={`font-bold ${textColor}`}>{field.rate}% <span className="text-muted font-normal">({field.count.toLocaleString()})</span></span>
+                    </div>
+                    <div className="h-2 bg-card-border/40 rounded-full overflow-hidden">
+                      <div className={`h-full ${color} rounded-full transition-all`} style={{ width: `${field.rate}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-muted mt-3">
+              Most skipped field:{' '}
+              <span className="font-semibold text-foreground">
+                {Object.entries(profileCompletion.fieldRates).sort(([,a],[,b]) => a - b)[0]?.[0] ?? '—'}
+              </span>
+            </p>
+          </div>
+
+          {/* By User Type */}
+          <div>
+            <p className="text-xs font-semibold text-muted mb-3 uppercase tracking-wide">Completion by User Type</p>
+            <div className="space-y-3">
+              {profileCompletion.byUserType.map((ut) => (
+                <div key={ut.userType}>
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-foreground font-medium capitalize">{ut.userType}</span>
+                    <span className="text-muted">
+                      <span className={`font-bold ${ut.rate >= 50 ? 'text-emerald-600' : 'text-amber-600'}`}>{ut.rate}%</span>
+                      {' '}({ut.completed}/{ut.total})
+                    </span>
+                  </div>
+                  <div className="h-2 bg-card-border/40 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${ut.rate >= 50 ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                      style={{ width: `${ut.rate}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              {profileCompletion.byUserType.length === 0 && (
+                <p className="text-xs text-muted">No data</p>
+              )}
+            </div>
+            <div className="mt-4 pt-3 border-t border-card-border grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-card-border/20 p-3 text-center">
+                <p className="text-sm font-bold text-foreground">{profileCompletion.total - profileCompletion.tiers.full - profileCompletion.tiers.empty}</p>
+                <p className="text-[10px] text-muted">Partially Filled</p>
+              </div>
+              <div className="rounded-lg bg-red-50 border border-red-200/40 p-3 text-center dark:bg-red-900/10 dark:border-red-800/30">
+                <p className="text-sm font-bold text-red-600">{profileCompletion.tiers.empty}</p>
+                <p className="text-[10px] text-muted">Never Started</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

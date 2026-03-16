@@ -31,6 +31,7 @@ import {
   Sparkles,
   UserCog,
   Download,
+  ClipboardCheck,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ const SUPERADMIN_SECTIONS: NavSection[] = [
   {
     title: 'MODERATION',
     items: [
+      { href: '/dashboard/approvals', label: 'Approvals', icon: ClipboardCheck },
       { href: '/dashboard/applications', label: 'Applications', icon: Users },
       { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
       { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },

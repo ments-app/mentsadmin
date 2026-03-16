@@ -71,9 +71,10 @@ export async function updateMyStartupProfile(updates: Record<string, unknown>) {
 
   if (!existing) throw new Error('No startup profile found');
 
+  const { tagline: _tagline, ...safeUpdates } = updates as Record<string, unknown> & { tagline?: unknown };
   const payload = {
-    ...updates,
-    founded_date: updates.founded_date === '' ? null : updates.founded_date,
+    ...safeUpdates,
+    founded_date: safeUpdates.founded_date === '' ? null : safeUpdates.founded_date,
     updated_at: new Date().toISOString(),
   };
 
