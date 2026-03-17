@@ -267,6 +267,21 @@ export async function findUserByEmail(email: string): Promise<SimpleUser | null>
   return data || null;
 }
 
+export async function searchUsers(query: string): Promise<SimpleUser[]> {
+  await requireSuperAdmin();
+  const supabase = createAdminClient();
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+
+  const { data } = await supabase
+    .from('users')
+    .select('id, username, full_name, avatar_url, email')
+    .or(`full_name.ilike.%${q}%,email.ilike.%${q}%,username.ilike.%${q}%`)
+    .limit(8);
+
+  return data ?? [];
+}
+
 export async function getStartupByOwnerId(ownerId: string): Promise<string | null> {
   await requireSuperAdmin();
   const supabase = createAdminClient();
@@ -387,6 +402,115 @@ export async function upsertStartupAwards(
     awards.map((a) => ({ startup_id: startupId, award_name: a.award_name, year: a.year || null }))
   );
   if (error) throw new Error(error.message);
+}
+
+// ─── Transfer startup ownership ──────────────────────────────
+
+export async function transferStartupOwnership(startupId: string, newOwnerEmail: string): Promise<{ success: boolean; message: string }> {
+  const session = await requireSuperAdmin();
+  const supabase = createAdminClient();
+
+  // 1. Verify startup exists
+  const { data: startup, error: startupErr } = await supabase
+    .from('startup_profiles')
+    .select('id, brand_name, owner_id')
+    .eq('id', startupId)
+    .single();
+
+  if (startupErr || !startup) throw new Error('Startup not found');
+
+  // 2. Find new owner by email
+  const { data: newOwner, error: userErr } = await supabase
+    .from('users')
+    .select('id, email, full_name, username')
+    .eq('email', newOwnerEmail.toLowerCase().trim())
+    .single();
+
+  if (userErr || !newOwner) throw new Error('No Ments user found with that email');
+
+  // 3. Check new owner doesn't already own a startup
+  const { data: existingStartup } = await supabase
+    .from('startup_profiles')
+    .select('id, brand_name')
+    .eq('owner_id', newOwner.id)
+    .maybeSingle();
+
+  if (existingStartup) {
+    throw new Error(`This user already owns a startup: "${existingStartup.brand_name}"`);
+  }
+
+  // 4. Prevent transferring to current owner
+  if (startup.owner_id === newOwner.id) {
+    throw new Error('This user is already the owner of this startup');
+  }
+
+  const oldOwnerId = startup.owner_id;
+
+  // 5. Transfer ownership
+  const { error: updateErr } = await supabase
+    .from('startup_profiles')
+    .update({ owner_id: newOwner.id, updated_at: new Date().toISOString() })
+    .eq('id', startupId);
+
+  if (updateErr) throw new Error(updateErr.message);
+
+  // 6. Update admin_profiles for new owner: ensure they have startup role
+  await supabase.from('admin_profiles').upsert({
+    id: newOwner.id,
+    role: 'startup',
+    verification_status: 'approved',
+    email: newOwner.email,
+    display_name: newOwner.full_name || newOwner.username || newOwner.email,
+  }, { onConflict: 'id' });
+
+  // 7. Update content ownership (jobs, gigs, events, competitions)
+  await Promise.all([
+    supabase.from('jobs').update({ created_by: newOwner.id }).eq('startup_id', startupId),
+    supabase.from('gigs').update({ created_by: newOwner.id }).eq('startup_id', startupId),
+    supabase.from('events').update({ created_by: newOwner.id }).eq('startup_id', startupId),
+    supabase.from('competitions').update({ created_by: newOwner.id }).eq('startup_id', startupId),
+  ]);
+
+  revalidatePath('/dashboard/startups');
+  revalidatePath(`/dashboard/startups/${startupId}`);
+  revalidatePath('/dashboard/transfer');
+
+  return {
+    success: true,
+    message: `"${startup.brand_name}" transferred to ${newOwner.full_name || newOwner.email}`,
+  };
+}
+
+export async function searchStartupsForTransfer(query: string): Promise<Array<{ id: string; brand_name: string; owner_email: string; owner_name: string }>> {
+  await requireSuperAdmin();
+  const supabase = createAdminClient();
+
+  const { data: startups } = await supabase
+    .from('startup_profiles')
+    .select('id, brand_name, owner_id')
+    .ilike('brand_name', `%${query}%`)
+    .order('brand_name')
+    .limit(10);
+
+  if (!startups || startups.length === 0) return [];
+
+  const ownerIds = [...new Set(startups.map((s: { owner_id: string }) => s.owner_id))];
+  const { data: users } = await supabase
+    .from('users')
+    .select('id, email, full_name')
+    .in('id', ownerIds);
+
+  const userMap = new Map((users ?? []).map((u: { id: string; email: string; full_name: string }) => [u.id, u]));
+
+  return startups.map((s: { id: string; brand_name: string; owner_id: string }) => {
+    const owner = userMap.get(s.owner_id);
+    return {
+      id: s.id,
+      brand_name: s.brand_name,
+      owner_email: owner?.email ?? 'Unknown',
+      owner_name: owner?.full_name ?? 'Unknown',
+    };
+  });
 }
 
 export type StartupRankingEntry = {

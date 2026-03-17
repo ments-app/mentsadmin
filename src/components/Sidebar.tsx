@@ -32,6 +32,7 @@ import {
   UserCog,
   Download,
   ClipboardCheck,
+  ArrowRightLeft,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -64,6 +65,7 @@ const SUPERADMIN_SECTIONS: NavSection[] = [
       { href: '/dashboard/facilitators', label: 'Facilitators', icon: ShieldCheck },
       { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
       { href: '/dashboard/investors', label: 'Investors', icon: BadgeDollarSign },
+      { href: '/dashboard/transfer', label: 'Transfer Startup', icon: ArrowRightLeft },
     ],
   },
   {
