@@ -6,7 +6,9 @@ import FormField from '@/components/FormField';
 import DateTimePicker from '@/components/DateTimePicker';
 import AiFieldButton from '@/components/AiFieldButton';
 import { createStartupJob, getMyApprovedFacilitators } from '@/actions/startup-portal';
-import { Globe, Lock } from 'lucide-react';
+import { getStartupProfileCompleteness } from '@/actions/startup-profile';
+import { Globe, Lock, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
 import SkillsInput from '@/components/SkillsInput';
 import SalaryInput from '@/components/SalaryInput';
 import LocationInput from '@/components/LocationInput';
@@ -60,6 +62,8 @@ export default function StartupNewJobPage() {
   const [fetchingLogo, setFetchingLogo] = useState(false);
   const [facilitators, setFacilitators] = useState<Facilitator[]>([]);
   const [loadingFacilitators, setLoadingFacilitators] = useState(false);
+  const [profileCheck, setProfileCheck] = useState<{ percentage: number; filled: number; total: number } | null>(null);
+  const [checkingProfile, setCheckingProfile] = useState(true);
   const [form, setForm] = useState({
     title: '',
     company: '',
@@ -84,6 +88,10 @@ export default function StartupNewJobPage() {
   });
 
   useEffect(() => {
+    getStartupProfileCompleteness().then((data) => {
+      setProfileCheck(data);
+      setCheckingProfile(false);
+    });
     setLoadingFacilitators(true);
     getMyApprovedFacilitators().then((data) => {
       setFacilitators(data);
@@ -124,6 +132,44 @@ export default function StartupNewJobPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingProfile) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-card-border border-t-primary" />
+      </div>
+    );
+  }
+
+  if (profileCheck && profileCheck.percentage < 50) {
+    return (
+      <div className="animate-fade-in mx-auto max-w-lg mt-12">
+        <div className="card-elevated rounded-xl p-8 text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+            <AlertTriangle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">Complete Your Profile First</h2>
+          <p className="text-sm text-muted leading-relaxed">
+            Your startup profile is <span className="font-semibold text-foreground">{profileCheck.percentage}%</span> complete.
+            You need at least <span className="font-semibold text-foreground">50%</span> completion before you can post jobs.
+          </p>
+          <div className="w-full bg-card-border rounded-full h-2.5 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-amber-500 transition-all"
+              style={{ width: `${profileCheck.percentage}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted">{profileCheck.filled} of {profileCheck.total} fields completed</p>
+          <Link
+            href="/startup/profile"
+            className="btn-primary inline-block mt-2"
+          >
+            Complete Profile
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

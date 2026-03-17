@@ -4,6 +4,16 @@ import { createAdminClient } from '@/lib/supabase-server';
 import { requireStartup } from '@/lib/auth';
 import { writeAuditLog } from './rbac';
 import { revalidatePath } from 'next/cache';
+import { getStartupProfileCompleteness } from './startup-profile';
+
+const MINIMUM_PROFILE_PERCENT = 50;
+
+async function enforceProfileCompleteness() {
+  const { percentage } = await getStartupProfileCompleteness();
+  if (percentage < MINIMUM_PROFILE_PERCENT) {
+    throw new Error(`Your startup profile is only ${percentage}% complete. Please complete at least ${MINIMUM_PROFILE_PERCENT}% of your profile before posting jobs or gigs.`);
+  }
+}
 
 // ─── Startup: Get own startup profile ────────────────────────
 
@@ -113,6 +123,7 @@ export async function createStartupJob(jobData: {
   target_facilitator_ids?: string[] | null;
 }) {
   const session = await requireStartup();
+  await enforceProfileCompleteness();
   const admin = createAdminClient();
   const startupId = await getStartupProfileForUser(session.authId);
   if (!startupId) throw new Error('No startup profile found');
@@ -234,6 +245,7 @@ export async function createStartupGig(gigData: {
   target_facilitator_ids?: string[] | null;
 }) {
   const session = await requireStartup();
+  await enforceProfileCompleteness();
   const admin = createAdminClient();
   const startupId = await getStartupProfileForUser(session.authId);
   if (!startupId) throw new Error('No startup profile found');

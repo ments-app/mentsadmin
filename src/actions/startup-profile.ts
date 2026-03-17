@@ -290,6 +290,48 @@ export async function upsertMyStartupSlides(
   if (error) throw new Error(error.message);
 }
 
+// ─── Profile completeness ────────────────────────────────────
+
+export async function getStartupProfileCompleteness(): Promise<{ percentage: number; filled: number; total: number }> {
+  const session = await requireStartup();
+  const admin = createAdminClient();
+
+  const { data } = await admin
+    .from('startup_profiles')
+    .select('brand_name, stage, description, logo_url, banner_url, city, country, startup_email, startup_phone, website, categories, keywords, problem_statement, solution_statement, business_model, team_size, legal_status, founded_date, elevator_pitch, target_audience')
+    .eq('owner_id', session.authId)
+    .maybeSingle();
+
+  if (!data) return { percentage: 0, filled: 0, total: 20 };
+
+  const checks = [
+    !!data.brand_name,
+    !!data.stage,
+    !!data.description,
+    !!data.logo_url,
+    !!data.banner_url,
+    !!data.city,
+    !!data.country,
+    !!data.startup_email,
+    !!data.startup_phone,
+    !!data.website,
+    Array.isArray(data.categories) && data.categories.length > 0,
+    Array.isArray(data.keywords) && data.keywords.length > 0,
+    !!data.problem_statement,
+    !!data.solution_statement,
+    !!data.business_model,
+    !!data.team_size,
+    !!data.legal_status && data.legal_status !== 'not_registered',
+    !!data.founded_date,
+    !!data.elevator_pitch,
+    !!data.target_audience,
+  ];
+
+  const filled = checks.filter(Boolean).length;
+  const total = checks.length;
+  return { percentage: Math.round((filled / total) * 100), filled, total };
+}
+
 // ─── Browse facilitators (for startup portal) ─────────────────
 
 export async function getApprovedFacilitators() {
