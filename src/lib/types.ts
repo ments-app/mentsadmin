@@ -20,6 +20,7 @@ export interface Competition {
   team_size_min: number;
   team_size_max: number;
   eligibility_criteria: string | null;
+  brochure_url: string | null;
 }
 
 export interface CompetitionRound {
@@ -157,6 +158,7 @@ export interface Event {
   is_featured: boolean;
   organizer_name: string | null;
   category: 'event' | 'meetup' | 'workshop' | 'conference' | 'seminar';
+  brochure_url: string | null;
   // Startup Investment Arena
   entry_type: 'startup' | 'project' | null;
   arena_enabled: boolean;

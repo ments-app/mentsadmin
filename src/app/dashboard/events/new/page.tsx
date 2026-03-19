@@ -42,6 +42,7 @@ export default function NewEventPage() {
     event_date: '',
     location: '',
     event_url: '',
+    brochure_url: '',
     banner_image_url: '',
     event_type: 'online',
     is_active: true,
@@ -129,6 +130,9 @@ export default function NewEventPage() {
 
           <FormField type="url" label="Event Registration URL" name="event_url" value={form.event_url}
             onChange={(v) => update('event_url', v)} placeholder="https://..." />
+
+          <FormField type="url" label="Brochure URL" name="brochure_url" value={form.brochure_url}
+            onChange={(v) => update('brochure_url', v)} placeholder="https://drive.google.com/... or any downloadable link" />
 
           <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url}
             onChange={(v) => update('banner_image_url', v)} />

@@ -42,6 +42,7 @@ export async function createEvent(formData: {
   is_featured: boolean;
   organizer_name: string;
   category: string;
+  brochure_url?: string;
   // Arena fields
   entry_type?: string | null;
   arena_enabled?: boolean;
@@ -63,6 +64,7 @@ export async function createEvent(formData: {
     is_featured: formData.is_featured,
     organizer_name: formData.organizer_name || null,
     category: formData.category || 'event',
+    brochure_url: formData.brochure_url || null,
     entry_type: formData.entry_type || null,
     arena_enabled: formData.arena_enabled ?? false,
     virtual_fund_amount: formData.virtual_fund_amount ?? 1000000,
@@ -91,6 +93,7 @@ export async function updateEvent(
     is_featured: boolean;
     organizer_name: string;
     category: string;
+    brochure_url?: string;
     visibility?: string;
     target_facilitator_ids?: string[] | null;
     // Arena fields
@@ -117,6 +120,7 @@ export async function updateEvent(
       is_featured: formData.is_featured,
       organizer_name: formData.organizer_name || null,
       category: formData.category || 'event',
+      brochure_url: formData.brochure_url || null,
       ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
       target_facilitator_ids: formData.target_facilitator_ids ?? null,
       entry_type: formData.entry_type || null,

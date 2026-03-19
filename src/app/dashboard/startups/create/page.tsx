@@ -91,7 +91,7 @@ export default function CreateStartupPage() {
         startup_email: form.startup_email || undefined,
         startup_phone: form.startup_phone || undefined,
       });
-      router.push(`/dashboard/startups/${id}/edit`);
+      router.push(`/dashboard/startups/${id}/edit?setup=true`);
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Creation failed');
     } finally {
@@ -186,7 +186,7 @@ export default function CreateStartupPage() {
               className="btn-primary gap-2"
             >
               {creating ? <Loader2 size={15} className="animate-spin" /> : <Building2 size={15} />}
-              Create & Edit Full Profile
+              Create & Set Up Profile
             </button>
           </div>
         </form>

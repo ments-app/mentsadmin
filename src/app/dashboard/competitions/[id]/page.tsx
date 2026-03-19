@@ -58,6 +58,7 @@ export default function EditCompetitionPage() {
     team_size_min: 1,
     team_size_max: 4,
     eligibility_criteria: '',
+    brochure_url: '',
   });
 
   const [rounds, setRounds] = useState<Round[]>([]);
@@ -87,6 +88,7 @@ export default function EditCompetitionPage() {
         team_size_min: comp.team_size_min ?? 1,
         team_size_max: comp.team_size_max ?? 4,
         eligibility_criteria: comp.eligibility_criteria ?? '',
+        brochure_url: comp.brochure_url ?? '',
       });
       setRounds(roundData.map((r, idx) => ({
         id: r.id,
@@ -247,6 +249,9 @@ export default function EditCompetitionPage() {
           </div>
           <ImageUpload label="Banner Image" name="banner_image_url" value={form.banner_image_url}
             onChange={(v) => update('banner_image_url', v)} />
+
+          <FormField type="url" label="Brochure URL" name="brochure_url" value={form.brochure_url}
+            onChange={(v) => update('brochure_url', v)} placeholder="https://drive.google.com/... or any downloadable link" />
         </section>
 
         {/* Participation */}

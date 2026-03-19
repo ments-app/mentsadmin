@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Loader2,
@@ -17,6 +17,8 @@ import {
   Save,
   ArrowLeft,
   CheckCircle2,
+  ArrowRight,
+  Check,
 } from 'lucide-react';
 import {
   getFullStartupProfile,
@@ -72,12 +74,45 @@ const ROUND_TYPES = [
 
 const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'SGD', 'AED'];
 
-export default function StartupEditPage() {
+const TAB_ORDER: Tab[] = TABS.map((t) => t.id);
+
+export default function StartupEditPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="mx-auto max-w-3xl animate-fade-in">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-card-border/50" />
+        <div className="mt-6 space-y-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-12 animate-pulse rounded-lg bg-card-border/50" />
+          ))}
+        </div>
+      </div>
+    }>
+      <StartupEditPage />
+    </Suspense>
+  );
+}
+
+function StartupEditPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const isSetup = searchParams.get('setup') === 'true';
   const [profile, setProfile] = useState<FullStartupProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('identity');
   const [saved, setSaved] = useState<Tab | null>(null);
+  const [completedTabs, setCompletedTabs] = useState<Set<Tab>>(new Set());
+
+  function goNextTab() {
+    const currentIndex = TAB_ORDER.indexOf(activeTab);
+    if (currentIndex < TAB_ORDER.length - 1) {
+      setActiveTab(TAB_ORDER[currentIndex + 1]);
+    }
+  }
+
+  function markCompleted(tab: Tab) {
+    setCompletedTabs((prev) => new Set(prev).add(tab));
+  }
 
   useEffect(() => {
     getFullStartupProfile(id).then((data) => {
@@ -121,22 +156,30 @@ export default function StartupEditPage() {
       {/* Header */}
       <div className="mb-8 flex items-center gap-3">
         <Link
-          href={`/dashboard/startups/${id}`}
+          href={isSetup ? '/dashboard/startups' : `/dashboard/startups/${id}`}
           className="btn-ghost !p-2 !rounded-xl"
         >
           <ArrowLeft size={18} />
         </Link>
         <div className="flex-1">
           <h1 className="text-2xl font-semibold text-foreground">{profile.brand_name}</h1>
-          <p className="mt-0.5 text-sm text-muted">Edit startup profile</p>
+          <p className="mt-0.5 text-sm text-muted">
+            {isSetup ? 'Set up the startup profile — fill in each section and click Next' : 'Edit startup profile'}
+          </p>
         </div>
-        {profile.owner && (
+        {isSetup ? (
+          <div className="text-right">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {completedTabs.size} / {TAB_ORDER.length} completed
+            </span>
+          </div>
+        ) : profile.owner ? (
           <div className="text-right">
             <p className="text-xs font-medium uppercase tracking-wide text-muted">Owner</p>
             <p className="text-sm font-medium text-foreground">{profile.owner.full_name}</p>
             <p className="text-xs text-muted">{profile.owner.email}</p>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Tabs */}
@@ -151,7 +194,11 @@ export default function StartupEditPage() {
                 : 'text-muted hover:text-foreground'
             }`}
           >
-            {tab.icon}
+            {isSetup && completedTabs.has(tab.id) ? (
+              <Check size={15} className="text-emerald-500" />
+            ) : (
+              tab.icon
+            )}
             {tab.label}
             {saved === tab.id && <CheckCircle2 size={12} className="text-emerald-500 animate-fade-in" />}
             {activeTab === tab.id && (
@@ -164,36 +211,45 @@ export default function StartupEditPage() {
       {/* Tab Content */}
       <div className="card-elevated rounded-xl p-6">
         {activeTab === 'identity' && (
-          <IdentityTab profile={profile} onSave={(data) => {
+          <IdentityTab profile={profile} isSetup={isSetup} onSave={(data, andNext) => {
             updateStartupCoreProfile(id, data).then(() => {
               setProfile((p) => p ? { ...p, ...data } : p);
               showSaved('identity');
+              markCompleted('identity');
+              if (andNext) goNextTab();
             });
           }} />
         )}
         {activeTab === 'content' && (
-          <ContentTab profile={profile} onSave={(data) => {
+          <ContentTab profile={profile} isSetup={isSetup} onSave={(data, andNext) => {
             updateStartupCoreProfile(id, data).then(() => {
               setProfile((p) => p ? { ...p, ...data } : p);
               showSaved('content');
+              markCompleted('content');
+              if (andNext) goNextTab();
             });
           }} />
         )}
         {activeTab === 'market' && (
-          <MarketTab profile={profile} onSave={(data) => {
+          <MarketTab profile={profile} isSetup={isSetup} onSave={(data, andNext) => {
             updateStartupCoreProfile(id, data).then(() => {
               setProfile((p) => p ? { ...p, ...data } : p);
               showSaved('market');
+              markCompleted('market');
+              if (andNext) goNextTab();
             });
           }} />
         )}
         {activeTab === 'financials' && (
           <FinancialsTab
             profile={profile}
-            onSaveMeta={(data) => {
+            isSetup={isSetup}
+            onSaveMeta={(data, andNext) => {
               updateStartupCoreProfile(id, data).then(() => {
                 setProfile((p) => p ? { ...p, ...data } : p);
                 showSaved('financials');
+                markCompleted('financials');
+                if (andNext) goNextTab();
               });
             }}
             onSaveRounds={(rounds) => {
@@ -207,10 +263,13 @@ export default function StartupEditPage() {
         {activeTab === 'team' && (
           <TeamTab
             founders={profile.founders}
-            onSave={(founders) => {
+            isSetup={isSetup}
+            onSave={(founders, andNext) => {
               upsertStartupFounders(id, founders).then(() => {
                 setProfile((p) => p ? { ...p, founders: founders as StartupFounder[] } : p);
                 showSaved('team');
+                markCompleted('team');
+                if (andNext) goNextTab();
               });
             }}
           />
@@ -219,6 +278,7 @@ export default function StartupEditPage() {
           <RecognitionTab
             incubators={profile.incubators}
             awards={profile.awards}
+            isSetup={isSetup}
             onSaveIncubators={(items) => {
               upsertStartupIncubators(id, items).then(() => {
                 setProfile((p) => p ? { ...p, incubators: items as StartupIncubator[] } : p);
@@ -231,13 +291,22 @@ export default function StartupEditPage() {
                 showSaved('recognition');
               });
             }}
+            onComplete={(andNext) => {
+              markCompleted('recognition');
+              if (andNext) goNextTab();
+            }}
           />
         )}
         {activeTab === 'publishing' && (
-          <PublishingTab profile={profile} onSave={(data) => {
+          <PublishingTab profile={profile} isSetup={isSetup} startupId={id} onSave={(data, andNext) => {
             updateStartupCoreProfile(id, data).then(() => {
               setProfile((p) => p ? { ...p, ...data } : p);
               showSaved('publishing');
+              markCompleted('publishing');
+              if (andNext) {
+                // Last tab — go to startup detail page
+                window.location.href = `/dashboard/startups/${id}`;
+              }
             });
           }} />
         )}
@@ -248,7 +317,7 @@ export default function StartupEditPage() {
 
 // ─── Identity Tab ──────────────────────────────────────────────
 
-function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (d: Record<string, unknown>) => void }) {
+function IdentityTab({ profile, isSetup, onSave }: { profile: FullStartupProfile; isSetup?: boolean; onSave: (d: Record<string, unknown>, andNext?: boolean) => void }) {
   const [form, setForm] = useState({
     brand_name: profile.brand_name || '',
     registered_name: profile.registered_name || '',
@@ -270,7 +339,7 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSave() {
+  async function handleSave(andNext?: boolean) {
     if (!form.brand_name.trim()) { setError('Brand name is required'); return; }
     setSaving(true); setError('');
     try {
@@ -278,7 +347,7 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
         ...form,
         founded_date: form.founded_date || null,
         team_size: form.team_size || null,
-      });
+      }, andNext);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
@@ -322,8 +391,9 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
         <Field label="Website" type="url" value={form.website} onChange={(v) => setForm({ ...form, website: v })} placeholder="https://" />
       </div>
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/50 p-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
-      <div className="border-t border-card-border pt-5">
-        <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5 flex gap-3">
+        <SaveButton saving={saving} onClick={() => handleSave(false)} />
+        {isSetup && <SaveNextButton saving={saving} onClick={() => handleSave(true)} />}
       </div>
     </div>
   );
@@ -331,7 +401,7 @@ function IdentityTab({ profile, onSave }: { profile: FullStartupProfile; onSave:
 
 // ─── Content Tab ───────────────────────────────────────────────
 
-function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (d: Record<string, unknown>) => void }) {
+function ContentTab({ profile, isSetup, onSave }: { profile: FullStartupProfile; isSetup?: boolean; onSave: (d: Record<string, unknown>, andNext?: boolean) => void }) {
   const [form, setForm] = useState({
     description: profile.description || '',
     elevator_pitch: profile.elevator_pitch || '',
@@ -342,7 +412,7 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleSave() {
+  async function handleSave(andNext?: boolean) {
     setSaving(true); setError('');
     try {
       onSave({
@@ -352,7 +422,7 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
         target_audience: form.target_audience || null,
         traction_metrics: form.traction_metrics || null,
         key_strengths: form.key_strengths || null,
-      });
+      }, andNext);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Save failed');
     } finally {
@@ -399,8 +469,9 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
         rows={3}
       />
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-950/50 p-3 text-xs text-red-600 dark:text-red-400">{error}</p>}
-      <div className="border-t border-card-border pt-5">
-        <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5 flex gap-3">
+        <SaveButton saving={saving} onClick={() => handleSave(false)} />
+        {isSetup && <SaveNextButton saving={saving} onClick={() => handleSave(true)} />}
       </div>
     </div>
   );
@@ -408,7 +479,7 @@ function ContentTab({ profile, onSave }: { profile: FullStartupProfile; onSave: 
 
 // ─── Market Tab ────────────────────────────────────────────────
 
-function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (d: Record<string, unknown>) => void }) {
+function MarketTab({ profile, isSetup, onSave }: { profile: FullStartupProfile; isSetup?: boolean; onSave: (d: Record<string, unknown>, andNext?: boolean) => void }) {
   const [categories, setCategories] = useState<string[]>(profile.categories || []);
   const [keywords, setKeywords] = useState<string[]>(profile.keywords || []);
   const [catInput, setCatInput] = useState('');
@@ -425,9 +496,9 @@ function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (
     setList(list.filter((t) => t !== tag));
   }
 
-  async function handleSave() {
+  async function handleSave(andNext?: boolean) {
     setSaving(true);
-    try { onSave({ categories, keywords }); }
+    try { onSave({ categories, keywords }, andNext); }
     finally { setSaving(false); }
   }
 
@@ -473,8 +544,9 @@ function MarketTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (
           placeholder="Add keyword (press Enter)"
         />
       </div>
-      <div className="border-t border-card-border pt-5">
-        <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5 flex gap-3">
+        <SaveButton saving={saving} onClick={() => handleSave(false)} />
+        {isSetup && <SaveNextButton saving={saving} onClick={() => handleSave(true)} />}
       </div>
     </div>
   );
@@ -486,11 +558,13 @@ type RoundDraft = { investor: string; amount: string; round_type: string; round_
 
 function FinancialsTab({
   profile,
+  isSetup,
   onSaveMeta,
   onSaveRounds,
 }: {
   profile: FullStartupProfile;
-  onSaveMeta: (d: Record<string, unknown>) => void;
+  isSetup?: boolean;
+  onSaveMeta: (d: Record<string, unknown>, andNext?: boolean) => void;
   onSaveRounds: (rounds: RoundDraft[]) => void;
 }) {
   const fp = profile as FullStartupProfile;
@@ -549,7 +623,7 @@ function FinancialsTab({
             label="Actively Raising"
           />
         </div>
-        <div className="mt-5">
+        <div className="mt-5 flex gap-3">
           <SaveButton
             saving={savingMeta}
             label="Save Revenue Info"
@@ -562,10 +636,27 @@ function FinancialsTab({
                 total_raised: meta.total_raised || null,
                 investor_count: meta.investor_count ? parseInt(meta.investor_count) : null,
                 is_actively_raising: meta.is_actively_raising,
-              });
+              }, false);
               setSavingMeta(false);
             }}
           />
+          {isSetup && (
+            <SaveNextButton
+              saving={savingMeta}
+              onClick={() => {
+                setSavingMeta(true);
+                onSaveMeta({
+                  revenue_amount: meta.revenue_amount || null,
+                  revenue_currency: meta.revenue_currency || null,
+                  revenue_growth: meta.revenue_growth || null,
+                  total_raised: meta.total_raised || null,
+                  investor_count: meta.investor_count ? parseInt(meta.investor_count) : null,
+                  is_actively_raising: meta.is_actively_raising,
+                }, true);
+                setSavingMeta(false);
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -626,10 +717,12 @@ type FounderDraft = { name: string; role: string; email: string; ments_username:
 
 function TeamTab({
   founders,
+  isSetup,
   onSave,
 }: {
   founders: StartupFounder[];
-  onSave: (founders: FounderDraft[]) => void;
+  isSetup?: boolean;
+  onSave: (founders: FounderDraft[], andNext?: boolean) => void;
 }) {
   const [list, setList] = useState<FounderDraft[]>(
     founders.map((f) => ({
@@ -649,9 +742,9 @@ function TeamTab({
     setList(list.map((f, idx) => (idx === i ? { ...f, [field]: value } : f)));
   }
 
-  async function handleSave() {
+  async function handleSave(andNext?: boolean) {
     setSaving(true);
-    try { onSave(list.filter((f) => f.name.trim())); }
+    try { onSave(list.filter((f) => f.name.trim()), andNext); }
     finally { setSaving(false); }
   }
 
@@ -685,8 +778,9 @@ function TeamTab({
           <p className="text-sm text-muted">No team members added yet</p>
         </div>
       )}
-      <div className="border-t border-card-border pt-5">
-        <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5 flex gap-3">
+        <SaveButton saving={saving} onClick={() => handleSave(false)} />
+        {isSetup && <SaveNextButton saving={saving} onClick={() => handleSave(true)} />}
       </div>
     </div>
   );
@@ -700,13 +794,17 @@ type AwardDraft = { award_name: string; year: string };
 function RecognitionTab({
   incubators,
   awards,
+  isSetup,
   onSaveIncubators,
   onSaveAwards,
+  onComplete,
 }: {
   incubators: StartupIncubator[];
   awards: StartupAward[];
+  isSetup?: boolean;
   onSaveIncubators: (items: { program_name: string; year?: number | null }[]) => void;
   onSaveAwards: (items: { award_name: string; year?: number | null }[]) => void;
+  onComplete?: (andNext?: boolean) => void;
 }) {
   const [incList, setIncList] = useState<IncubatorDraft[]>(
     incubators.map((i) => ({ program_name: i.program_name, year: i.year?.toString() || '' }))
@@ -783,7 +881,7 @@ function RecognitionTab({
           ))}
           {awardList.length === 0 && <p className="text-sm text-muted py-2">No awards added yet.</p>}
         </div>
-        <div className="mt-4">
+        <div className="mt-4 flex gap-3">
           <SaveButton
             saving={savingAward}
             label="Save Awards"
@@ -794,8 +892,23 @@ function RecognitionTab({
                 year: a.year ? parseInt(a.year) : null,
               })));
               setSavingAward(false);
+              onComplete?.(false);
             }}
           />
+          {isSetup && (
+            <SaveNextButton
+              saving={savingAward}
+              onClick={() => {
+                setSavingAward(true);
+                onSaveAwards(awardList.filter((a) => a.award_name.trim()).map((a) => ({
+                  award_name: a.award_name,
+                  year: a.year ? parseInt(a.year) : null,
+                })));
+                setSavingAward(false);
+                onComplete?.(true);
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -804,16 +917,16 @@ function RecognitionTab({
 
 // ─── Publishing Tab ────────────────────────────────────────────
 
-function PublishingTab({ profile, onSave }: { profile: FullStartupProfile; onSave: (d: Record<string, unknown>) => void }) {
+function PublishingTab({ profile, isSetup, startupId, onSave }: { profile: FullStartupProfile; isSetup?: boolean; startupId?: string; onSave: (d: Record<string, unknown>, andNext?: boolean) => void }) {
   const [form, setForm] = useState({
     visibility: profile.visibility || 'public',
     is_featured: profile.is_featured,
   });
   const [saving, setSaving] = useState(false);
 
-  async function handleSave() {
+  async function handleSave(andNext?: boolean) {
     setSaving(true);
-    try { onSave(form); }
+    try { onSave(form, andNext); }
     finally { setSaving(false); }
   }
 
@@ -842,8 +955,18 @@ function PublishingTab({ profile, onSave }: { profile: FullStartupProfile; onSav
         <Toggle checked={form.is_featured} onChange={(v) => setForm({ ...form, is_featured: v })}
           label="Featured" desc="Highlights the startup with a featured badge on the listing page" />
       </div>
-      <div className="border-t border-card-border pt-5">
-        <SaveButton saving={saving} onClick={handleSave} />
+      <div className="border-t border-card-border pt-5 flex gap-3">
+        <SaveButton saving={saving} onClick={() => handleSave(false)} />
+        {isSetup && (
+          <button
+            onClick={() => handleSave(true)}
+            disabled={saving}
+            className="btn-primary gap-2 bg-emerald-600 hover:bg-emerald-700"
+          >
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+            Finish Setup
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1022,6 +1145,25 @@ function SaveButton({
     >
       {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
       {label}
+    </button>
+  );
+}
+
+function SaveNextButton({
+  saving,
+  onClick,
+}: {
+  saving: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={saving}
+      className="btn-primary gap-2"
+    >
+      {saving ? <Loader2 size={15} className="animate-spin" /> : <ArrowRight size={15} />}
+      Save & Next
     </button>
   );
 }

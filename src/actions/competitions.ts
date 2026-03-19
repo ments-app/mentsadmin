@@ -53,6 +53,7 @@ export async function createCompetition(formData: {
   team_size_min: number;
   team_size_max: number;
   eligibility_criteria: string;
+  brochure_url?: string;
 }) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -76,6 +77,7 @@ export async function createCompetition(formData: {
       team_size_min: formData.team_size_min || 1,
       team_size_max: formData.team_size_max || 1,
       eligibility_criteria: formData.eligibility_criteria || null,
+      brochure_url: formData.brochure_url || null,
     })
     .select('id')
     .single();
@@ -107,6 +109,7 @@ export async function updateCompetition(
     team_size_min: number;
     team_size_max: number;
     eligibility_criteria: string;
+    brochure_url?: string;
     visibility?: string;
     target_facilitator_ids?: string[] | null;
   }
@@ -132,6 +135,7 @@ export async function updateCompetition(
       team_size_min: formData.team_size_min || 1,
       team_size_max: formData.team_size_max || 1,
       eligibility_criteria: formData.eligibility_criteria || null,
+      brochure_url: formData.brochure_url || null,
       ...(formData.visibility !== undefined ? { visibility: formData.visibility } : {}),
       target_facilitator_ids: formData.target_facilitator_ids ?? null,
     })
