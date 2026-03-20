@@ -200,6 +200,45 @@ export interface EventInvestment {
   investor?: { full_name: string; username: string; avatar_url: string | null };
 }
 
+// ─── Mailer ──────────────────────────────────────────────────
+
+export interface MailBox {
+  id: string;
+  owner_id: string;
+  owner_role: 'facilitator' | 'startup';
+  name: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  email_count?: number;
+}
+
+export interface MailBoxEmail {
+  id: string;
+  box_id: string;
+  email: string;
+  label: string | null;
+  created_at: string;
+}
+
+export interface MailCampaign {
+  id: string;
+  sender_id: string;
+  sender_role: 'facilitator' | 'startup';
+  subject: string;
+  html_body: string;
+  box_ids: string[];
+  recipient_count: number;
+  status: 'sent' | 'failed' | 'partial' | 'pending_approval' | 'rejected';
+  approval_status: 'pending' | 'approved' | 'rejected' | null;
+  rejection_reason: string | null;
+  cc_emails: string[] | null;
+  sent_at: string;
+  created_at: string;
+  sender_email?: string;
+  sender_name?: string;
+}
+
 export interface SchemeMetadata {
   location?: string;
   recent_investments?: string;

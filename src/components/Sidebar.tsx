@@ -33,6 +33,9 @@ import {
   Download,
   ClipboardCheck,
   ArrowRightLeft,
+  Mail,
+  Compass,
+  MailCheck,
 } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────
@@ -65,6 +68,7 @@ const SUPERADMIN_SECTIONS: NavSection[] = [
       { href: '/dashboard/facilitators', label: 'Facilitators', icon: ShieldCheck },
       { href: '/dashboard/startups', label: 'Startups', icon: Rocket },
       { href: '/dashboard/investors', label: 'Investors', icon: BadgeDollarSign },
+      { href: '/dashboard/explore-startups', label: 'Explore Startup', icon: Compass },
       { href: '/dashboard/transfer', label: 'Transfer Startup', icon: ArrowRightLeft },
     ],
   },
@@ -82,6 +86,7 @@ const SUPERADMIN_SECTIONS: NavSection[] = [
     title: 'MODERATION',
     items: [
       { href: '/dashboard/approvals', label: 'Approvals', icon: ClipboardCheck },
+      { href: '/dashboard/mail-approvals', label: 'Mail Approvals', icon: MailCheck },
       { href: '/dashboard/applications', label: 'Applications', icon: Users },
       { href: '/dashboard/trending', label: 'Trending', icon: TrendingUp },
       { href: '/dashboard/feed', label: 'Feed Moderation', icon: MessageSquare },
@@ -108,6 +113,7 @@ const FACILITATOR_SECTIONS: NavSection[] = [
     items: [
       { href: '/facilitator/profile', label: 'Profile', icon: Building2 },
       { href: '/facilitator/startups', label: 'My Startups', icon: Rocket },
+      { href: '/facilitator/explore-startups', label: 'Explore Startup', icon: Compass },
       { href: '/facilitator/students', label: 'Student Access', icon: GraduationCap },
       { href: '/facilitator/team', label: 'Team', icon: UserCog },
     ],
@@ -119,6 +125,7 @@ const FACILITATOR_SECTIONS: NavSection[] = [
       { href: '/facilitator/gigs', label: 'Gigs', icon: Zap },
       { href: '/facilitator/events', label: 'Events', icon: CalendarDays },
       { href: '/facilitator/competitions', label: 'Competitions', icon: Trophy },
+      { href: '/facilitator/mailer', label: 'Mailer', icon: Mail },
     ],
   },
   {
@@ -144,6 +151,7 @@ const STARTUP_SECTIONS: NavSection[] = [
       { href: '/startup/gigs', label: 'Gigs', icon: Zap },
       { href: '/startup/events', label: 'Events', icon: CalendarDays },
       { href: '/startup/competitions', label: 'Competitions', icon: Trophy },
+      { href: '/startup/mailer', label: 'Mailer', icon: Mail },
     ],
   },
   {
